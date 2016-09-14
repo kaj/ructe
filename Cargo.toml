@@ -1,0 +1,9 @@
+[package]
+name = "ructe"
+version = "0.1.0"
+authors = ["Rasmus Kaj <kaj@kth.se>"]
+description = "Rust Compiled Templates, a build-time template system"
+readme = "README.md"
+
+[dependencies]
+nom = "*"
