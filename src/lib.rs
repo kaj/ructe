@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate nom;
+extern crate regex;
 
-use nom::{alphanumeric, multispace, eof};
+use nom::{multispace, eof};
 use nom::IResult::*;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -10,6 +11,7 @@ use std::str::from_utf8;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Template {
+    preamble: Vec<String>,
     args: Vec<String>,
     body: Vec<TemplateExpression>,
 }
@@ -38,13 +40,19 @@ impl TemplateExpression {
 named!(template<&[u8], Template>,
        chain!(
            spacelike ~
+           preamble: many0!(chain!(tag!("@") ~
+                                   code: is_not!(";()") ~
+                                   tag!(";") ~
+                                   spacelike,
+                                   ||from_utf8(code).unwrap().to_string()
+                                   )) ~
            tag!("@(") ~
            args: separated_list!(tag!(", "), formal_argument) ~
            tag!(")") ~
            spacelike ~
            body: many0!(template_expression) ~
            eof,
-           || { Template { args: args, body: body } }
+           || { Template { preamble: preamble, args: args, body: body } }
            )
 );
 
@@ -69,7 +77,7 @@ named!(template_expression<&[u8], TemplateExpression>,
                }) |
            chain!(
                tag!("@") ~
-               expr: alphanumeric,
+               expr: re_bytes_find!("^[a-z][a-z0-9.]*"),
                || TemplateExpression::Expression {
                    expr: from_utf8(expr).unwrap().to_string()
                }
@@ -113,11 +121,16 @@ pub fn compile_templates(indir: &Path,
                 }
             };
             try!(write!(f,
-                       "pub fn {name}(out: &mut Write{args}) \
+                       "{preamble}\n\
+                        pub fn {name}(out: &mut Write{args}) \
                         -> io::Result<()> {{\n\
                         {body}\n\
                         Ok(())\n\
                         }}",
+                       preamble = tpl.preamble
+                            .iter()
+                            .map(|l| format!("{};\n", l))
+                            .collect::<String>(),
                        name = name,
                        args = tpl.args
                             .iter()

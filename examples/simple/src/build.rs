@@ -8,7 +8,8 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let in_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
         .join("templates");
-    let templates = ["hello", "hello_args", "hello_args_two"];
+    let templates = ["hello", "hello_args", "hello_args_two",
+                     "hello_fields"];
     for t in templates.iter() {
         println!("cargo:rerun-if-changed=templates/{}.rs.html", t);
     }
