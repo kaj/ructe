@@ -92,10 +92,42 @@ named!(spacelike<&[u8], ()>,
               || ()));
 
 named!(comment<&[u8], ()>,
-       chain!(tag!("@*") ~
-              is_not!("*") ~
-              tag!("*@"),
-              || ()));
+       value!((), delimited!(tag!("@*"),
+                             many0!(alt!(
+                                 chain!(is_not!("*"), ||()) |
+                                 chain!(tag!("*") ~ none_of!("@"), ||())
+                                     )),
+                             tag!("*@"))));
+
+#[test]
+fn test_comment() {
+    assert_eq!(comment(b"@* a simple comment *@"), Done(&b""[..], ()));
+}
+#[test]
+fn test_comment2() {
+    assert_eq!(comment(b" @* comment *@"),
+               Error(nom::Err::Position(nom::ErrorKind::Tag,
+                                        &b" @* comment *@"[..])));
+}
+#[test]
+fn test_comment3() {
+    assert_eq!(comment(b"@* comment *@ & stuff"), Done(&b" & stuff"[..], ()));
+}
+#[test]
+fn test_comment4() {
+    assert_eq!(comment(b"@* comment *@ and @* another *@"),
+               Done(&b" and @* another *@"[..], ()));
+}
+#[test]
+fn test_comment5() {
+    assert_eq!(comment(b"@* comment containing * and @ *@"),
+               Done(&b""[..], ()));
+}
+#[test]
+fn test_comment6() {
+    assert_eq!(comment(b"@*** peculiar comment ***@***"),
+               Done(&b"***"[..], ()));
+}
 
 pub fn compile_templates(indir: &Path,
                          outdir: &Path,
