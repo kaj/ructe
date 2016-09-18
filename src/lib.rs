@@ -95,15 +95,22 @@ named!(expression<&[u8], String>,
 #[test]
 fn test_expression() {
     // Proper expressions, each followed by two non-expression characters.
-    for input in &[&b"foo  "[..], &b"foo<x"[..], &b"foo!!"[..], &b"x15  "[..],
+    for input in &[&b"foo  "[..],
+                   &b"foo<x"[..],
+                   &b"foo!!"[..],
+                   &b"x15  "[..],
                    &b"foo. "[..],
-                   &b"foo.bar  "[..], &b"boo.bar.baz##"[..]] {
+                   &b"foo.bar  "[..],
+                   &b"boo.bar.baz##"[..]] {
         let i = input.len() - 2;
-        assert_eq!(expression(*input), Done(&input[i..], from_utf8(&input[..i]).unwrap().to_string()));
+        assert_eq!(expression(*input),
+                   Done(&input[i..],
+                        from_utf8(&input[..i]).unwrap().to_string()));
     }
     // non-expressions
     for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
-        assert_eq!(expression(*input), Error(nom::Err::Position(nom::ErrorKind::Alt, &input[..])));
+        assert_eq!(expression(*input),
+                   Error(nom::Err::Position(nom::ErrorKind::Alt, &input[..])));
     }
 }
 
