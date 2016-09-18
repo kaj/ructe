@@ -1,8 +1,7 @@
 #[macro_use]
 extern crate nom;
-extern crate regex;
 
-use nom::{multispace, eof};
+use nom::{alpha, alphanumeric, multispace, eof};
 use nom::IResult::*;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -77,13 +76,43 @@ named!(template_expression<&[u8], TemplateExpression>,
                }) |
            chain!(
                tag!("@") ~
-               expr: re_bytes_find!("^[a-z][a-z0-9.]*"),
-               || TemplateExpression::Expression {
-                   expr: from_utf8(expr).unwrap().to_string()
-               }
+               expr: expression,
+               || TemplateExpression::Expression{ expr: expr }
            )
        )
 );
+
+
+named!(expression<&[u8], String>,
+       alt!(
+           chain!(pre: rust_name ~
+                  char!('.') ~
+                  post: expression,
+                  || format!("{}.{}", pre, post)) |
+           rust_name
+               ));
+
+#[test]
+fn test_expression() {
+    // Proper expressions, each followed by two non-expression characters.
+    for input in &[&b"foo  "[..], &b"foo<x"[..], &b"foo!!"[..], &b"x15  "[..],
+                   &b"foo. "[..],
+                   &b"foo.bar  "[..], &b"boo.bar.baz##"[..]] {
+        let i = input.len() - 2;
+        assert_eq!(expression(*input), Done(&input[i..], from_utf8(&input[..i]).unwrap().to_string()));
+    }
+    // non-expressions
+    for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
+        assert_eq!(expression(*input), Error(nom::Err::Position(nom::ErrorKind::Alt, &input[..])));
+    }
+}
+
+named!(rust_name<&[u8], String>,
+       chain!(first: alpha ~
+              rest: opt!(alphanumeric),
+              || format!("{}{}",
+                         from_utf8(first).unwrap(),
+                         from_utf8(rest.unwrap_or(b"")).unwrap())));
 
 named!(spacelike<&[u8], ()>,
        chain!(many0!(alt!(
