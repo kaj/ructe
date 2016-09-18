@@ -1,9 +1,10 @@
-# Rust Compile Templates -- ructe
+# Rust Compiled Templates — ructe
 
 This is my attempt at writing a HTML template system for Rust.
-Some inspiration comes from the scala template system used in play 2.
+Some inspiration comes from the scala template system used in play 2,
+as well as plain old jsp.
 
-Design criteria:
+## Design criteria:
 
 * As many errors as possible should be caught in compile-time.
 * A compiled binary should include all the template code it needs,
