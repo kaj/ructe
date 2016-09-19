@@ -3,7 +3,7 @@ extern crate nom;
 
 use nom::{alpha, alphanumeric, multispace, eof};
 use nom::IResult::*;
-use std::fs::File;
+use std::fs::{File, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::from_utf8;
@@ -189,30 +189,39 @@ fn test_comment6() {
                Done(&b"***"[..], ()));
 }
 
-pub fn compile_templates(indir: &Path,
-                         outdir: &Path,
-                         names: &[&str])
-                         -> io::Result<()> {
+pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
+    let suffix = ".rs.html";
+
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
         try!(write!(f, "mod templates {{\n\
                         use std::io::{{self, Write}};\n\
                         use std::fmt::Display;\n"));
-        for name in names {
-            let path = indir.join(format!("{}.rs.html", name));
-            println!("cargo:rerun-if-changed={}", path.to_string_lossy());
-            let mut input = try!(File::open(&path));
-            let mut buf = Vec::new();
-            try!(input.read_to_end(&mut buf));
-            match template(&buf) {
-                Done(_, t) => try!(t.write_rust(&mut f, name)),
-                Error(err) => {
-                    println!("cargo:warning=Template parse error in {:?}: {}",
-                             path, err)
-                }
-                Incomplete(needed) => {
-                    println!("cargo:warning=\
-                              Failed to parse template {:?}: {:?} needed",
-                             path, needed)
+
+        for entry in try!(read_dir(indir)) {
+            let entry = try!(entry);
+            let path = entry.path();
+            if let Some(filename) = entry.file_name().to_str() {
+                if filename.ends_with(suffix) {
+                    println!("cargo:rerun-if-changed={}",
+                             path.to_string_lossy());
+                    let name = &filename[..filename.len() - suffix.len()];
+                    let mut input = try!(File::open(&path));
+                    let mut buf = Vec::new();
+                    try!(input.read_to_end(&mut buf));
+                    match template(&buf) {
+                        Done(_, t) => try!(t.write_rust(&mut f, name)),
+                        Error(err) => {
+                            println!("cargo:warning=\
+                                      Template parse error in {:?}: {}",
+                                     path, err)
+                        }
+                        Incomplete(needed) => {
+                            println!("cargo:warning=\
+                                      Failed to parse template {:?}: \
+                                      {:?} needed",
+                                     path, needed)
+                        }
+                    }
                 }
             }
         }
