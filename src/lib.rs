@@ -30,7 +30,7 @@ impl TemplateExpression {
                 format!("try!(write!(out, \"{}\"));\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("try!(out.write_all(&try!(encode_html(&{}))));\n", expr)
+                format!("try!({}.to_html(out));\n", expr)
             }
         }
     }
@@ -192,7 +192,7 @@ pub fn compile_templates(indir: &Path,
                        "{preamble}\n\
                         pub fn {name}(out: &mut Write{args}) \
                         -> io::Result<()> {{\n\
-                        {body}\n\
+                        {body}\
                         Ok(())\n\
                         }}",
                        preamble = tpl.preamble
@@ -209,20 +209,26 @@ pub fn compile_templates(indir: &Path,
                             .map(|b| b.code())
                             .collect::<String>()));
         }
-        write!(f, "fn encode_html(arg: &Display) \
-                       -> io::Result<Vec<u8>> {{\n\
-                       let mut buf = Vec::new();\n\
-                       try!(write!(buf, \"{{}}\", arg));\n\
-                       Ok(buf.into_iter().fold(Vec::new(), |mut v, c| {{\n\
-                       match c {{\n\
-                       b'<' => v.extend_from_slice(b\"&lt;\"),\n\
-                       b'>' => v.extend_from_slice(b\"&gt;\"),\n\
-                       b'&' => v.extend_from_slice(b\"&amp;\"),\n\
-                       c => v.push(c),\n\
-                       }};\n\
-                       v\n\
-                       }}))\n\
-                       }}\n\
-                       }}\n")
+        write!(f, "{}\n}}\n", include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
+                                                   "/src/template_utils.rs")))
     })
+}
+
+mod foo {
+    use std::fmt::Display;
+    use std::io::{self, Write};
+    include!("template_utils.rs");
+
+    #[test]
+    fn test_encoded() {
+        let mut buf = Vec::new();
+        "a < b".to_html(&mut buf).unwrap();
+        assert_eq!(b"a &lt; b", &buf[..]);
+    }
+    #[test]
+    fn test_raw_html() {
+        let mut buf = Vec::new();
+        Html("a<b>c</b>").to_html(&mut buf).unwrap();
+        assert_eq!(b"a<b>c</b>", &buf[..]);
+    }
 }

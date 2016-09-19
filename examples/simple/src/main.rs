@@ -59,3 +59,12 @@ fn test_hello_fields() {
     assert_eq!(from_utf8(&buf).unwrap(),
                "<h1>Hello Tom Puss!</h1>\n<p>Your email is tom@example.nl</p>\n");
 }
+
+#[test]
+fn test_hello_code() {
+    use templates::Html;
+    let mut buf = Vec::new();
+    hello_code(&mut buf, &"Paragraph:", &Html("<p>Hello.</p>")).unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<h2>Paragraph:</h2>\n<p>Hello.</p>\n");
+}
