@@ -56,7 +56,7 @@ impl TemplateExpression {
         match *self {
             TemplateExpression::Comment => String::new(),
             TemplateExpression::Text { ref text } => {
-                format!("try!(write!(out, \"{}\"));\n", text)
+                format!("try!(write!(out, {:?}));\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
                 format!("try!({}.to_html(out));\n", expr)

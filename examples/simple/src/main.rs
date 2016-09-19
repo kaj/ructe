@@ -34,7 +34,8 @@ fn test_hello_encodes_args() {
 fn test_hello_args_two() {
     let mut buf = Vec::new();
     hello_args_two(&mut buf, 56, "prime".to_string(), false).unwrap();
-    assert_eq!(from_utf8(&buf).unwrap(), "<p>Is 56 a prime? false!</p>\n");
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<p class=\"foo\" data-n=\"56\">Is 56 a prime? false!</p>\n");
 }
 
 mod models {
