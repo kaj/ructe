@@ -15,6 +15,30 @@ struct Template {
     body: Vec<TemplateExpression>,
 }
 
+impl Template {
+    fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
+        write!(out,
+               "{preamble}\n\
+                pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
+                {body}\
+                Ok(())\n\
+                }}",
+               preamble = self.preamble
+                   .iter()
+                   .map(|l| format!("{};\n", l))
+                   .collect::<String>(),
+               name = name,
+               args = self.args
+                   .iter()
+                   .map(|a| format!(", {}", a))
+                   .collect::<String>(),
+               body = self.body
+                   .iter()
+                   .map(|b| b.code())
+                   .collect::<String>())
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum TemplateExpression {
     Comment,
@@ -175,39 +199,22 @@ pub fn compile_templates(indir: &Path,
                         use std::fmt::Display;\n"));
         for name in names {
             let path = indir.join(format!("{}.rs.html", name));
+            println!("cargo:rerun-if-changed={}", path.to_string_lossy());
             let mut input = try!(File::open(&path));
             let mut buf = Vec::new();
             try!(input.read_to_end(&mut buf));
-            let tpl = match template(&buf) {
-                Done(_, t) => t,
+            match template(&buf) {
+                Done(_, t) => try!(t.write_rust(&mut f, name)),
                 Error(err) => {
-                    panic!("Template parse error in {:?}: {}", path, err)
+                    println!("cargo:warning=Template parse error in {:?}: {}",
+                             path, err)
                 }
                 Incomplete(needed) => {
-                    panic!("Failed to parse template {:?}: {:?} needed",
-                               path, needed)
+                    println!("cargo:warning=\
+                              Failed to parse template {:?}: {:?} needed",
+                             path, needed)
                 }
-            };
-            try!(write!(f,
-                       "{preamble}\n\
-                        pub fn {name}(out: &mut Write{args}) \
-                        -> io::Result<()> {{\n\
-                        {body}\
-                        Ok(())\n\
-                        }}",
-                       preamble = tpl.preamble
-                            .iter()
-                            .map(|l| format!("{};\n", l))
-                            .collect::<String>(),
-                       name = name,
-                       args = tpl.args
-                            .iter()
-                            .map(|a| format!(", {}", a))
-                            .collect::<String>(),
-                       body = tpl.body
-                            .iter()
-                            .map(|b| b.code())
-                            .collect::<String>()));
+            }
         }
         write!(f, "{}\n}}\n", include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
                                                    "/src/template_utils.rs")))
