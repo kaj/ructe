@@ -68,3 +68,11 @@ fn test_hello_code() {
     assert_eq!(from_utf8(&buf).unwrap(),
                "<h2>Paragraph:</h2>\n<p>Hello.</p>\n");
 }
+
+#[test]
+fn test_for_loop() {
+    let mut buf = Vec::new();
+    for_loop(&mut buf, vec!["Hello", "World"]).unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<h1>Looped paragraphs</h1>\n<p>Hello</p>\n<p>World</p>\n\n");
+}

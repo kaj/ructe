@@ -22,7 +22,7 @@ impl Template {
                 pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
                 {body}\
                 Ok(())\n\
-                }}",
+                }}\n",
                preamble = self.preamble
                    .iter()
                    .map(|l| format!("{};\n", l))
@@ -44,6 +44,11 @@ enum TemplateExpression {
     Comment,
     Text { text: String },
     Expression { expr: String },
+    ForLoop {
+        name: String,
+        expr: String,
+        body: Vec<TemplateExpression>,
+    },
 }
 
 impl TemplateExpression {
@@ -55,6 +60,12 @@ impl TemplateExpression {
             }
             TemplateExpression::Expression { ref expr } => {
                 format!("try!({}.to_html(out));\n", expr)
+            }
+            TemplateExpression::ForLoop { ref name, ref expr, ref body } => {
+                format!("for {} in {} {{\n{}}}\n",
+                        name,
+                        expr,
+                        body.iter().map(|b| b.code()).collect::<String>())
             }
         }
     }
@@ -94,7 +105,19 @@ named!(template_expression<&[u8], TemplateExpression>,
                || TemplateExpression::Comment
                ) |
            chain!(
-               text: is_not!("@"),
+               tag!("@for") ~ spacelike ~
+                   name: rust_name ~
+                   spacelike ~ tag!("in") ~ spacelike ~
+                   expr: expression ~ spacelike ~ tag!("{") ~ spacelike ~
+                   body: many0!(template_expression) ~
+                   spacelike ~ tag!("}"),
+               || TemplateExpression::ForLoop {
+                   name: name,
+                   expr: expr,
+                   body: body,
+               }) |
+           chain!(
+               text: is_not!("@{}"),
                || TemplateExpression::Text {
                    text: from_utf8(text).unwrap().to_string()
                }) |
