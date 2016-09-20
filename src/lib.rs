@@ -137,13 +137,16 @@ named!(template_expression<&[u8], TemplateExpression>,
 
 
 named!(expression<&[u8], String>,
-       alt!(
-           chain!(pre: rust_name ~
-                  char!('.') ~
-                  post: expression,
-                  || format!("{}.{}", pre, post)) |
-           rust_name
-               ));
+       chain!(pre: rust_name ~
+              post: alt_complete!(
+                  chain!(tag!(".") ~ post: expression,
+                         || format!(".{}", post)) |
+                  chain!(tag!("(") ~
+                         args: separated_list!(tag!(", "), expression) ~
+                         tag!(")"),
+                         || format!("({})", args.join(", "))) |
+                  chain!(tag!(""), || format!(""))),
+              || format!("{}{}", pre, post)));
 
 #[test]
 fn test_expression() {
@@ -154,7 +157,8 @@ fn test_expression() {
                    &b"x15  "[..],
                    &b"foo. "[..],
                    &b"foo.bar  "[..],
-                   &b"boo.bar.baz##"[..]] {
+                   &b"boo.bar.baz##"[..],
+                   &b"foo(x, a.b.c(), d)  "[..]] {
         let i = input.len() - 2;
         assert_eq!(expression(*input),
                    Done(&input[i..],
@@ -163,7 +167,8 @@ fn test_expression() {
     // non-expressions
     for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
         assert_eq!(expression(*input),
-                   Error(nom::Err::Position(nom::ErrorKind::Alt, &input[..])));
+                   Error(nom::Err::Position(nom::ErrorKind::Alpha,
+                                            &input[..])));
     }
 }
 

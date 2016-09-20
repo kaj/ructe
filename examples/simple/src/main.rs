@@ -40,10 +40,16 @@ fn test_hello_args_two() {
 
 mod models {
     use std::fmt;
+    use templates::Html;
 
     pub struct User<'a> {
         pub name: &'a str,
         pub email: &'a str,
+    }
+    impl<'a> User<'a> {
+        pub fn mailto(&self) -> Html<String> {
+            Html(format!("<a href=\"mailto:{0}\">{0}</a>", self.email))
+        }
     }
     impl<'a> fmt::Display for User<'a> {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -59,6 +65,16 @@ fn test_hello_fields() {
     hello_fields(&mut buf, &user).unwrap();
     assert_eq!(from_utf8(&buf).unwrap(),
                "<h1>Hello Tom Puss!</h1>\n<p>Your email is tom@example.nl</p>\n");
+}
+
+#[test]
+fn test_hello_method() {
+    let user = models::User { name: "Tom Puss", email: "tom@example.nl" };
+    let mut buf = Vec::new();
+    hello_method(&mut buf, &user).unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
+                <a href=\"mailto:tom@example.nl\">tom@example.nl</a></p>\n");
 }
 
 #[test]
