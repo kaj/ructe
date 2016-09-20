@@ -18,11 +18,17 @@ struct Template {
 impl Template {
     fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
         write!(out,
-               "{preamble}\n\
+               "mod template_{name} {{\n\
+                use std::io::{{self, Write}};\n\
+                #[allow(unused)]\n\
+                use templates::ToHtml;\n\
+                {preamble}\n\
                 pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
                 {body}\
                 Ok(())\n\
-                }}\n",
+                }}\n\
+                }}\n\
+                pub use templates::template_{name}::{name};\n\n",
                preamble = self.preamble
                    .iter()
                    .map(|l| format!("{};\n", l))
