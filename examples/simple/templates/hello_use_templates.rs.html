@@ -1,0 +1,7 @@
+@use templates::hello;
+@use templates::hello_code;
+
+@(foo: &ToHtml)
+
+@:hello()
+@:hello_code(&"foo", foo)

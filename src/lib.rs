@@ -55,6 +55,7 @@ enum TemplateExpression {
         expr: String,
         body: Vec<TemplateExpression>,
     },
+    CallTemplate { name: String, args: Vec<String> },
 }
 
 impl TemplateExpression {
@@ -72,6 +73,13 @@ impl TemplateExpression {
                         name,
                         expr,
                         body.iter().map(|b| b.code()).collect::<String>())
+            }
+            TemplateExpression::CallTemplate { ref name, ref args } => {
+                format!("try!({}(out{}));",
+                        name,
+                        args.iter()
+                            .map(|b| format!(", {}", b))
+                            .collect::<String>())
             }
         }
     }
@@ -111,6 +119,16 @@ named!(template_expression<&[u8], TemplateExpression>,
                || TemplateExpression::Comment
                ) |
            chain!(
+               tag!("@:") ~
+               name: rust_name ~
+               args: delimited!(tag!("("),
+                                separated_list!(tag!(", "), expression),
+                                tag!(")")),
+               || TemplateExpression::CallTemplate {
+                   name: name,
+                   args: args,
+               }) |
+           chain!(
                tag!("@for") ~ spacelike ~
                    name: rust_name ~
                    spacelike ~ tag!("in") ~ spacelike ~
@@ -137,7 +155,11 @@ named!(template_expression<&[u8], TemplateExpression>,
 
 
 named!(expression<&[u8], String>,
-       chain!(pre: rust_name ~
+       chain!(pre: alt!(rust_name |
+                        chain!(char!('&') ~ char!('"') ~
+                               text: is_not!("\"") ~ char!('"'),
+                               || format!("&\"{}\"",
+                                          from_utf8(text).unwrap()))) ~
               post: fold_many0!(
                   alt_complete!(
                       chain!(tag!(".") ~ post: expression,
@@ -165,6 +187,7 @@ fn test_expression() {
                    &b"foo.bar  "[..],
                    &b"boo.bar.baz##"[..],
                    &b"foo(x, a.b.c(), d)  "[..],
+                   &b"foo(&\"x\").bar  "[..],
                    &b"foo().bar(x).baz, "[..]] {
         let i = input.len() - 2;
         assert_eq!(expression(*input),
@@ -174,7 +197,7 @@ fn test_expression() {
     // non-expressions
     for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
         assert_eq!(expression(*input),
-                   Error(nom::Err::Position(nom::ErrorKind::Alpha,
+                   Error(nom::Err::Position(nom::ErrorKind::Alt,
                                             &input[..])));
     }
 }
@@ -251,6 +274,11 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     match template(&buf) {
                         Done(_, t) => try!(t.write_rust(&mut f, name)),
+                        Error(nom::Err::Position(e, pos)) => {
+                            println!("cargo:warning=\
+                                      Template parse error {:?} in {:?}: {:?}",
+                                     e, path, from_utf8(pos).unwrap())
+                        }
                         Error(err) => {
                             println!("cargo:warning=\
                                       Template parse error in {:?}: {}",

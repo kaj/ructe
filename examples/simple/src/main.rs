@@ -5,7 +5,8 @@ include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 use templates::*;
 
 fn main() {
-    hello(&mut io::stdout()).unwrap();
+    hello_use_templates(&mut io::stdout(), &Html("<p>this is foo</p>"))
+        .unwrap();
 }
 
 #[test]
@@ -42,11 +43,13 @@ mod models {
     use std::fmt;
     use templates::Html;
 
+    #[allow(dead_code)]
     pub struct User<'a> {
         pub name: &'a str,
         pub email: &'a str,
     }
     impl<'a> User<'a> {
+        #[allow(dead_code)]
         pub fn mailto(&self) -> Html<String> {
             Html(format!("<a href=\"mailto:{0}\">{0}</a>", self.email))
         }
@@ -92,4 +95,13 @@ fn test_for_loop() {
     for_loop(&mut buf, vec!["Hello", "World"]).unwrap();
     assert_eq!(from_utf8(&buf).unwrap(),
                "<h1>Looped paragraphs</h1>\n<p>Hello</p>\n<p>World</p>\n\n");
+}
+
+#[test]
+fn test_hello_use_templates() {
+    let mut buf = Vec::new();
+    hello_use_templates(&mut buf, &Html("<p>this is foo</p>")).unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<h1>Hello World!</h1>\n\n\
+                <h2>foo</h2>\n<p>this is foo</p>\n\n");
 }
