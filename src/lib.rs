@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate nom;
 
-use nom::{alpha, alphanumeric, multispace, eof};
+use nom::{alpha, multispace, eof};
 use nom::IResult::*;
 use std::fs::{File, read_dir};
 use std::io::{self, Read, Write};
@@ -138,14 +138,19 @@ named!(template_expression<&[u8], TemplateExpression>,
 
 named!(expression<&[u8], String>,
        chain!(pre: rust_name ~
-              post: alt_complete!(
-                  chain!(tag!(".") ~ post: expression,
-                         || format!(".{}", post)) |
-                  chain!(tag!("(") ~
-                         args: separated_list!(tag!(", "), expression) ~
-                         tag!(")"),
-                         || format!("({})", args.join(", "))) |
-                  chain!(tag!(""), || format!(""))),
+              post: fold_many0!(
+                  alt_complete!(
+                      chain!(tag!(".") ~ post: expression,
+                             || format!(".{}", post)) |
+                      chain!(tag!("(") ~
+                             args: separated_list!(tag!(", "), expression) ~
+                             tag!(")"),
+                             || format!("({})", args.join(", ")))),
+                  String::new(),
+                  |mut acc: String, item: String| {
+                      acc.push_str(&item);
+                      acc
+                  }),
               || format!("{}{}", pre, post)));
 
 #[test]
@@ -155,10 +160,12 @@ fn test_expression() {
                    &b"foo<x"[..],
                    &b"foo!!"[..],
                    &b"x15  "[..],
+                   &b"a_b_c  "[..],
                    &b"foo. "[..],
                    &b"foo.bar  "[..],
                    &b"boo.bar.baz##"[..],
-                   &b"foo(x, a.b.c(), d)  "[..]] {
+                   &b"foo(x, a.b.c(), d)  "[..],
+                   &b"foo().bar(x).baz, "[..]] {
         let i = input.len() - 2;
         assert_eq!(expression(*input),
                    Done(&input[i..],
@@ -174,7 +181,7 @@ fn test_expression() {
 
 named!(rust_name<&[u8], String>,
        chain!(first: alpha ~
-              rest: opt!(alphanumeric),
+              rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")),
               || format!("{}{}",
                          from_utf8(first).unwrap(),
                          from_utf8(rest.unwrap_or(b"")).unwrap())));
