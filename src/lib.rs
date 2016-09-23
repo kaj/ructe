@@ -175,6 +175,10 @@ named!(template_expression<&[u8], TemplateExpression>,
                    body: body,
                    else_body: else_body,
                }) |
+           chain!(tag!("@{"),
+                  || TemplateExpression::Text { text: "{{".to_string() }) |
+           chain!(tag!("@}"),
+                  || TemplateExpression::Text { text: "}}".to_string() }) |
            chain!(
                text: is_not!("@{}"),
                || TemplateExpression::Text {
@@ -209,7 +213,11 @@ named!(expression<&[u8], String>,
                       chain!(tag!("(") ~
                              args: separated_list!(tag!(", "), expression) ~
                              tag!(")"),
-                             || format!("({})", args.join(", ")))),
+                             || format!("({})", args.join(", "))) |
+                      chain!(tag!("[") ~
+                             args: separated_list!(tag!(", "), expression) ~
+                             tag!("]"),
+                             || format!("[{}]", args.join(", ")))),
                   String::new(),
                   |mut acc: String, item: String| {
                       acc.push_str(&item);
@@ -222,7 +230,7 @@ fn test_expression() {
     // Proper expressions, each followed by two non-expression characters.
     for input in &[&b"foo  "[..],
                    &b"foo<x"[..],
-                   &b"foo!!"[..],
+                   &b"foo??"[..],
                    &b"x15  "[..],
                    &b"a_b_c  "[..],
                    &b"foo. "[..],
@@ -246,10 +254,12 @@ fn test_expression() {
 
 named!(rust_name<&[u8], String>,
        chain!(first: alpha ~
-              rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")),
-              || format!("{}{}",
+              rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")) ~
+              last: opt!(tag!("!")),
+              || format!("{}{}{}",
                          from_utf8(first).unwrap(),
-                         from_utf8(rest.unwrap_or(b"")).unwrap())));
+                         from_utf8(rest.unwrap_or(b"")).unwrap(),
+                         from_utf8(last.unwrap_or(b"")).unwrap())));
 
 named!(spacelike<&[u8], ()>,
        chain!(many0!(alt!(
