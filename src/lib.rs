@@ -55,6 +55,11 @@ enum TemplateExpression {
         expr: String,
         body: Vec<TemplateExpression>,
     },
+    IfBlock {
+        expr: String,
+        body: Vec<TemplateExpression>,
+        else_body: Option<Vec<TemplateExpression>>,
+    },
     CallTemplate { name: String, args: Vec<String> },
 }
 
@@ -73,6 +78,21 @@ impl TemplateExpression {
                         name,
                         expr,
                         body.iter().map(|b| b.code()).collect::<String>())
+            }
+            TemplateExpression::IfBlock { ref expr,
+                                          ref body,
+                                          ref else_body } => {
+                format!("if {} {{\n{}}}{}\n",
+                        expr,
+                        body.iter().map(|b| b.code()).collect::<String>(),
+                        else_body.iter()
+                            .map(|ref b| {
+                                format!(" else {{\n{}}}",
+                                        b.iter()
+                                            .map(|b| b.code())
+                                            .collect::<String>())
+                            })
+                            .collect::<String>())
             }
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!("try!({}(out{}));",
@@ -141,6 +161,21 @@ named!(template_expression<&[u8], TemplateExpression>,
                    body: body,
                }) |
            chain!(
+               tag!("@if") ~ spacelike ~
+                   expr: cond_expression ~ spacelike ~ tag!("{") ~ spacelike ~
+                   body: many0!(template_expression) ~
+                   spacelike ~ tag!("}") ~
+                   else_body: opt!(
+                       chain!(spacelike ~ tag!("else") ~ spacelike ~ tag!("{") ~
+                              else_body: many0!(template_expression) ~
+                              tag!("}"),
+                              || else_body)),
+               || TemplateExpression::IfBlock {
+                   expr: expr,
+                   body: body,
+                   else_body: else_body,
+               }) |
+           chain!(
                text: is_not!("@{}"),
                || TemplateExpression::Text {
                    text: from_utf8(text).unwrap().to_string()
@@ -153,6 +188,13 @@ named!(template_expression<&[u8], TemplateExpression>,
        )
 );
 
+named!(cond_expression<&[u8], String>,
+       alt!(chain!(tag!("let") ~ spacelike ~
+                   lhs: expression ~
+                   spacelike ~ char!('=') ~ spacelike ~
+                   rhs: expression,
+                   || format!("let {} = {}", lhs, rhs)) |
+            expression));
 
 named!(expression<&[u8], String>,
        chain!(pre: alt!(rust_name |
