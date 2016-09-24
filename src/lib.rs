@@ -202,6 +202,10 @@ named!(cond_expression<&[u8], String>,
 
 named!(expression<&[u8], String>,
        chain!(pre: alt!(rust_name |
+                        chain!(char!('"') ~
+                               text: is_not!("\"") ~ char!('"'),
+                               || format!("\"{}\"",
+                                          from_utf8(text).unwrap())) |
                         chain!(char!('&') ~ char!('"') ~
                                text: is_not!("\"") ~ char!('"'),
                                || format!("&\"{}\"",
@@ -233,7 +237,9 @@ fn test_expression() {
     // Proper expressions, each followed by two non-expression characters.
     for input in &[&b"foo  "[..],
                    &b"foo<x"[..],
-                   &b"foo??"[..],
+                   &b"foo. "[..],
+                   &b"foo! "[..],
+                   &b"foo? "[..],
                    &b"x15  "[..],
                    &b"a_b_c  "[..],
                    &b"foo. "[..],

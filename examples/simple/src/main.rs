@@ -98,6 +98,15 @@ fn test_for_loop() {
 }
 
 #[test]
+fn test_explicit_formatting() {
+    let mut buf = Vec::new();
+    explicit_formatting(&mut buf, 5.212432234, "one\ntwo").unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<p>Value 1 is 5.2 (or really 5.212432234),\n\
+                while value 2 is \"one\\ntwo\".</p>\n");
+}
+
+#[test]
 fn test_hello_use_templates() {
     let mut buf = Vec::new();
     hello_use_templates(&mut buf, &Html("<p>this is foo</p>")).unwrap();
