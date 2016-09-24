@@ -190,7 +190,7 @@ destination.
 The return value of a template is `std::io::Result<()>`, which should be
 `Ok(())` unless writing to the destination fails.
 
-```
+```rust
 #[test]
 fn test_hello() {
     let mut buf = Vec::new();
@@ -202,7 +202,7 @@ fn test_hello() {
 When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
 rendering function that looks like this:
 
-```
+```rust
 fn render<'mw, F>(res: Response<'mw>, do_render: F)
                   ->MiddlewareResult<'mw>
     where F: FnOnce(&mut Write) -> io::Result<()>
@@ -217,6 +217,6 @@ fn render<'mw, F>(res: Response<'mw>, do_render: F)
 
 Which I call like this:
 
-```
+```rust
 render(res, |o| templates::foo(o, other, arguments))
 ```
