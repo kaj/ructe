@@ -63,16 +63,23 @@ mod models {
 
 #[test]
 fn test_hello_fields() {
-    let user = models::User { name: "Tom Puss", email: "tom@example.nl" };
+    let user = models::User {
+        name: "Tom Puss",
+        email: "tom@example.nl",
+    };
     let mut buf = Vec::new();
     hello_fields(&mut buf, &user).unwrap();
     assert_eq!(from_utf8(&buf).unwrap(),
-               "<h1>Hello Tom Puss!</h1>\n<p>Your email is tom@example.nl</p>\n");
+               "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
+                tom@example.nl</p>\n");
 }
 
 #[test]
 fn test_hello_method() {
-    let user = models::User { name: "Tom Puss", email: "tom@example.nl" };
+    let user = models::User {
+        name: "Tom Puss",
+        email: "tom@example.nl",
+    };
     let mut buf = Vec::new();
     hello_method(&mut buf, &user).unwrap();
     assert_eq!(from_utf8(&buf).unwrap(),
