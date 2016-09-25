@@ -2,6 +2,6 @@
 
 @(who: &str)
 
-@:page_base(format!("Hello {}!", who), {
+@:page_base(&format!("Hello {}!", who), {
   <p>This is page content for @who</p>
 })

@@ -244,14 +244,11 @@ named!(cond_expression<&[u8], String>,
             expression));
 
 named!(expression<&[u8], String>,
-       chain!(pre: alt!(rust_name |
+       chain!(pre: alt!(tag!("&") | tag!("ref ") | tag!("")) ~
+              name: alt!(rust_name |
                         chain!(char!('"') ~
                                text: is_not!("\"") ~ char!('"'),
                                || format!("\"{}\"",
-                                          from_utf8(text).unwrap())) |
-                        chain!(char!('&') ~ char!('"') ~
-                               text: is_not!("\"") ~ char!('"'),
-                               || format!("&\"{}\"",
                                           from_utf8(text).unwrap()))) ~
               post: fold_many0!(
                   alt_complete!(
@@ -270,7 +267,7 @@ named!(expression<&[u8], String>,
                       acc.push_str(&item);
                       acc
                   }),
-              || format!("{}{}", pre, post)));
+              || format!("{}{}{}", from_utf8(pre).unwrap(), name, post)));
 
 named!(comma_expressions<&[u8], String>,
        chain!(list: separated_list!(tag!(", "), expression),
