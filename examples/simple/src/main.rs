@@ -121,3 +121,17 @@ fn test_hello_use_templates() {
                "<h1>Hello World!</h1>\n\n\
                 <h2>foo</h2>\n<p>this is foo</p>\n\n");
 }
+
+#[test]
+fn test_page_with_base() {
+    let mut buf = Vec::new();
+    page_page(&mut buf, "World").unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<html>\n  \
+                <head><title>Hello World!</title></head>\n  \
+                <body>\n    \
+                <h1>Hello World!</h1>\n    \n  \
+                <p>This is page content for World</p>\n\n  \
+                </body>\n\
+                </html>\n\n");
+}

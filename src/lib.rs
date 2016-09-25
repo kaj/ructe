@@ -3,6 +3,7 @@ extern crate nom;
 
 use nom::{alpha, multispace, eof};
 use nom::IResult::*;
+use std::fmt::{self, Display};
 use std::fs::{File, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -23,7 +24,8 @@ impl Template {
                 #[allow(unused)]\n\
                 use templates::ToHtml;\n\
                 {preamble}\n\
-                pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
+                pub fn {name}{type_args}(out: &mut Write{args})\n\
+                -> io::Result<()> {type_spec}{{\n\
                 {body}\
                 Ok(())\n\
                 }}\n\
@@ -34,9 +36,22 @@ impl Template {
                    .map(|l| format!("{};\n", l))
                    .collect::<String>(),
                name = name,
+               type_args = self.args
+                   .iter()
+                   .filter(|a| a.as_str() == "content: Content")
+                   .map(|_a| format!("<Content>"))
+                   .collect::<String>(),
                args = self.args
                    .iter()
                    .map(|a| format!(", {}", a))
+                   .collect::<String>(),
+               type_spec = self.args
+                   .iter()
+                   .filter(|a| a.as_str() == "content: Content")
+                   .map(|_a| {
+                       format!("\nwhere Content: FnOnce(&mut Write) \
+                                -> io::Result<()>")
+                   })
                    .collect::<String>(),
                body = self.body
                    .iter()
@@ -60,7 +75,29 @@ enum TemplateExpression {
         body: Vec<TemplateExpression>,
         else_body: Option<Vec<TemplateExpression>>,
     },
-    CallTemplate { name: String, args: Vec<String> },
+    CallTemplate {
+        name: String,
+        args: Vec<TemplateArgument>,
+    },
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum TemplateArgument {
+    Rust(String),
+    Body(Vec<TemplateExpression>),
+}
+
+impl Display for TemplateArgument {
+    fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            TemplateArgument::Rust(ref s) => write!(out, "{}", s),
+            TemplateArgument::Body(ref v) => {
+                write!(out,
+                       "|out| {{\n{}\nOk(())\n}}\n",
+                       v.iter().map(|b| b.code()).collect::<String>())
+            }
+        }
+    }
 }
 
 impl TemplateExpression {
@@ -95,7 +132,7 @@ impl TemplateExpression {
                             .collect::<String>())
             }
             TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!("try!({}(out{}));",
+                format!("try!({}(out{}));\n",
                         name,
                         args.iter()
                             .map(|b| format!(", {}", b))
@@ -142,7 +179,7 @@ named!(template_expression<&[u8], TemplateExpression>,
                tag!("@:") ~
                name: rust_name ~
                args: delimited!(tag!("("),
-                                separated_list!(tag!(", "), expression),
+                                separated_list!(tag!(", "), template_argument),
                                 tag!(")")),
                || TemplateExpression::CallTemplate {
                    name: name,
@@ -191,6 +228,12 @@ named!(template_expression<&[u8], TemplateExpression>,
            )
        )
 );
+
+named!(template_argument<&[u8], TemplateArgument>,
+       alt!(chain!(tag!("{") ~ body: many0!(template_expression) ~ tag!("}"),
+                   || TemplateArgument::Body(body)) |
+            chain!(expr: expression,
+                   || TemplateArgument::Rust(expr))));
 
 named!(cond_expression<&[u8], String>,
        alt!(chain!(tag!("let") ~ spacelike ~
