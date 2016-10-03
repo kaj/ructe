@@ -39,6 +39,17 @@ fn test_hello_args_two() {
                "<p class=\"foo\" data-n=\"56\">Is 56 a prime? false!</p>\n");
 }
 
+#[test]
+fn test_hello_utf8() {
+    let mut buf = Vec::new();
+    hello_utf8(&mut buf, "δ", "ε", "δ < ε", "δ &lt; ε").unwrap();
+    assert_eq!(from_utf8(&buf).unwrap(),
+               "<p>δ &lt; ε</p>\n\
+                <p>δ &lt; ε</p>\n\
+                <p>δ &lt; ε</p>\n\
+                <p>δ &lt; ε</p>\n");
+}
+
 mod models {
     use std::fmt;
     use templates::Html;
