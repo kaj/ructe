@@ -22,7 +22,7 @@ impl Template {
                "mod template_{name} {{\n\
                 use std::io::{{self, Write}};\n\
                 #[allow(unused)]\n\
-                use templates::ToHtml;\n\
+                use ::templates::{{Html,ToHtml}};\n\
                 {preamble}\n\
                 pub fn {name}{type_args}(out: &mut Write{args})\n\
                 -> io::Result<()> {type_spec}{{\n\
@@ -30,7 +30,7 @@ impl Template {
                 Ok(())\n\
                 }}\n\
                 }}\n\
-                pub use templates::template_{name}::{name};\n\n",
+                pub use ::templates::template_{name}::{name};\n\n",
                preamble = self.preamble
                    .iter()
                    .map(|l| format!("{};\n", l))
