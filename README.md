@@ -127,7 +127,7 @@ So, given something like this in `header.rs.html`:
 It can be used like this:
 
 ```
-@use templates::header`
+@use templates::header;
 
 @()
 
@@ -135,9 +135,40 @@ It can be used like this:
   @:header("Example")
   <body>
     <h1>Example</h1>
-    ...
+    <p>page content ...</p>
   </body>
 </html>
+```
+
+It is also possible to send template blocks as parameters to templates.
+A structure similar to the above can breated by having something like
+this in `base_page.rs.html`:
+
+```
+@(title: &str, body: Content)
+
+<html>
+  <head>
+    <title>@title</title>
+    <link rel="stylesheet" href="/my/style.css" type="text/css">
+  </head>
+  <body>
+    <h1>@title</h1>
+    @:body()
+  </body>
+</html>
+```
+
+And use it like this:
+
+```
+@use templates::base_page;
+
+@()
+
+@:base_page("Example", {
+    <p>page content ...</p>
+})
 ```
 
 ## How to use ructe
