@@ -4,7 +4,7 @@ extern crate nom;
 use nom::{alpha, multispace, eof};
 use nom::IResult::*;
 use std::fmt::{self, Display};
-use std::fs::{File, read_dir};
+use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::from_utf8;
@@ -19,8 +19,7 @@ struct Template {
 impl Template {
     fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
         write!(out,
-               "mod template_{name} {{\n\
-                use std::io::{{self, Write}};\n\
+               "use std::io::{{self, Write}};\n\
                 #[allow(unused)]\n\
                 use ::templates::{{Html,ToHtml}};\n\
                 {preamble}\n\
@@ -28,9 +27,7 @@ impl Template {
                 -> io::Result<()> {type_spec}{{\n\
                 {body}\
                 Ok(())\n\
-                }}\n\
-                }}\n\
-                pub use ::templates::template_{name}::{name};\n\n",
+                }}\n",
                preamble = self.preamble
                    .iter()
                    .map(|l| format!("{};\n", l))
@@ -358,7 +355,10 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
         try!(write!(f, "mod templates {{\n\
                         use std::io::{{self, Write}};\n\
-                        use std::fmt::Display;\n"));
+                        use std::fmt::Display;\n\n"));
+
+        let outdir = outdir.join("templates");
+        try!(create_dir_all(&outdir));
 
         for entry in try!(read_dir(indir)) {
             let entry = try!(entry);
@@ -372,7 +372,17 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                     let mut buf = Vec::new();
                     try!(input.read_to_end(&mut buf));
                     match template(&buf) {
-                        Done(_, t) => try!(t.write_rust(&mut f, name)),
+                        Done(_, t) => {
+                            let fname = outdir.join(format!("template_{}.rs",
+                                                            name));
+                            try!(File::create(fname)
+                                 .and_then(|mut f| t.write_rust(&mut f, name)));
+                            try!(write!(f,
+                                        "mod template_{name};\n\
+                                         pub use ::templates::template_{name}\
+                                         ::{name};\n\n",
+                                        name = name));
+                        }
                         Error(nom::Err::Position(e, pos)) => {
                             println!("cargo:warning=\
                                       Template parse error {:?} in {:?}: {:?}",
