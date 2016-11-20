@@ -184,7 +184,7 @@ First, specify a build script and ructe as a build dependency in
 build = "src/build.rs"
 
 [build-dependencies]
-ructe = { git = "https://github.com/kaj/ructe" }
+ructe = "^0.1"
 ```
 
 Then, in the build script, compile all templates found in the templates

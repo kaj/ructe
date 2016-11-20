@@ -1,6 +1,6 @@
 [package]
 name = "ructe"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 description = "Rust Compiled Templates, a build-time template system"
 repository = "https://github.com/kaj/ructe"
