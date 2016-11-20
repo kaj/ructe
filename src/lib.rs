@@ -241,7 +241,7 @@ named!(cond_expression<&[u8], String>,
             expression));
 
 named!(expression<&[u8], String>,
-       chain!(pre: alt!(tag!("&") | tag!("ref ") | tag!("")) ~
+       chain!(pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) ~
               name: alt!(rust_name |
                         chain!(char!('"') ~
                                text: is_not!("\"") ~ char!('"'),
@@ -282,6 +282,7 @@ fn test_expression() {
                    &b"foo. "[..],
                    &b"foo.bar  "[..],
                    &b"boo.bar.baz##"[..],
+                   &b"!foo.is_empty()  "[..],
                    &b"foo(x, a.b.c(), d)  "[..],
                    &b"foo(&\"x\").bar  "[..],
                    &b"foo().bar(x).baz, "[..]] {
