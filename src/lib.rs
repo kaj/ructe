@@ -1,9 +1,14 @@
 #[macro_use]
 extern crate nom;
 
-use nom::{alpha, multispace, eof};
+mod spacelike;
+use spacelike::spacelike;
+mod expression;
+mod templateexpression;
+use templateexpression::{TemplateExpression, template_expression};
+
+use nom::eof;
 use nom::IResult::*;
-use std::fmt::{self, Display};
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -57,88 +62,6 @@ impl Template {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum TemplateExpression {
-    Comment,
-    Text { text: String },
-    Expression { expr: String },
-    ForLoop {
-        name: String,
-        expr: String,
-        body: Vec<TemplateExpression>,
-    },
-    IfBlock {
-        expr: String,
-        body: Vec<TemplateExpression>,
-        else_body: Option<Vec<TemplateExpression>>,
-    },
-    CallTemplate {
-        name: String,
-        args: Vec<TemplateArgument>,
-    },
-}
-
-#[derive(Debug, PartialEq, Eq)]
-enum TemplateArgument {
-    Rust(String),
-    Body(Vec<TemplateExpression>),
-}
-
-impl Display for TemplateArgument {
-    fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match *self {
-            TemplateArgument::Rust(ref s) => write!(out, "{}", s),
-            TemplateArgument::Body(ref v) => {
-                write!(out,
-                       "|out| {{\n{}\nOk(())\n}}\n",
-                       v.iter().map(|b| b.code()).collect::<String>())
-            }
-        }
-    }
-}
-
-impl TemplateExpression {
-    fn code(&self) -> String {
-        match *self {
-            TemplateExpression::Comment => String::new(),
-            TemplateExpression::Text { ref text } => {
-                format!("try!(write!(out, {:?}));\n", text)
-            }
-            TemplateExpression::Expression { ref expr } => {
-                format!("try!({}.to_html(out));\n", expr)
-            }
-            TemplateExpression::ForLoop { ref name, ref expr, ref body } => {
-                format!("for {} in {} {{\n{}}}\n",
-                        name,
-                        expr,
-                        body.iter().map(|b| b.code()).collect::<String>())
-            }
-            TemplateExpression::IfBlock { ref expr,
-                                          ref body,
-                                          ref else_body } => {
-                format!("if {} {{\n{}}}{}\n",
-                        expr,
-                        body.iter().map(|b| b.code()).collect::<String>(),
-                        else_body.iter()
-                            .map(|ref b| {
-                                format!(" else {{\n{}}}",
-                                        b.iter()
-                                            .map(|b| b.code())
-                                            .collect::<String>())
-                            })
-                            .collect::<String>())
-            }
-            TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!("try!({}(out{}));\n",
-                        name,
-                        args.iter()
-                            .map(|b| format!(", {}", b))
-                            .collect::<String>())
-            }
-        }
-    }
-}
-
 named!(template<&[u8], Template>,
        chain!(
            spacelike ~
@@ -166,189 +89,8 @@ named!(formal_argument<&[u8], String>,
                )
        );
 
-named!(template_expression<&[u8], TemplateExpression>,
-       alt!(
-           chain!(
-               comment,
-               || TemplateExpression::Comment
-               ) |
-           chain!(
-               tag!("@:") ~
-               name: rust_name ~
-               args: delimited!(tag!("("),
-                                separated_list!(tag!(", "), template_argument),
-                                tag!(")")),
-               || TemplateExpression::CallTemplate {
-                   name: name,
-                   args: args,
-               }) |
-           chain!(
-               tag!("@for") ~ spacelike ~
-                   name: rust_name ~
-                   spacelike ~ tag!("in") ~ spacelike ~
-                   expr: expression ~ spacelike ~ tag!("{") ~ spacelike ~
-                   body: many0!(template_expression) ~
-                   spacelike ~ tag!("}"),
-               || TemplateExpression::ForLoop {
-                   name: name,
-                   expr: expr,
-                   body: body,
-               }) |
-           chain!(
-               tag!("@if") ~ spacelike ~
-                   expr: cond_expression ~ spacelike ~ tag!("{") ~ spacelike ~
-                   body: many0!(template_expression) ~
-                   spacelike ~ tag!("}") ~
-                   else_body: opt!(
-                       chain!(spacelike ~ tag!("else") ~ spacelike ~ tag!("{") ~
-                              else_body: many0!(template_expression) ~
-                              tag!("}"),
-                              || else_body)),
-               || TemplateExpression::IfBlock {
-                   expr: expr,
-                   body: body,
-                   else_body: else_body,
-               }) |
-           chain!(tag!("@{"),
-                  || TemplateExpression::Text { text: "{{".to_string() }) |
-           chain!(tag!("@}"),
-                  || TemplateExpression::Text { text: "}}".to_string() }) |
-           chain!(
-               text: is_not!("@{}"),
-               || TemplateExpression::Text {
-                   text: from_utf8(text).unwrap().to_string()
-               }) |
-           chain!(
-               tag!("@") ~
-               expr: expression,
-               || TemplateExpression::Expression{ expr: expr }
-           )
-       )
-);
 
-named!(template_argument<&[u8], TemplateArgument>,
-       alt!(chain!(tag!("{") ~ body: many0!(template_expression) ~ tag!("}"),
-                   || TemplateArgument::Body(body)) |
-            chain!(expr: expression,
-                   || TemplateArgument::Rust(expr))));
 
-named!(cond_expression<&[u8], String>,
-       alt!(chain!(tag!("let") ~ spacelike ~
-                   lhs: expression ~
-                   spacelike ~ char!('=') ~ spacelike ~
-                   rhs: expression,
-                   || format!("let {} = {}", lhs, rhs)) |
-            expression));
-
-named!(expression<&[u8], String>,
-       chain!(pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) ~
-              name: alt!(rust_name |
-                        chain!(char!('"') ~
-                               text: is_not!("\"") ~ char!('"'),
-                               || format!("\"{}\"",
-                                          from_utf8(text).unwrap()))) ~
-              post: fold_many0!(
-                  alt_complete!(
-                      chain!(tag!(".") ~ post: expression,
-                             || format!(".{}", post)) |
-                      chain!(tag!("(") ~ args: comma_expressions ~ tag!(")"),
-                             || format!("({})", args)) |
-                      chain!(tag!("[") ~ args: comma_expressions ~ tag!("]"),
-                             || format!("[{}]", args)) |
-                      chain!(tag!("!(") ~ args: comma_expressions ~ tag!(")"),
-                             || format!("!({})", args)) |
-                      chain!(tag!("![") ~ args: comma_expressions ~ tag!("]"),
-                             || format!("![{}]", args))),
-                  String::new(),
-                  |mut acc: String, item: String| {
-                      acc.push_str(&item);
-                      acc
-                  }),
-              || format!("{}{}{}", from_utf8(pre).unwrap(), name, post)));
-
-named!(comma_expressions<&[u8], String>,
-       chain!(list: separated_list!(tag!(", "), expression),
-              || list.join(", ")));
-#[test]
-fn test_expression() {
-    // Proper expressions, each followed by two non-expression characters.
-    for input in &[&b"foo  "[..],
-                   &b"foo<x"[..],
-                   &b"foo. "[..],
-                   &b"foo! "[..],
-                   &b"foo? "[..],
-                   &b"x15  "[..],
-                   &b"a_b_c  "[..],
-                   &b"foo. "[..],
-                   &b"foo.bar  "[..],
-                   &b"boo.bar.baz##"[..],
-                   &b"!foo.is_empty()  "[..],
-                   &b"foo(x, a.b.c(), d)  "[..],
-                   &b"foo(&\"x\").bar  "[..],
-                   &b"foo().bar(x).baz, "[..]] {
-        let i = input.len() - 2;
-        assert_eq!(expression(*input),
-                   Done(&input[i..],
-                        from_utf8(&input[..i]).unwrap().to_string()));
-    }
-    // non-expressions
-    for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
-        assert_eq!(expression(*input),
-                   Error(nom::Err::Position(nom::ErrorKind::Alt,
-                                            &input[..])));
-    }
-}
-
-named!(rust_name<&[u8], String>,
-       chain!(first: alpha ~
-              rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")),
-              || format!("{}{}",
-                         from_utf8(first).unwrap(),
-                         from_utf8(rest.unwrap_or(b"")).unwrap())));
-
-named!(spacelike<&[u8], ()>,
-       chain!(many0!(alt!(
-           comment |
-           chain!(multispace, ||()))),
-              || ()));
-
-named!(comment<&[u8], ()>,
-       value!((), delimited!(tag!("@*"),
-                             many0!(alt!(
-                                 chain!(is_not!("*"), ||()) |
-                                 chain!(tag!("*") ~ none_of!("@"), ||())
-                                     )),
-                             tag!("*@"))));
-
-#[test]
-fn test_comment() {
-    assert_eq!(comment(b"@* a simple comment *@"), Done(&b""[..], ()));
-}
-#[test]
-fn test_comment2() {
-    assert_eq!(comment(b" @* comment *@"),
-               Error(nom::Err::Position(nom::ErrorKind::Tag,
-                                        &b" @* comment *@"[..])));
-}
-#[test]
-fn test_comment3() {
-    assert_eq!(comment(b"@* comment *@ & stuff"), Done(&b" & stuff"[..], ()));
-}
-#[test]
-fn test_comment4() {
-    assert_eq!(comment(b"@* comment *@ and @* another *@"),
-               Done(&b" and @* another *@"[..], ()));
-}
-#[test]
-fn test_comment5() {
-    assert_eq!(comment(b"@* comment containing * and @ *@"),
-               Done(&b""[..], ()));
-}
-#[test]
-fn test_comment6() {
-    assert_eq!(comment(b"@*** peculiar comment ***@***"),
-               Done(&b"***"[..], ()));
-}
 
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     let suffix = ".rs.html";
