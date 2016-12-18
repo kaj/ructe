@@ -1,6 +1,6 @@
-use std::fmt::{self, Display};
-use spacelike::{comment, spacelike};
 use expression::{expression, rust_name};
+use spacelike::{comment, spacelike};
+use std::fmt::{self, Display};
 use std::str::from_utf8;
 
 #[derive(Debug, PartialEq, Eq)]

@@ -2,94 +2,16 @@
 extern crate nom;
 
 mod spacelike;
-use spacelike::spacelike;
 mod expression;
 mod templateexpression;
-use templateexpression::{TemplateExpression, template_expression};
+mod template;
 
-use nom::eof;
 use nom::IResult::*;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::from_utf8;
-
-#[derive(Debug, PartialEq, Eq)]
-struct Template {
-    preamble: Vec<String>,
-    args: Vec<String>,
-    body: Vec<TemplateExpression>,
-}
-
-impl Template {
-    fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
-        write!(out,
-               "use std::io::{{self, Write}};\n\
-                #[allow(unused)]\n\
-                use ::templates::{{Html,ToHtml}};\n\
-                {preamble}\n\
-                pub fn {name}{type_args}(out: &mut Write{args})\n\
-                -> io::Result<()> {type_spec}{{\n\
-                {body}\
-                Ok(())\n\
-                }}\n",
-               preamble = self.preamble
-                   .iter()
-                   .map(|l| format!("{};\n", l))
-                   .collect::<String>(),
-               name = name,
-               type_args = self.args
-                   .iter()
-                   .filter(|a| a.as_str() == "content: Content")
-                   .map(|_a| format!("<Content>"))
-                   .collect::<String>(),
-               args = self.args
-                   .iter()
-                   .map(|a| format!(", {}", a))
-                   .collect::<String>(),
-               type_spec = self.args
-                   .iter()
-                   .filter(|a| a.as_str() == "content: Content")
-                   .map(|_a| {
-                       format!("\nwhere Content: FnOnce(&mut Write) \
-                                -> io::Result<()>")
-                   })
-                   .collect::<String>(),
-               body = self.body
-                   .iter()
-                   .map(|b| b.code())
-                   .collect::<String>())
-    }
-}
-
-named!(template<&[u8], Template>,
-       chain!(
-           spacelike ~
-           preamble: many0!(chain!(tag!("@") ~
-                                   code: is_not!(";()") ~
-                                   tag!(";") ~
-                                   spacelike,
-                                   ||from_utf8(code).unwrap().to_string()
-                                   )) ~
-           tag!("@(") ~
-           args: separated_list!(tag!(", "), formal_argument) ~
-           tag!(")") ~
-           spacelike ~
-           body: many0!(template_expression) ~
-           eof,
-           || { Template { preamble: preamble, args: args, body: body } }
-           )
-);
-
-// TODO Actually parse arguments!
-named!(formal_argument<&[u8], String>,
-       chain!(
-           raw: is_not!(",)"),
-           || from_utf8(raw).unwrap().to_string()
-               )
-       );
-
-
+use template::template;
 
 
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
@@ -151,19 +73,20 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     })
 }
 
-mod foo {
+#[cfg(test)]
+mod template_utils_test {
     use std::fmt::Display;
     use std::io::{self, Write};
     include!("template_utils.rs");
 
     #[test]
-    fn test_encoded() {
+    fn encoded() {
         let mut buf = Vec::new();
         "a < b".to_html(&mut buf).unwrap();
         assert_eq!(b"a &lt; b", &buf[..]);
     }
     #[test]
-    fn test_raw_html() {
+    fn raw_html() {
         let mut buf = Vec::new();
         Html("a<b>c</b>").to_html(&mut buf).unwrap();
         assert_eq!(b"a<b>c</b>", &buf[..]);

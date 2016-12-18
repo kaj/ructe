@@ -40,9 +40,9 @@ named!(pub rust_name<&[u8], String>,
 
 #[cfg(test)]
 mod test {
-    use nom::IResult::{Done, Error};
-    use nom;
     use expression::expression;
+    use nom;
+    use nom::IResult::{Done, Error};
     use std::str::from_utf8;
 
     #[test]

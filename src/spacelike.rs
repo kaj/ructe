@@ -1,4 +1,4 @@
-use nom::{multispace};
+use nom::multispace;
 
 named!(pub spacelike<&[u8], ()>,
        chain!(many0!(alt!(
@@ -16,9 +16,9 @@ named!(pub comment<&[u8], ()>,
 
 #[cfg(test)]
 mod test {
-    use nom::IResult::{Done, Error};
     use nom;
-    use spacelike::comment;
+    use nom::IResult::{Done, Error};
+    use spacelike::{comment, spacelike};
 
     #[test]
     fn comment1() {
@@ -32,7 +32,8 @@ mod test {
     }
     #[test]
     fn comment3() {
-        assert_eq!(comment(b"@* comment *@ & stuff"), Done(&b" & stuff"[..], ()));
+        assert_eq!(comment(b"@* comment *@ & stuff"),
+                   Done(&b" & stuff"[..], ()));
     }
     #[test]
     fn comment4() {
@@ -48,5 +49,22 @@ mod test {
     fn comment6() {
         assert_eq!(comment(b"@*** peculiar comment ***@***"),
                    Done(&b"***"[..], ()));
+    }
+
+    #[test]
+    fn spacelike_empty() {
+        assert_eq!(spacelike(b""), Done(&b""[..], ()));
+    }
+    #[test]
+    fn spacelike_simple() {
+        assert_eq!(spacelike(b" "), Done(&b""[..], ()));
+    }
+    #[test]
+    fn spacelike_long() {
+        assert_eq!(spacelike(b"\n\
+                               @* a comment on a line by itself *@\n\
+                               \t\t   \n\n\r\n\
+                               @*another comment*@    something else"),
+                   Done(&b"something else"[..], ()));
     }
 }
