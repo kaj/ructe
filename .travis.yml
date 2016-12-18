@@ -15,4 +15,5 @@ script:
   PATH=${HOME}/.cargo/bin:$PATH cargo fmt -- --write-mode=diff &&
   cargo build &&
   cargo test &&
-  cd examples/simple && cargo test
+  (cd examples/simple && cargo test) &&
+  (cd examples/statics && cargo test)
