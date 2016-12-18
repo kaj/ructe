@@ -44,8 +44,8 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                             try!(File::create(fname)
                                 .and_then(|mut f| t.write_rust(&mut f, name)));
                             try!(write!(f,
-                                        "mod template_{name};\n\
-                                         pub use ::templates::template_{name}\
+                                        "mod template_{name};\npub use \
+                                         ::templates::template_{name}\
                                          ::{name};\n\n",
                                         name = name));
                         }
