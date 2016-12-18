@@ -1,11 +1,15 @@
-#![allow(dead_code)] // Most templates here are only used in tests.
 use std::io::{self, Write};
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 use templates::*;
 
 fn main() {
+    println!("### Page:");
     page(&mut io::stdout()).unwrap();
+    for s in statics::STATICS {
+        println!("### /static/{}:", s.name);
+        io::stdout().write(s.content).unwrap();
+    }
 }
 
 #[test]
@@ -22,6 +26,7 @@ fn test_page_w_static() {
                 </body>\n\
                 </html>\n");
 }
+
 #[test]
 fn test_static_css_data() {
     // TODO The css content should be minified!
@@ -38,6 +43,7 @@ fn test_all_statics_known() {
                ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-o2rFo1lI.css"]);
 }
 
+#[cfg(test)]
 fn r2s<Call>(call: Call) -> String
     where Call: FnOnce(&mut Write) -> io::Result<()>
 {
