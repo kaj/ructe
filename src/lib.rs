@@ -11,13 +11,12 @@ mod template;
 use nom::IResult::*;
 
 use rustc_serialize::base64::{self, ToBase64};
-use std::fmt::{self, Display};
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::from_utf8;
 use template::template;
-
+use std::collections::BTreeSet;
 
 pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
     let outdir = outdir.join("templates");
@@ -27,7 +26,7 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                           pub content: &'static [u8],\n  \
                           pub name: &'static str,\n\
                         }}\n"));
-        let mut statics = vec![];
+        let mut statics = BTreeSet::new();
         for entry in try!(read_dir(indir)) {
             let entry = try!(entry);
             let path = entry.path();
@@ -42,7 +41,7 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     // TODO Minifying the css would be nice
                     try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.push(name.to_string());
+                    statics.insert(name.to_string());
                 }
                 let suffix = ".js";
                 if filename.ends_with(suffix) {
@@ -54,7 +53,7 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     // TODO Minifying the javascript would be nice
                     try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.push(name.to_string());
+                    statics.insert(name.to_string());
                 }
             }
         }

@@ -35,7 +35,7 @@ fn test_static_css_data() {
 fn test_all_statics_known() {
     use templates::statics::STATICS;
     assert_eq!(STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-               ["style-o2rFo1lI.css", "foo-R-7hhHLr.js"]);
+               ["foo-R-7hhHLr.js", "style-o2rFo1lI.css"]);
 }
 
 fn r2s<Call>(call: Call) -> String
