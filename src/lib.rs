@@ -96,9 +96,10 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     let suffix = ".rs.html";
 
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
-        try!(write!(f, "mod templates {{\n\
-                        use std::io::{{self, Write}};\n\
-                        use std::fmt::Display;\n\n"));
+        try!(write!(f,
+                    "mod templates {{\n\
+                     use std::io::{{self, Write}};\n\
+                     use std::fmt::Display;\n\n"));
 
         let outdir = outdir.join("templates");
         try!(create_dir_all(&outdir));
@@ -116,39 +117,45 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     match template(&buf) {
                         Done(_, t) => {
-                            let fname = outdir.join(format!("template_{}.rs",
-                                                            name));
+                            let fname =
+                                outdir.join(format!("template_{}.rs", name));
                             try!(File::create(fname)
-                                 .and_then(|mut f| t.write_rust(&mut f, name)));
+                                .and_then(|mut f| t.write_rust(&mut f, name)));
                             try!(write!(f,
-                                        "mod template_{name};\n\
-                                         pub use ::templates::template_{name}\
+                                        "mod template_{name};\npub use \
+                                         ::templates::template_{name}\
                                          ::{name};\n\n",
                                         name = name));
                         }
                         Error(nom::Err::Position(e, pos)) => {
                             println!("cargo:warning=\
                                       Template parse error {:?} in {:?}: {:?}",
-                                     e, path, from_utf8(pos).unwrap())
+                                     e,
+                                     path,
+                                     from_utf8(pos).unwrap())
                         }
                         Error(err) => {
                             println!("cargo:warning=\
                                       Template parse error in {:?}: {}",
-                                     path, err)
+                                     path,
+                                     err)
                         }
                         Incomplete(needed) => {
                             println!("cargo:warning=\
                                       Failed to parse template {:?}: \
                                       {:?} needed",
-                                     path, needed)
+                                     path,
+                                     needed)
                         }
                     }
                 }
             }
         }
         try!(write!(f, "pub mod statics;\n"));
-        write!(f, "{}\n}}\n", include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                                   "/src/template_utils.rs")))
+        write!(f,
+               "{}\n}}\n",
+               include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
+                                    "/src/template_utils.rs")))
     })
 }
 
