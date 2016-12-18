@@ -9,4 +9,6 @@ readme = "README.md"
 license = "MIT/Apache-2.0"
 
 [dependencies]
+md5 = "^0.3"
 nom = "^1"
+rustc-serialize = "^0.3"
