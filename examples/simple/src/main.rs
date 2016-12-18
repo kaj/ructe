@@ -18,14 +18,12 @@ fn r2s<Call>(call: Call) -> String
 
 #[test]
 fn test_hello() {
-    assert_eq!(r2s(|o| hello(o)),
-               "<h1>Hello World!</h1>\n");
+    assert_eq!(r2s(|o| hello(o)), "<h1>Hello World!</h1>\n");
 }
 
 #[test]
 fn test_hello_args() {
-    assert_eq!(r2s(|o| hello_args(o, "World")),
-               "<h1>Hello World!</h1>\n");
+    assert_eq!(r2s(|o| hello_args(o, "World")), "<h1>Hello World!</h1>\n");
 }
 
 #[test]
