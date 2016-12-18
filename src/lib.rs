@@ -155,7 +155,9 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                 }
             }
         }
-        try!(write!(f, "pub mod statics;\n"));
+        if outdir.join("statics.rs").exists() {
+            try!(write!(f, "pub mod statics;\n"));
+        }
         write!(f,
                "{}\n}}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
