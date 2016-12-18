@@ -25,9 +25,9 @@ fn test_page_w_static() {
 #[test]
 fn test_static_css_data() {
     // TODO The css content should be minified!
-    use templates::statics::style;
+    use templates::statics::style_css;
     use std::str::from_utf8;
-    assert_eq!(from_utf8(&style.content).unwrap(),
+    assert_eq!(from_utf8(&style_css.content).unwrap(),
                "body {\n    background: white;\n    color: black;\n}\n");
 }
 
@@ -35,7 +35,7 @@ fn test_static_css_data() {
 fn test_all_statics_known() {
     use templates::statics::STATICS;
     assert_eq!(STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-               ["foo-R-7hhHLr.js", "style-o2rFo1lI.css"]);
+               ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-o2rFo1lI.css"]);
 }
 
 fn r2s<Call>(call: Call) -> String

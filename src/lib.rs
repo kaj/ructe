@@ -42,7 +42,7 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     // TODO Minifying the css would be nice
                     try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.insert(name.to_string());
+                    statics.insert(format!("{}_css", name));
                 }
                 let suffix = ".js";
                 if filename.ends_with(suffix) {
@@ -54,7 +54,7 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                     try!(input.read_to_end(&mut buf));
                     // TODO Minifying the javascript would be nice
                     try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.insert(name.to_string());
+                    statics.insert(format!("{}_js", name));
                 }
             }
         }
@@ -78,16 +78,16 @@ fn write_static_file(f: &mut Write,
     write!(f,
            "\n// From {path:?}\n\
             #[allow(non_upper_case_globals)]\n\
-            pub static {name}: StaticFile = \
+            pub static {name}_{suf}: StaticFile = \
             StaticFile {{\n  \
             content: &{content:?},\n  \
-            name: \"{name}-{hash}{suf}\",\n\
+            name: \"{name}-{hash}.{suf}\",\n\
             }};\n",
            path = path,
            name = name,
            content = content,
            hash = checksum_slug(&content),
-           suf = suffix)
+           suf = &suffix[1..])
 }
 
 /// A short and url-safe checksum string from string data.
