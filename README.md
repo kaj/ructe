@@ -48,6 +48,11 @@ And third, the template body.
 </html>
 ```
 
+The curly brackets, `{` and `}`, is used for blocks (see Loops,
+Conditionals, and Calling other templates below).
+To use them in the template body, they must be escaped as `@{` and
+`@}`.
+
 ### Value expressions
 
 A parameter can be used in an expression preceded by an @ sign.
