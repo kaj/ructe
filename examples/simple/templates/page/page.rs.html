@@ -1,0 +1,7 @@
+@use templates::page::base;
+
+@(who: &str)
+
+@:base(&format!("Hello {}!", who), {
+  <p>This is page content for @who</p>
+})
