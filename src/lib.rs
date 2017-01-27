@@ -10,7 +10,6 @@ use nom::IResult::*;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
-use std::str::from_utf8;
 use template::template;
 
 
@@ -76,14 +75,6 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
             try!(File::create(fname)
                  .and_then(|mut f| t.write_rust(&mut f, name)));
             Ok(true)
-        }
-        Error(nom::Err::Position(e, pos)) => {
-            println!("cargo:warning=\
-                      Template parse error {:?} in {:?}: {:?}",
-                     e,
-                     path,
-                     from_utf8(pos).unwrap());
-            Ok(false)
         }
         Error(err) => {
             println!("cargo:warning=\

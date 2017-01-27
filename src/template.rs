@@ -1,4 +1,3 @@
-use nom::eof;
 use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
@@ -66,7 +65,7 @@ named!(pub template<&[u8], Template>,
            tag!(")") ~
            spacelike ~
            body: many0!(template_expression) ~
-           eof,
+           eof!(),
            || { Template { preamble: preamble, args: args, body: body } }
            )
 );

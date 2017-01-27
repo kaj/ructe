@@ -71,10 +71,10 @@ mod test {
     #[test]
     fn non_expressions() {
         // non-expressions
+        // TODO See if I can get nom to produce more helpfull errors.
         for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
             assert_eq!(expression(*input),
-                       Error(nom::Err::Position(nom::ErrorKind::Alt,
-                                                &input[..])));
+                       Error(nom::ErrorKind::Alt));
         }
     }
 }
