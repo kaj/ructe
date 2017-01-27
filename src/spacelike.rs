@@ -27,8 +27,7 @@ mod test {
     #[test]
     fn comment2() {
         assert_eq!(comment(b" @* comment *@"),
-                   Error(nom::Err::Position(nom::ErrorKind::Tag,
-                                            &b" @* comment *@"[..])));
+                   Error(nom::ErrorKind::Tag));
     }
     #[test]
     fn comment3() {

@@ -10,7 +10,6 @@ use nom::IResult::*;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
-use std::str::from_utf8;
 use template::template;
 
 
@@ -48,13 +47,6 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                                          ::templates::template_{name}\
                                          ::{name};\n\n",
                                         name = name));
-                        }
-                        Error(nom::Err::Position(e, pos)) => {
-                            println!("cargo:warning=\
-                                      Template parse error {:?} in {:?}: {:?}",
-                                     e,
-                                     path,
-                                     from_utf8(pos).unwrap())
                         }
                         Error(err) => {
                             println!("cargo:warning=\
