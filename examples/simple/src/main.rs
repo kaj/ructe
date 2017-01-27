@@ -5,7 +5,7 @@ include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 use templates::*;
 
 fn main() {
-    page_page(&mut io::stdout(), "sample page").unwrap();
+    page::page(&mut io::stdout(), "sample page").unwrap();
 }
 
 fn r2s<Call>(call: Call) -> String
@@ -118,7 +118,7 @@ fn test_hello_use_templates() {
 
 #[test]
 fn test_page_with_base() {
-    assert_eq!(r2s(|o| page_page(o, "World")),
+    assert_eq!(r2s(|o| page::page(o, "World")),
                "<!doctype html>\n\
                 <html>\n  \
                 <head><title>Hello World!</title></head>\n  \
