@@ -43,14 +43,13 @@ fn handle_entries(f: &mut Write,
                 let outdir = outdir.join(filename);
                 try!(create_dir_all(&outdir));
                 try!(File::create(outdir.join("mod.rs"))
-                     .and_then(|mut f| handle_entries(&mut f, &path, &outdir)));
-                try!(write!(f, "pub mod {name};\n\n", name=filename));
+                    .and_then(|mut f| handle_entries(&mut f, &path, &outdir)));
+                try!(write!(f, "pub mod {name};\n\n", name = filename));
             }
 
         } else if let Some(filename) = entry.file_name().to_str() {
             if filename.ends_with(suffix) {
-                println!("cargo:rerun-if-changed={}",
-                         path.to_string_lossy());
+                println!("cargo:rerun-if-changed={}", path.to_string_lossy());
                 let name = &filename[..filename.len() - suffix.len()];
                 if try!(handle_template(name, &path, &outdir)) {
                     try!(write!(f,
@@ -73,7 +72,7 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
         Done(_, t) => {
             let fname = outdir.join(format!("template_{}.rs", name));
             try!(File::create(fname)
-                 .and_then(|mut f| t.write_rust(&mut f, name)));
+                .and_then(|mut f| t.write_rust(&mut f, name)));
             Ok(true)
         }
         Error(err) => {
