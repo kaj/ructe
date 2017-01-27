@@ -1,7 +1,7 @@
+extern crate base64;
 extern crate md5;
 #[macro_use]
 extern crate nom;
-extern crate rustc_serialize;
 
 mod spacelike;
 mod expression;
@@ -10,7 +10,6 @@ mod template;
 
 use nom::IResult::*;
 
-use rustc_serialize::base64::{self, ToBase64};
 use std::collections::BTreeSet;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
@@ -92,7 +91,7 @@ fn write_static_file(f: &mut Write,
 
 /// A short and url-safe checksum string from string data.
 fn checksum_slug(data: &[u8]) -> String {
-    md5::compute(data)[..6].to_base64(base64::URL_SAFE)
+    base64::encode_mode(&md5::compute(data)[..6], base64::Base64Mode::UrlSafe)
 }
 
 
