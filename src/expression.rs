@@ -73,8 +73,7 @@ mod test {
         // non-expressions
         // TODO See if I can get nom to produce more helpfull errors.
         for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
-            assert_eq!(expression(*input),
-                       Error(nom::ErrorKind::Alt));
+            assert_eq!(expression(*input), Error(nom::ErrorKind::Alt));
         }
     }
 }
