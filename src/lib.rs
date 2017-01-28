@@ -1,3 +1,74 @@
+//! Rust Compiled Templates is a HTML template system for Rust.
+//!
+//! Templates in a syntax inspired by
+//! [Twirl](https://github.com/playframework/twirl), the Scala-based
+//! template engine in
+//! [Play framework](https://www.playframework.com/) are translated to
+//! Rust language source code, to be compiled together with your
+//! program.
+//! The template syntax is currently documented only in the readme of
+//! [the github repository for ructe](https://github.com/kaj/ructe).
+//!
+//!
+//! # How to use ructe
+//!
+//! Ructe compiles your templates to rust code that should be compiled with
+//! your other rust code, so it needs to be called before compiling.
+//! Assuming you use [cargo](http://doc.crates.io/), it can be done like
+//! this:
+//!
+//! First, specify a build script and ructe as a build dependency in
+//! `Cargo.toml`:
+//!
+//! ```toml
+//! build = "src/build.rs"
+//!
+//! [build-dependencies]
+//! ructe = "^0.1"
+//! ```
+//!
+//! Then, in the build script, compile all templates found in the templates
+//! directory and put the output where cargo tells it to:
+//!
+//! ```no-run
+//! extern crate ructe;
+//!
+//! use ructe::compile_templates;
+//! use std::env;
+//! use std::path::PathBuf;
+//!
+//! fn main() {
+//!     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+//!     let in_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
+//!         .join("templates");
+//!     compile_templates(&in_dir, &out_dir).expect("compile templates");
+//! }
+//! ```
+//!
+//! And finally, include and use the generated code in your code.
+//! The file `templates.rs` will contain `mod templates { ... }`,
+//! so I just include it in my `main.rs`:
+//!
+//! ```no-compile
+//! include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+//! ```
+//!
+//! When calling a template, the arguments declared in the template will be
+//! prepended by a `Write` argument to write the output to.
+//! It can be a `Vec<u8>` as a buffer or for testing, or an actual output
+//! destination.
+//! The return value of a template is `std::io::Result<()>`, which should be
+//! `Ok(())` unless writing to the destination fails.
+//!
+//! ```
+//! #[test]
+//! fn test_hello() {
+//!     let mut buf = Vec::new();
+//!     templates::hello(&mut buf, "World").unwrap();
+//!     assert_eq!(buf, b"<h1>Hello World!</h1>\n");
+//! }
+//! ```
+
 #[macro_use]
 extern crate nom;
 
@@ -12,7 +83,8 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use template::template;
 
-
+/// Create a `templates` module in `outdir` containing rust code for
+/// all templates found in `indir`.
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
         try!(write!(f,
