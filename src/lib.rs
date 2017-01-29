@@ -69,6 +69,8 @@
 //! }
 //! ```
 
+extern crate base64;
+extern crate md5;
 #[macro_use]
 extern crate nom;
 
@@ -78,10 +80,90 @@ mod templateexpression;
 mod template;
 
 use nom::IResult::*;
+
+use std::collections::BTreeSet;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use template::template;
+
+/// Create a `statics` module inside `outdir`, containing static file data
+/// for all files in `indir`.
+///
+/// This must be called *before* `compile_templates`.
+pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
+    let outdir = outdir.join("templates");
+    try!(create_dir_all(&outdir));
+    File::create(outdir.join("statics.rs")).and_then(|mut f| {
+        try!(write!(f,
+                    "{}\n",
+                    include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
+                                         "/src/statics_utils.rs"))));
+        // Note: The provided getter uses binary search.
+        // The fact that statics is a BTreeSet guarantees proper ordering.
+        let mut statics = BTreeSet::new();
+        for entry in try!(read_dir(indir)) {
+            let entry = try!(entry);
+            if try!(entry.file_type()).is_file() {
+                let path = entry.path();
+                if let Some((name, ext)) = name_and_ext(&path) {
+                    println!("cargo:rerun-if-changed={}",
+                             path.to_string_lossy());
+                    let mut input = try!(File::open(&path));
+                    let mut buf = Vec::new();
+                    try!(input.read_to_end(&mut buf));
+
+                    try!(write_static_file(&mut f, &path, name, &buf, &ext));
+                    statics.insert(format!("{}_{}", name, ext));
+                }
+            }
+        }
+        try!(write!(f,
+                    "\npub static STATICS: &'static [&'static StaticFile] \
+                     = &[{}];\n",
+                    statics.iter()
+                        .map(|s| format!("&{}", s))
+                        .collect::<Vec<_>>()
+                        .join(", ")));
+        Ok(())
+    })
+}
+
+fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
+    if let (Some(name), Some(ext)) = (path.file_name(), path.extension()) {
+        if let (Some(name), Some(ext)) = (name.to_str(), ext.to_str()) {
+            return Some((&name[..name.len() - ext.len() - 1], ext));
+        }
+    }
+    None
+}
+
+fn write_static_file(f: &mut Write,
+                     path: &Path,
+                     name: &str,
+                     content: &[u8],
+                     suffix: &str)
+                     -> io::Result<()> {
+    write!(f,
+           "\n// From {path:?}\n\
+            #[allow(non_upper_case_globals)]\n\
+            pub static {name}_{suf}: StaticFile = \
+            StaticFile {{\n  \
+            content: &{content:?},\n  \
+            name: \"{name}-{hash}.{suf}\",\n\
+            }};\n",
+           path = path,
+           name = name,
+           content = content,
+           hash = checksum_slug(&content),
+           suf = suffix)
+}
+
+/// A short and url-safe checksum string from string data.
+fn checksum_slug(data: &[u8]) -> String {
+    base64::encode_mode(&md5::compute(data)[..6], base64::Base64Mode::UrlSafe)
+}
+
 
 /// Create a `templates` module in `outdir` containing rust code for
 /// all templates found in `indir`.
@@ -94,7 +176,13 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
 
         let outdir = outdir.join("templates");
         try!(create_dir_all(&outdir));
+
         try!(handle_entries(&mut f, indir, &outdir));
+
+        if outdir.join("statics.rs").exists() {
+            try!(write!(f, "pub mod statics;\n"));
+        }
+
         write!(f,
                "{}\n}}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
