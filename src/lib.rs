@@ -87,7 +87,7 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use template::template;
 
-pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
+pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
     let outdir = outdir.join("templates");
     try!(create_dir_all(&outdir));
     File::create(outdir.join("statics.rs")).and_then(|mut f| {
@@ -99,31 +99,17 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
         let mut statics = BTreeSet::new();
         for entry in try!(read_dir(indir)) {
             let entry = try!(entry);
-            let path = entry.path();
-            if let Some(filename) = entry.file_name().to_str() {
-                let suffix = ".css";
-                if filename.ends_with(suffix) {
+            if try!(entry.file_type()).is_file() {
+                let path = entry.path();
+                if let Some((name, ext)) = name_and_ext(&path) {
                     println!("cargo:rerun-if-changed={}",
                              path.to_string_lossy());
-                    let name = &filename[..filename.len() - suffix.len()];
                     let mut input = try!(File::open(&path));
                     let mut buf = Vec::new();
                     try!(input.read_to_end(&mut buf));
-                    // TODO Minifying the css would be nice
-                    try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.insert(format!("{}_css", name));
-                }
-                let suffix = ".js";
-                if filename.ends_with(suffix) {
-                    println!("cargo:rerun-if-changed={}",
-                             path.to_string_lossy());
-                    let name = &filename[..filename.len() - suffix.len()];
-                    let mut input = try!(File::open(&path));
-                    let mut buf = Vec::new();
-                    try!(input.read_to_end(&mut buf));
-                    // TODO Minifying the javascript would be nice
-                    try!(write_static_file(&mut f, &path, name, &buf, suffix));
-                    statics.insert(format!("{}_js", name));
+
+                    try!(write_static_file(&mut f, &path, name, &buf, &ext));
+                    statics.insert(format!("{}_{}", name, ext));
                 }
             }
         }
@@ -136,6 +122,15 @@ pub fn compile_static_css(indir: &Path, outdir: &Path) -> io::Result<()> {
                         .join(", ")));
         Ok(())
     })
+}
+
+fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
+    if let (Some(name), Some(ext)) = (path.file_name(), path.extension()) {
+        if let (Some(name), Some(ext)) = (name.to_str(), ext.to_str()) {
+            return Some((&name[..name.len() - ext.len() - 1], ext));
+        }
+    }
+    None
 }
 
 fn write_static_file(f: &mut Write,
@@ -156,7 +151,7 @@ fn write_static_file(f: &mut Write,
            name = name,
            content = content,
            hash = checksum_slug(&content),
-           suf = &suffix[1..])
+           suf = suffix)
 }
 
 /// A short and url-safe checksum string from string data.

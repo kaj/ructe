@@ -29,7 +29,6 @@ fn test_page_w_static() {
 
 #[test]
 fn test_static_css_data() {
-    // TODO The css content should be minified!
     use templates::statics::style_css;
     use std::str::from_utf8;
     assert_eq!(from_utf8(&style_css.content).unwrap(),
