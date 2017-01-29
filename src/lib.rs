@@ -99,7 +99,19 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
                     "pub struct StaticFile {{\n  \
                      pub content: &'static [u8],\n  \
                      pub name: &'static str,\n\
-                     }}\n"));
+                     }}\n\n\
+                     impl StaticFile {{\n  \
+                     pub fn get(name: &str) -> Option<&'static Self> {{\n    \
+                     if let Ok(pos) = STATICS.binary_search_by_key\
+                     (&name, |s| s.name) {{\n      \
+                     return Some(STATICS[pos]);\n    \
+                     }} else {{\n      \
+                     None\n    \
+                     }}\n  \
+                     }}\n\
+                     }}\n\n"));
+        // Note: The provided getter uses binary_search.
+        // The fact that statics is a BTreeSet guarantees proper ordering.
         let mut statics = BTreeSet::new();
         for entry in try!(read_dir(indir)) {
             let entry = try!(entry);

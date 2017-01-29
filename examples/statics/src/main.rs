@@ -36,6 +36,19 @@ fn test_static_css_data() {
 }
 
 #[test]
+fn test_get_static_by_name() {
+    use templates::statics::StaticFile;
+    assert_eq!(StaticFile::get("style-o2rFo1lI.css").map(|s| s.name),
+               Some("style-o2rFo1lI.css"))
+}
+
+#[test]
+fn test_get_static_unknown() {
+    use templates::statics::StaticFile;
+    assert_eq!(StaticFile::get("foo-bar.css").map(|s| s.name), None)
+}
+
+#[test]
 fn test_all_statics_known() {
     use templates::statics::STATICS;
     assert_eq!(STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
