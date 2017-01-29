@@ -1,6 +1,6 @@
 [package]
 name = "simple"
-version = "0.2.0"
+version = "0.2.2"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 
 build = "src/build.rs"
