@@ -87,6 +87,10 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use template::template;
 
+/// Create a `statics` module inside `outdir`, containing static file data
+/// for all files in `indir`.
+///
+/// This must be called *before* `compile_templates`.
 pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
     let outdir = outdir.join("templates");
     try!(create_dir_all(&outdir));
