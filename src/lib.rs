@@ -253,11 +253,28 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
     }
 }
 
-#[cfg(test)]
-mod template_utils_test {
+/// The module containing your generated template code will also
+/// contain everything from here.
+///
+/// The name `ructe::templates` should never be used.  Instead, you
+/// should use the module templates created when compiling your
+/// templates.
+pub mod templates {
     use std::fmt::Display;
     use std::io::{self, Write};
     include!("template_utils.rs");
+
+    /// Your `templates::statics` module will mirror this module.
+    ///
+    /// The name `ructe::templates::statics` should never be used.
+    /// Instead, you should use the module `templates::statics` created
+    /// when compiling your templates.
+    pub mod statics {
+        include!("statics_utils.rs");
+
+        /// An array of all known `StaticFile`s.
+        pub static STATICS: &'static [&'static StaticFile] = &[];
+    }
 
     #[test]
     fn encoded() {
