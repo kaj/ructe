@@ -4,6 +4,7 @@ pub struct StaticFile {
     pub name: &'static str,
 }
 
+#[allow(dead_code)]
 impl StaticFile {
     pub fn get(name: &str) -> Option<&'static Self> {
         if let Ok(pos) = STATICS.binary_search_by_key(&name, |s| s.name) {
