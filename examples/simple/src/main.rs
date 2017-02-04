@@ -39,6 +39,21 @@ fn test_hello_args_two() {
 }
 
 #[test]
+fn test_list() {
+    assert_eq!(r2s(|o| list(o, &["foo", "bar"])),
+               "<ul>\n  <li>foo</li>\n  <li>bar</li>\n  \n</ul>\n");
+}
+
+#[test]
+fn test_uselist() {
+    assert_eq!(r2s(|o| uselist(o)),
+               "<h1>Two items</h1>\n\
+                <ul>\n  <li>foo</li>\n  <li>bar</li>\n  \n</ul>\n\n\
+                <h2>No items</h2>\n\
+                <ul>\n  \n</ul>\n\n");
+}
+
+#[test]
 fn test_hello_utf8() {
     assert_eq!(r2s(|o| hello_utf8(o, "δ", "ε", "δ < ε", "δ &lt; ε")),
                "<p>δ &lt; ε</p>\n\
