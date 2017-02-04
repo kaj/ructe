@@ -7,7 +7,9 @@ named!(pub expression<&[u8], String>,
                         chain!(char!('"') ~
                                text: is_not!("\"") ~ char!('"'),
                                || format!("\"{}\"",
-                                          from_utf8(text).unwrap()))) ~
+                                          from_utf8(text).unwrap())) |
+                         chain!(tag!("[") ~ args: comma_expressions ~ tag!("]"),
+                                || format!("[{}]", args))) ~
               post: fold_many0!(
                   alt_complete!(
                       chain!(tag!(".") ~ post: expression,
@@ -43,31 +45,64 @@ mod test {
     use expression::expression;
     use nom;
     use nom::IResult::{Done, Error};
-    use std::str::from_utf8;
 
     #[test]
-    fn expressions() {
-        // Proper expressions, each followed by two non-expression characters.
-        for input in &[&b"foo  "[..],
-                       &b"foo<x"[..],
-                       &b"foo. "[..],
-                       &b"foo! "[..],
-                       &b"foo? "[..],
-                       &b"x15  "[..],
-                       &b"a_b_c  "[..],
-                       &b"foo. "[..],
-                       &b"foo.bar  "[..],
-                       &b"boo.bar.baz##"[..],
-                       &b"!foo.is_empty()  "[..],
-                       &b"foo(x, a.b.c(), d)  "[..],
-                       &b"foo(&\"x\").bar  "[..],
-                       &b"foo().bar(x).baz, "[..]] {
-            let i = input.len() - 2;
-            assert_eq!(expression(*input),
-                       Done(&input[i..],
-                            from_utf8(&input[..i]).unwrap().to_string()));
+    fn expression_1() {
+        check_expr("foo");
+    }
+    #[test]
+    fn expression_2() {
+        check_expr("x15");
+    }
+    #[test]
+    fn expression_3() {
+        check_expr("a_b_c");
+    }
+    #[test]
+    fn expression_4() {
+        check_expr("foo.bar");
+    }
+    #[test]
+    fn expression_5() {
+        check_expr("foo.bar.baz");
+    }
+    #[test]
+    fn expression_6() {
+        check_expr("!foo.is_empty()");
+    }
+    #[test]
+    fn expression_7() {
+        check_expr("foo(x, a.b.c(), d)");
+    }
+    #[test]
+    fn expression_8() {
+        check_expr("foo(&\"x\").bar");
+    }
+    #[test]
+    fn expression_9() {
+        check_expr("foo().bar(x).baz");
+    }
+    #[test]
+    fn expression_str() {
+        check_expr("\"foo\"");
+    }
+    #[test]
+    fn expression_slice() {
+        check_expr("&[foo, bar]");
+    }
+    #[test]
+    fn expression_slice_empty() {
+        check_expr("&[]");
+    }
+
+    fn check_expr(expr: &str) {
+        for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". "] {
+            let input = format!("{}{}", expr, post);
+            assert_eq!(expression(input.as_bytes()),
+                       Done(post.as_bytes(), expr.to_string()));
         }
     }
+
     #[test]
     fn non_expressions() {
         // non-expressions

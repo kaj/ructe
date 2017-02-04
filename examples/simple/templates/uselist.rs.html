@@ -1,0 +1,8 @@
+@use templates::list;
+
+@()
+
+<h1>Two items</h1>
+@:list(&["foo", "bar"])
+<h2>No items</h2>
+@:list(&[])
