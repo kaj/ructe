@@ -6,7 +6,9 @@ named!(pub expression<&[u8], String>,
            pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) >>
            name: alt!(rust_name |
                       do_parse!(char!('"') >>
-                                text: is_not!("\"") >> char!('"') >>
+                                text: escaped!(is_not!("\"\\"),
+                                               '\\', one_of!("\"\\")) >>
+                                char!('"') >>
                                 (format!("\"{}\"",
                                          from_utf8(text).unwrap()))) |
                       do_parse!(tag!("[") >> args: comma_expressions >>
@@ -91,6 +93,10 @@ mod test {
     #[test]
     fn expression_str() {
         check_expr("\"foo\"");
+    }
+    #[test]
+    fn expression_str_with_escaped_quotes() {
+        check_expr("\"Hello \\\"world\\\"\"");
     }
     #[test]
     fn expression_slice() {
