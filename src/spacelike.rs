@@ -1,16 +1,16 @@
 use nom::multispace;
 
 named!(pub spacelike<&[u8], ()>,
-       chain!(many0!(alt!(
+       map!(many0!(alt!(
            comment |
-           chain!(multispace, ||()))),
-              || ()));
+           map!(multispace, |_|()))),
+            |_| ()));
 
 named!(pub comment<&[u8], ()>,
        value!((), delimited!(tag!("@*"),
                              many0!(alt!(
-                                 chain!(is_not!("*"), ||()) |
-                                 chain!(tag!("*") ~ none_of!("@"), ||())
+                                 map!(is_not!("*"), |_|()) |
+                                 do_parse!(tag!("*") >> none_of!("@") >> ())
                                      )),
                              tag!("*@"))));
 

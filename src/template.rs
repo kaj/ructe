@@ -52,28 +52,24 @@ impl Template {
 }
 
 named!(pub template<&[u8], Template>,
-       chain!(
-           spacelike ~
-           preamble: many0!(chain!(tag!("@") ~
-                                   code: is_not!(";()") ~
-                                   tag!(";") ~
-                                   spacelike,
-                                   ||from_utf8(code).unwrap().to_string()
-                                   )) ~
-           tag!("@(") ~
-           args: separated_list!(tag!(", "), formal_argument) ~
-           tag!(")") ~
-           spacelike ~
-           body: many0!(template_expression) ~
-           eof!(),
-           || { Template { preamble: preamble, args: args, body: body } }
-           )
-);
+       do_parse!(
+           spacelike >>
+           preamble: many0!(do_parse!(tag!("@") >>
+                                      code: is_not!(";()") >>
+                                      tag!(";") >>
+                                      spacelike >>
+                                      (from_utf8(code).unwrap().to_string())
+                                      )) >>
+           tag!("@(") >>
+           args: separated_list!(tag!(", "), formal_argument) >>
+           tag!(")") >>
+           spacelike >>
+           body: many0!(template_expression) >>
+           eof!() >>
+           (Template { preamble: preamble, args: args, body: body })
+           ));
 
 // TODO Actually parse arguments!
 named!(formal_argument<&[u8], String>,
-       chain!(
-           raw: is_not!(",)"),
-           || from_utf8(raw).unwrap().to_string()
-               )
-       );
+       map!(is_not!(",)"),
+            |raw| from_utf8(raw).unwrap().to_string()));

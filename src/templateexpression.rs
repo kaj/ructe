@@ -87,74 +87,67 @@ impl TemplateExpression {
 
 named!(pub template_expression<&[u8], TemplateExpression>,
        alt!(
-           chain!(
-               comment,
-               || TemplateExpression::Comment
-               ) |
-           chain!(
-               tag!("@:") ~
-               name: rust_name ~
+           map!(comment, |()| TemplateExpression::Comment) |
+           do_parse!(
+               tag!("@:") >>
+               name: rust_name >>
                args: delimited!(tag!("("),
                                 separated_list!(tag!(", "), template_argument),
-                                tag!(")")),
-               || TemplateExpression::CallTemplate {
+                                tag!(")")) >>
+               (TemplateExpression::CallTemplate {
                    name: name,
                    args: args,
-               }) |
-           chain!(
-               tag!("@for") ~ spacelike ~
-                   name: rust_name ~
-                   spacelike ~ tag!("in") ~ spacelike ~
-                   expr: expression ~ spacelike ~ tag!("{") ~ spacelike ~
-                   body: many0!(template_expression) ~
-                   spacelike ~ tag!("}"),
-               || TemplateExpression::ForLoop {
+               })) |
+           do_parse!(
+               tag!("@for") >> spacelike >>
+               name: rust_name >>
+               spacelike >> tag!("in") >> spacelike >>
+               expr: expression >> spacelike >> tag!("{") >> spacelike >>
+               body: many0!(template_expression) >>
+               spacelike >> tag!("}") >>
+               (TemplateExpression::ForLoop {
                    name: name,
                    expr: expr,
                    body: body,
-               }) |
-           chain!(
-               tag!("@if") ~ spacelike ~
-                   expr: cond_expression ~ spacelike ~ tag!("{") ~ spacelike ~
-                   body: many0!(template_expression) ~
-                   spacelike ~ tag!("}") ~
-                   else_body: opt!(
-                       chain!(spacelike ~ tag!("else") ~ spacelike ~ tag!("{") ~
-                              else_body: many0!(template_expression) ~
-                              tag!("}"),
-                              || else_body)),
-               || TemplateExpression::IfBlock {
+               })) |
+           do_parse!(
+               tag!("@if") >> spacelike >>
+               expr: cond_expression >> spacelike >> tag!("{") >> spacelike >>
+               body: many0!(template_expression) >> spacelike >>
+               tag!("}") >>
+               else_body: opt!(do_parse!(
+                   spacelike >> tag!("else") >> spacelike >>
+                   tag!("{") >>
+                   else_body: many0!(template_expression) >>
+                   tag!("}") >>
+                   (else_body))) >>
+               (TemplateExpression::IfBlock {
                    expr: expr,
                    body: body,
                    else_body: else_body,
-               }) |
-           chain!(tag!("@{"),
-                  || TemplateExpression::Text { text: "{{".to_string() }) |
-           chain!(tag!("@}"),
-                  || TemplateExpression::Text { text: "}}".to_string() }) |
-           chain!(
-               text: is_not!("@{}"),
-               || TemplateExpression::Text {
-                   text: from_utf8(text).unwrap().to_string()
-               }) |
-           chain!(
-               tag!("@") ~
-               expr: expression,
-               || TemplateExpression::Expression{ expr: expr }
-           )
+               })) |
+           map!(tag!("@{"),
+                |_| TemplateExpression::Text { text: "{{".to_string() }) |
+           map!(tag!("@}"),
+                |_| TemplateExpression::Text { text: "}}".to_string() }) |
+           map!(is_not!("@{}"),
+                |text| TemplateExpression::Text {
+                    text: from_utf8(text).unwrap().to_string()
+                }) |
+           map!(preceded!(tag!("@"), expression),
+                |expr| TemplateExpression::Expression{ expr: expr })
        )
 );
 
 named!(template_argument<&[u8], TemplateArgument>,
-       alt!(chain!(tag!("{") ~ body: many0!(template_expression) ~ tag!("}"),
-                   || TemplateArgument::Body(body)) |
-            chain!(expr: expression,
-                   || TemplateArgument::Rust(expr))));
+       alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
+                 |body| TemplateArgument::Body(body)) |
+            map!(expression, |expr| TemplateArgument::Rust(expr))));
 
 named!(cond_expression<&[u8], String>,
-       alt!(chain!(tag!("let") ~ spacelike ~
-                   lhs: expression ~
-                   spacelike ~ char!('=') ~ spacelike ~
-                   rhs: expression,
-                   || format!("let {} = {}", lhs, rhs)) |
+       alt!(do_parse!(tag!("let") >> spacelike >>
+                      lhs: expression >>
+                      spacelike >> char!('=') >> spacelike >>
+                      rhs: expression >>
+                      (format!("let {} = {}", lhs, rhs))) |
             expression));

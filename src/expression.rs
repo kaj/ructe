@@ -2,43 +2,49 @@ use nom::alpha;
 use std::str::from_utf8;
 
 named!(pub expression<&[u8], String>,
-       chain!(pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) ~
-              name: alt!(rust_name |
-                        chain!(char!('"') ~
-                               text: is_not!("\"") ~ char!('"'),
-                               || format!("\"{}\"",
-                                          from_utf8(text).unwrap())) |
-                         chain!(tag!("[") ~ args: comma_expressions ~ tag!("]"),
-                                || format!("[{}]", args))) ~
-              post: fold_many0!(
-                  alt_complete!(
-                      chain!(tag!(".") ~ post: expression,
-                             || format!(".{}", post)) |
-                      chain!(tag!("(") ~ args: comma_expressions ~ tag!(")"),
-                             || format!("({})", args)) |
-                      chain!(tag!("[") ~ args: comma_expressions ~ tag!("]"),
-                             || format!("[{}]", args)) |
-                      chain!(tag!("!(") ~ args: comma_expressions ~ tag!(")"),
-                             || format!("!({})", args)) |
-                      chain!(tag!("![") ~ args: comma_expressions ~ tag!("]"),
-                             || format!("![{}]", args))),
-                  String::new(),
-                  |mut acc: String, item: String| {
-                      acc.push_str(&item);
-                      acc
-                  }),
-              || format!("{}{}{}", from_utf8(pre).unwrap(), name, post)));
+       do_parse!(
+           pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) >>
+           name: alt!(rust_name |
+                      do_parse!(char!('"') >>
+                                text: is_not!("\"") >> char!('"') >>
+                                (format!("\"{}\"",
+                                         from_utf8(text).unwrap()))) |
+                      do_parse!(tag!("[") >> args: comma_expressions >>
+                                tag!("]") >>
+                                (format!("[{}]", args)))) >>
+           post: fold_many0!(
+               alt_complete!(
+                   do_parse!(tag!(".") >> post: expression >>
+                             (format!(".{}", post))) |
+                   do_parse!(tag!("(") >> args: comma_expressions >>
+                             tag!(")") >>
+                             (format!("({})", args))) |
+                   do_parse!(tag!("[") >> args: comma_expressions >>
+                             tag!("]") >>
+                             (format!("[{}]", args))) |
+                   do_parse!(tag!("!(") >> args: comma_expressions >>
+                             tag!(")") >>
+                             (format!("!({})", args))) |
+                   do_parse!(tag!("![") >> args: comma_expressions >>
+                             tag!("]") >>
+                             (format!("![{}]", args)))),
+               String::new(),
+               |mut acc: String, item: String| {
+                   acc.push_str(&item);
+                   acc
+               }) >>
+           (format!("{}{}{}", from_utf8(pre).unwrap(), name, post))));
 
 named!(comma_expressions<&[u8], String>,
-       chain!(list: separated_list!(tag!(", "), expression),
-              || list.join(", ")));
+       map!(separated_list!(tag!(", "), expression),
+            |list: Vec<_>| list.join(", ")));
 
 named!(pub rust_name<&[u8], String>,
-       chain!(first: alpha ~
-              rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")),
-              || format!("{}{}",
-                         from_utf8(first).unwrap(),
-                         from_utf8(rest.unwrap_or(b"")).unwrap())));
+       do_parse!(first: alpha >>
+                 rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")) >>
+                 (format!("{}{}",
+                          from_utf8(first).unwrap(),
+                          from_utf8(rest.unwrap_or(b"")).unwrap()))));
 
 #[cfg(test)]
 mod test {
