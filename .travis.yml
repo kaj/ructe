@@ -4,6 +4,7 @@ before_script:
 - cargo update || true
 - cargo install rustfmt || true
 rust:
+  - 1.14
   - stable
   - beta
   - nightly
