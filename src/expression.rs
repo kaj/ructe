@@ -108,7 +108,7 @@ mod test {
     }
 
     fn check_expr(expr: &str) {
-        for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". "] {
+        for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"] {
             let input = format!("{}{}", expr, post);
             assert_eq!(expression(input.as_bytes()),
                        Done(post.as_bytes(), expr.to_string()));
