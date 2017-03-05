@@ -6,6 +6,7 @@ as well as plain old jsp.
 
 [![Build Status](https://travis-ci.org/kaj/ructe.svg?branch=master)](https://travis-ci.org/kaj/ructe)
 [![Crate](https://meritbadge.herokuapp.com/ructe)](https://crates.io/crates/ructe)
+[![docs](https://docs.rs/ructe/badge.svg)](https://docs.rs/ructe)
 
 ## Design criteria
 
