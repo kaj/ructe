@@ -236,9 +236,9 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
         }
         Error(err) => {
             println!("cargo:warning=\
-                      Template parse error in {:?}: {}",
-                     path,
-                     err);
+                      Template parse error in {:?}:",
+                     path);
+            report_error(err);
             Ok(false)
         }
         Incomplete(needed) => {
@@ -248,6 +248,35 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
                      path,
                      needed);
             Ok(false)
+        }
+    }
+}
+
+use nom::verbose_errors::Err;
+use std::fmt::Debug;
+
+fn report_error<E>(err: Err<&[u8], E>)
+    where E: Debug
+{
+
+    match err {
+        Err::Code(kind) => {
+            println!("cargo:warning={:?}", kind);
+        }
+        Err::Node(kind, next) => {
+            println!("cargo:warning={:?}", kind);
+            report_error(*next);
+        }
+        Err::Position(kind, pos) => {
+            println!("cargo:warning=expected {:?}, got {:?}",
+                     kind,
+                     String::from_utf8_lossy(pos));
+        }
+        Err::NodePosition(kind, pos, next) => {
+            println!("cargo:warning=expected {:?}, got {:?}",
+                     kind,
+                     String::from_utf8_lossy(pos));
+            report_error(*next);
         }
     }
 }

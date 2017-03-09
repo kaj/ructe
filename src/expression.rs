@@ -51,8 +51,9 @@ named!(pub rust_name<&[u8], String>,
 #[cfg(test)]
 mod test {
     use expression::expression;
-    use nom;
+    use nom::ErrorKind;
     use nom::IResult::{Done, Error};
+    use nom::verbose_errors::Err;
 
     #[test]
     fn expression_1() {
@@ -120,7 +121,8 @@ mod test {
         // non-expressions
         // TODO See if I can get nom to produce more helpfull errors.
         for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
-            assert_eq!(expression(*input), Error(nom::ErrorKind::Alt));
+            assert_eq!(expression(*input),
+                       Error(Err::Position(ErrorKind::Alt, *input)))
         }
     }
 }

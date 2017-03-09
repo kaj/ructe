@@ -16,8 +16,9 @@ named!(pub comment<&[u8], ()>,
 
 #[cfg(test)]
 mod test {
-    use nom;
+    use nom::ErrorKind;
     use nom::IResult::{Done, Error};
+    use nom::verbose_errors::Err;
     use spacelike::{comment, spacelike};
 
     #[test]
@@ -26,7 +27,9 @@ mod test {
     }
     #[test]
     fn comment2() {
-        assert_eq!(comment(b" @* comment *@"), Error(nom::ErrorKind::Tag));
+        let space_before = b" @* comment *@";
+        assert_eq!(comment(space_before),
+                   Error(Err::Position(ErrorKind::Tag, &space_before[..])))
     }
     #[test]
     fn comment3() {
