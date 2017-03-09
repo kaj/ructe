@@ -231,8 +231,7 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
     match template(&buf) {
         Done(_, t) => {
             let fname = outdir.join(format!("template_{}.rs", name));
-            try!(File::create(fname)
-                .and_then(|mut f| t.write_rust(&mut f, name)));
+            File::create(fname).and_then(|mut f| t.write_rust(&mut f, name))?;
             Ok(true)
         }
         Error(err) => {

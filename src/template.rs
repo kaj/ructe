@@ -15,39 +15,32 @@ impl Template {
         write!(out,
                "use std::io::{{self, Write}};\n\
                 #[allow(unused)]\n\
-                use ::templates::{{Html,ToHtml}};\n\
-                {preamble}\n\
+                use ::templates::{{Html,ToHtml}};\n")?;
+        for l in &self.preamble {
+            write!(out, "{};\n", l)?;
+        }
+        let type_args = if self.args.contains(&"content: Content".to_owned()) {
+            ("<Content>",
+             "\nwhere Content: FnOnce(&mut Write) \
+              -> io::Result<()>")
+        } else {
+            ("", "")
+        };
+        write!(out,
+               "\n\
                 pub fn {name}{type_args}(out: &mut Write{args})\n\
                 -> io::Result<()> {type_spec}{{\n\
                 {body}\
                 Ok(())\n\
                 }}\n",
-               preamble = self.preamble
-                   .iter()
-                   .map(|l| format!("{};\n", l))
-                   .collect::<String>(),
                name = name,
-               type_args = self.args
-                   .iter()
-                   .filter(|a| a.as_str() == "content: Content")
-                   .map(|_a| format!("<Content>"))
-                   .collect::<String>(),
+               type_args = type_args.0,
                args = self.args
-                   .iter()
-                   .map(|a| format!(", {}", a))
-                   .collect::<String>(),
-               type_spec = self.args
-                   .iter()
-                   .filter(|a| a.as_str() == "content: Content")
-                   .map(|_a| {
-                       format!("\nwhere Content: FnOnce(&mut Write) \
-                                -> io::Result<()>")
-                   })
-                   .collect::<String>(),
-               body = self.body
-                   .iter()
-                   .map(|b| b.code())
-                   .collect::<String>())
+            .iter()
+            .map(|a| format!(", {}", a))
+            .collect::<String>(),
+               type_spec = type_args.1,
+               body = self.body.iter().map(|b| b.code()).collect::<String>())
     }
 }
 

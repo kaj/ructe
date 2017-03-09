@@ -67,11 +67,11 @@ impl TemplateExpression {
                         body.iter().map(|b| b.code()).collect::<String>(),
                         else_body.iter()
                             .map(|ref b| {
-                                format!(" else {{\n{}}}",
-                                        b.iter()
-                                            .map(|b| b.code())
-                                            .collect::<String>())
-                            })
+                                     format!(" else {{\n{}}}",
+                                             b.iter()
+                                                 .map(|b| b.code())
+                                                 .collect::<String>())
+                                 })
                             .collect::<String>())
             }
             TemplateExpression::CallTemplate { ref name, ref args } => {
