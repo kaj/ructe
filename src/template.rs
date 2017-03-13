@@ -1,3 +1,4 @@
+use nom::ErrorKind;
 use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
@@ -57,10 +58,14 @@ named!(pub template<&[u8], Template>,
            args: separated_list!(tag!(", "), formal_argument) >>
            tag!(")") >>
            spacelike >>
-           body: many0!(template_expression) >>
-           eof!() >>
-           (Template { preamble: preamble, args: args, body: body })
+           body: add_return_error!(
+               ErrorKind::Custom(1),
+               many_till!(template_expression, end)) >>
+           (Template { preamble: preamble, args: args, body: body.0 })
            ));
+
+named!(end<&[u8], ()>,
+       map!(eof!(), |_| ()));
 
 // TODO Actually parse arguments!
 named!(formal_argument<&[u8], String>,

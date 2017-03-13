@@ -84,60 +84,74 @@ impl TemplateExpression {
         }
     }
 }
+use nom::ErrorKind;
 
 named!(pub template_expression<&[u8], TemplateExpression>,
-       alt!(
-           map!(comment, |()| TemplateExpression::Comment) |
-           do_parse!(
-               tag!("@:") >>
-               name: rust_name >>
-               args: delimited!(tag!("("),
-                                separated_list!(tag!(", "), template_argument),
-                                tag!(")")) >>
-               (TemplateExpression::CallTemplate {
-                   name: name,
-                   args: args,
-               })) |
-           do_parse!(
-               tag!("@for") >> spacelike >>
-               name: rust_name >>
-               spacelike >> tag!("in") >> spacelike >>
-               expr: expression >> spacelike >> tag!("{") >> spacelike >>
-               body: many0!(template_expression) >>
-               spacelike >> tag!("}") >>
-               (TemplateExpression::ForLoop {
-                   name: name,
-                   expr: expr,
-                   body: body,
-               })) |
-           do_parse!(
-               tag!("@if") >> spacelike >>
-               expr: cond_expression >> spacelike >> tag!("{") >> spacelike >>
-               body: many0!(template_expression) >> spacelike >>
-               tag!("}") >>
-               else_body: opt!(do_parse!(
-                   spacelike >> tag!("else") >> spacelike >>
-                   tag!("{") >>
-                   else_body: many0!(template_expression) >>
+       add_return_error!(
+           ErrorKind::Custom(3),
+           switch!(
+               opt!(preceded!(tag!("@"),
+                              alt!(tag!(":") | tag!("{") | tag!("}") |
+                                   terminated!(
+                                       alt!(tag!("if") |
+                                            tag!("for")),
+                                       tag!(" "))))),
+               Some(b":") => do_parse!(
+                   name: rust_name >>
+                   args: delimited!(tag!("("),
+                                    separated_list!(tag!(", "),
+                                                    template_argument),
+                                    tag!(")")) >>
+                   (TemplateExpression::CallTemplate {
+                       name: name,
+                       args: args,
+                   })) |
+               Some(b"{") => value!(TemplateExpression::Text {
+                   text: "{{".to_string()
+               }) |
+               Some(b"}") => value!(TemplateExpression::Text {
+                   text: "}}".to_string()
+               }) |
+               Some(b"if") => do_parse!(
+                   spacelike >>
+                   expr: cond_expression >> spacelike >>
+                   tag!("{") >> spacelike >>
+                   body: many0!(template_expression) >> spacelike >>
                    tag!("}") >>
-                   (else_body))) >>
-               (TemplateExpression::IfBlock {
-                   expr: expr,
-                   body: body,
-                   else_body: else_body,
-               })) |
-           map!(tag!("@{"),
-                |_| TemplateExpression::Text { text: "{{".to_string() }) |
-           map!(tag!("@}"),
-                |_| TemplateExpression::Text { text: "}}".to_string() }) |
-           map!(is_not!("@{}"),
-                |text| TemplateExpression::Text {
-                    text: from_utf8(text).unwrap().to_string()
-                }) |
-           map!(preceded!(tag!("@"), expression),
-                |expr| TemplateExpression::Expression{ expr: expr })
-       )
-);
+                   else_body: opt!(do_parse!(
+                       spacelike >> tag!("else") >> spacelike >>
+                       tag!("{") >>
+                       else_body: many0!(template_expression) >>
+                       tag!("}") >>
+                       (else_body))) >>
+                   (TemplateExpression::IfBlock {
+                       expr: expr,
+                       body: body,
+                       else_body: else_body,
+                   })) |
+               Some(b"for") => do_parse!(
+                   spacelike >>
+                   name: rust_name >>
+                   spacelike >> tag!("in") >> spacelike >>
+                   expr: expression >> spacelike >>
+                   tag!("{") >> spacelike >>
+                   body: many0!(template_expression) >> spacelike >>
+                   tag!("}") >>
+                   (TemplateExpression::ForLoop {
+                       name: name,
+                       expr: expr,
+                       body: body,
+                   })) |
+               None => alt!(
+                   map!(comment, |()| TemplateExpression::Comment) |
+                   map!(is_not!("@{}"),
+                        |text| TemplateExpression::Text {
+                            text: from_utf8(text).unwrap().to_string()
+                        }) |
+                   map!(preceded!(tag!("@"), expression),
+                        |expr| TemplateExpression::Expression{ expr: expr })
+                       )))
+       );
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
@@ -145,9 +159,33 @@ named!(template_argument<&[u8], TemplateArgument>,
             map!(expression, |expr| TemplateArgument::Rust(expr))));
 
 named!(cond_expression<&[u8], String>,
-       alt!(do_parse!(tag!("let") >> spacelike >>
-                      lhs: expression >>
-                      spacelike >> char!('=') >> spacelike >>
-                      rhs: expression >>
-                      (format!("let {} = {}", lhs, rhs))) |
-            expression));
+       add_return_error!(
+           ErrorKind::Custom(7),
+           alt!(do_parse!(tag!("let") >> spacelike >>
+                          lhs: expression >>
+                          spacelike >> char!('=') >> spacelike >>
+                          rhs: expression >>
+                          (format!("let {} = {}", lhs, rhs))) |
+                expression)));
+
+#[cfg(test)]
+mod test {
+    use super::template_expression;
+    use nom::ErrorKind;
+    use nom::IResult::Error;
+    use nom::verbose_errors::Err;
+
+    #[test]
+    fn if_missing_conditional() {
+        let t = b"@if { oops }";
+        assert_eq!(template_expression(t),
+                   Error(Err::NodePosition(
+                       ErrorKind::Custom(3), &t[..],
+                       Box::new(Err::NodePosition(
+                           ErrorKind::Switch, &t[..],
+                           Box::new(Err::NodePosition(
+                               ErrorKind::Custom(7), &t[4..],
+                               Box::new(Err::Position(
+                                   ErrorKind::Alt, &t[4..])))))))))
+    }
+}
