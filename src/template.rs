@@ -60,12 +60,12 @@ named!(pub template<&[u8], Template>,
            spacelike >>
            body: add_return_error!(
                ErrorKind::Custom(1),
-               many_till!(template_expression, end)) >>
+               many_till!(template_expression, end_of_file)) >>
            (Template { preamble: preamble, args: args, body: body.0 })
            ));
 
-named!(end<&[u8], ()>,
-       map!(eof!(), |_| ()));
+named!(end_of_file<&[u8], ()>,
+       value!((), eof!()));
 
 // TODO Actually parse arguments!
 named!(formal_argument<&[u8], String>,
