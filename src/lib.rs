@@ -86,6 +86,7 @@ use std::collections::BTreeSet;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
+use std::str::from_utf8;
 use template::template;
 
 /// Create a `statics` module inside `outdir`, containing static file data
@@ -240,13 +241,39 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
                       Template parse error in {:?}:",
                      path);
             if let Some(errors) = prepare_errors(&buf, result) {
-                for &(ref kind, ref a, ref b) in &errors {
-                    println!("cargo:warning={:?} at {}, {}", kind, a, b);
+                for &(ref kind, ref from, ref _to) in &errors {
+                    show_error(&buf, *from, &format!("{:?}", kind));
                 }
             }
             Ok(false)
         }
     }
+}
+
+fn show_error(buf: &[u8], pos: usize, msg: &str) {
+    let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
+    let _ = line_start.next();
+    let line_start =
+        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
+    let line = buf[line_start..]
+        .splitn(2, |c| *c == b'\n')
+        .next()
+        .and_then(|s| from_utf8(s).ok())
+        .unwrap_or("(Failed to display line)");
+    let line_no = what_line(&buf, line_start);
+    let pos_in_line =
+        from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
+    println!("cargo:warning={:>4}:{}\n\
+              cargo:warning=     {:>pos$} {}",
+             line_no,
+             line,
+             "^",
+             msg,
+             pos = pos_in_line);
+}
+
+fn what_line(buf: &[u8], pos: usize) -> usize {
+    1 + buf[0..pos].iter().filter(|c| **c == b'\n').count()
 }
 
 /// The module containing your generated template code will also
