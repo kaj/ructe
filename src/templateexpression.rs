@@ -112,36 +112,34 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                Some(b"}") => value!(TemplateExpression::Text {
                    text: "}}".to_string()
                }) |
-               Some(b"if") => do_parse!(
+               Some(b"if") => add_return_error!(
+                   ErrorKind::Custom(4),
+                   do_parse!(
                    spacelike >>
                    expr: cond_expression >> spacelike >>
-                   tag!("{") >> spacelike >>
-                   body: many0!(template_expression) >> spacelike >>
-                   tag!("}") >>
+                   body: template_block >>
                    else_body: opt!(do_parse!(
                        spacelike >> tag!("else") >> spacelike >>
-                       tag!("{") >>
-                       else_body: many0!(template_expression) >>
-                       tag!("}") >>
+                       else_body: template_block >>
                        (else_body))) >>
                    (TemplateExpression::IfBlock {
                        expr: expr,
                        body: body,
                        else_body: else_body,
-                   })) |
-               Some(b"for") => do_parse!(
+                   }))) |
+               Some(b"for") => add_return_error!(
+                   ErrorKind::Custom(8),
+                   do_parse!(
                    spacelike >>
                    name: rust_name >>
                    spacelike >> tag!("in") >> spacelike >>
                    expr: expression >> spacelike >>
-                   tag!("{") >> spacelike >>
-                   body: many0!(template_expression) >> spacelike >>
-                   tag!("}") >>
+                   body: template_block >> spacelike >>
                    (TemplateExpression::ForLoop {
                        name: name,
                        expr: expr,
                        body: body,
-                   })) |
+                   }))) |
                None => alt!(
                    map!(comment, |()| TemplateExpression::Comment) |
                    map!(is_not!("@{}"),
@@ -152,6 +150,20 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                         |expr| TemplateExpression::Expression{ expr: expr })
                        )))
        );
+
+named!(template_block<&[u8], Vec<TemplateExpression>>,
+       add_return_error!(
+           ErrorKind::Custom(9),
+           do_parse!(
+               tag!("{") >>
+               spacelike >>
+               body: return_error!(
+                   ErrorKind::Custom(11),
+                   many_till!(template_expression, block_end)) >>
+               (body.0))));
+
+named!(block_end<&[u8], ()>,
+       value!((), tag!("}")));
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
