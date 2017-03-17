@@ -60,7 +60,7 @@ named!(pub template<&[u8], Template>,
            spacelike >>
            body: add_return_error!(
                ErrorKind::Custom(1),
-               many_till!(template_expression, end_of_file)) >>
+               my_many_till!(template_expression, end_of_file)) >>
            (Template { preamble: preamble, args: args, body: body.0 })
            ));
 

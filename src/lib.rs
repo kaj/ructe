@@ -76,6 +76,7 @@ extern crate nom;
 
 mod spacelike;
 mod expression;
+#[macro_use]
 mod templateexpression;
 mod template;
 
