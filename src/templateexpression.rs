@@ -9,7 +9,8 @@ use std::str::from_utf8;
 /// This should be removed when a fix for that is released from nom.
 #[macro_export]
 macro_rules! my_many_till(
-  ($i:expr, $submac1:ident!( $($args1:tt)* ), $submac2:ident!( $($args2:tt)* )) => (
+  ($i:expr, $submac1:ident!( $($args1:tt)* ), $submac2:ident!( $($args2:tt)* ))
+        => (
     {
       use nom::InputLength;
       use nom::ErrorKind;
@@ -29,7 +30,9 @@ macro_rules! my_many_till(
           _                           => {
             match $submac1!(input, $($args1)*) {
               IResult::Error(err)                            => {
-                ret = IResult::Error(error_node_position!(ErrorKind::ManyTill,input, err));
+                ret = IResult::Error(error_node_position!(ErrorKind::ManyTill,
+                                                          input,
+                                                          err));
                 break;
               },
               IResult::Incomplete(Needed::Unknown) => {
@@ -44,7 +47,8 @@ macro_rules! my_many_till(
               IResult::Done(i, o)                          => {
                 // loop trip must always consume (otherwise infinite loops)
                 if i == input {
-                  ret = IResult::Error(error_position!(ErrorKind::ManyTill,input));
+                  ret = IResult::Error(error_position!(ErrorKind::ManyTill,
+                                                       input));
                   break;
                 }
 
