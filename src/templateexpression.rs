@@ -261,8 +261,10 @@ mod test {
                        Box::new(Err::NodePosition(
                            ErrorKind::Switch, &t[..],
                            Box::new(Err::NodePosition(
-                               ErrorKind::Custom(7), &t[4..],
-                               Box::new(Err::Position(
-                                   ErrorKind::Alt, &t[4..])))))))))
+                               ErrorKind::Custom(4), &t[4..],
+                               Box::new(Err::NodePosition(
+                                   ErrorKind::Custom(7), &t[4..],
+                                   Box::new(Err::Position(
+                                       ErrorKind::Alt, &t[4..])))))))))))
     }
 }
