@@ -1,4 +1,3 @@
-use nom::ErrorKind;
 use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
@@ -58,9 +57,7 @@ named!(pub template<&[u8], Template>,
            args: separated_list!(tag!(", "), formal_argument) >>
            tag!(")") >>
            spacelike >>
-           body: add_return_error!(
-               ErrorKind::Custom(1),
-               my_many_till!(template_expression, end_of_file)) >>
+           body: my_many_till!(template_expression, end_of_file) >>
            (Template { preamble: preamble, args: args, body: body.0 })
            ));
 

@@ -73,16 +73,20 @@ extern crate base64;
 extern crate md5;
 #[macro_use]
 extern crate nom;
+#[macro_use]
+extern crate lazy_static;
 
 mod spacelike;
 mod expression;
 #[macro_use]
+mod errors;
+#[macro_use]
 mod templateexpression;
 mod template;
 
+use errors::get_error;
+use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
-use nom::prepare_errors;
-
 use std::collections::BTreeSet;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
@@ -243,11 +247,23 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
                      path);
             if let Some(errors) = prepare_errors(&buf, result) {
                 for &(ref kind, ref from, ref _to) in &errors {
-                    show_error(&buf, *from, &format!("{:?}", kind));
+                    show_error(&buf, *from, &get_message(kind));
                 }
             }
             Ok(false)
         }
+    }
+}
+
+fn get_message(err: &ErrorKind) -> String {
+    match err {
+        &ErrorKind::Custom(n) => {
+            match get_error(n) {
+                Some(msg) => msg,
+                None => format!("Unknown error #{}", n),
+            }
+        }
+        err => format!("{:?}", err),
     }
 }
 

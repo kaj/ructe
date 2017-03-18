@@ -149,11 +149,10 @@ impl TemplateExpression {
         }
     }
 }
-use nom::ErrorKind;
 
 named!(pub template_expression<&[u8], TemplateExpression>,
        add_return_error!(
-           ErrorKind::Custom(3),
+           err_str!("In expression starting here"),
            switch!(
                opt!(preceded!(tag!("@"),
                               alt!(tag!(":") | tag!("{") | tag!("}") |
@@ -177,8 +176,8 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                Some(b"}") => value!(TemplateExpression::Text {
                    text: "}}".to_string()
                }) |
-               Some(b"if") => add_return_error!(
-                   ErrorKind::Custom(4),
+               Some(b"if") => return_error!(
+                   err_str!("Error in conditional expression"),
                    do_parse!(
                    spacelike >>
                    expr: cond_expression >> spacelike >>
@@ -192,19 +191,23 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                        body: body,
                        else_body: else_body,
                    }))) |
-               Some(b"for") => add_return_error!(
-                   ErrorKind::Custom(8),
-                   do_parse!(
+               Some(b"for") => do_parse!(
                    spacelike >>
-                   name: rust_name >>
-                   spacelike >> tag!("in") >> spacelike >>
-                   expr: expression >> spacelike >>
-                   body: template_block >> spacelike >>
+                   name: return_error!(err_str!("Expected loop variable name"),
+                                       rust_name) >>
+                   spacelike >>
+                   return_error!(err_str!("Expected \"in\""), tag!("in")) >>
+                   spacelike >>
+                   expr: return_error!(err_str!("Expected iterable expression"),
+                                       expression) >>
+                   spacelike >>
+                   body: return_error!(err_str!("Error in loop block"),
+                                       template_block) >> spacelike >>
                    (TemplateExpression::ForLoop {
                        name: name,
                        expr: expr,
                        body: body,
-                   }))) |
+                   })) |
                None => alt!(
                    map!(comment, |()| TemplateExpression::Comment) |
                    map!(is_not!("@{}"),
@@ -217,15 +220,10 @@ named!(pub template_expression<&[u8], TemplateExpression>,
        );
 
 named!(template_block<&[u8], Vec<TemplateExpression>>,
-       add_return_error!(
-           ErrorKind::Custom(9),
-           do_parse!(
-               tag!("{") >>
-               spacelike >>
-               body: return_error!(
-                   ErrorKind::Custom(11),
-                   my_many_till!(template_expression, block_end)) >>
-               (body.0))));
+       do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
+                 spacelike >>
+                 body: my_many_till!(template_expression, block_end) >>
+                 (body.0)));
 
 named!(block_end<&[u8], ()>,
        value!((), tag!("}")));
@@ -236,18 +234,23 @@ named!(template_argument<&[u8], TemplateArgument>,
             map!(expression, |expr| TemplateArgument::Rust(expr))));
 
 named!(cond_expression<&[u8], String>,
-       add_return_error!(
-           ErrorKind::Custom(7),
-           alt!(do_parse!(tag!("let") >> spacelike >>
-                          lhs: expression >>
-                          spacelike >> char!('=') >> spacelike >>
-                          rhs: expression >>
-                          (format!("let {} = {}", lhs, rhs))) |
-                expression)));
+       alt!(do_parse!(tag!("let") >> spacelike >>
+                      lhs: return_error!(
+                          err_str!("Expected LHS expression in let binding"),
+                          expression) >>
+                      spacelike >>
+                      return_error!(err_str!("Expected \"=\""), char!('=')) >>
+                      spacelike >>
+                      rhs: return_error!(
+                          err_str!("Expected RHS expression in let binding"),
+                          expression) >>
+                      (format!("let {} = {}", lhs, rhs))) |
+            expression));
 
+/* TODO Implement a sane way to test for error messages!
 #[cfg(test)]
 mod test {
-    use super::template_expression;
+    use super::*;
     use nom::ErrorKind;
     use nom::IResult::Error;
     use nom::verbose_errors::Err;
@@ -257,14 +260,15 @@ mod test {
         let t = b"@if { oops }";
         assert_eq!(template_expression(t),
                    Error(Err::NodePosition(
-                       ErrorKind::Custom(3), &t[..],
+                       ERR_TE.clone(), &t[..],
                        Box::new(Err::NodePosition(
                            ErrorKind::Switch, &t[..],
                            Box::new(Err::NodePosition(
-                               ErrorKind::Custom(4), &t[4..],
+                               ERR_IF.clone(), &t[4..],
                                Box::new(Err::NodePosition(
                                    ErrorKind::Custom(7), &t[4..],
                                    Box::new(Err::Position(
                                        ErrorKind::Alt, &t[4..])))))))))))
     }
 }
+*/
