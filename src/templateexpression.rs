@@ -177,7 +177,7 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                    text: "}}".to_string()
                }) |
                Some(b"if") => return_error!(
-                   err_str!("Error in conditional expression"),
+                   err_str!("Error in conditional expression:"),
                    do_parse!(
                    spacelike >>
                    expr: cond_expression >> spacelike >>
@@ -201,7 +201,7 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                    expr: return_error!(err_str!("Expected iterable expression"),
                                        expression) >>
                    spacelike >>
-                   body: return_error!(err_str!("Error in loop block"),
+                   body: return_error!(err_str!("Error in loop block:"),
                                        template_block) >> spacelike >>
                    (TemplateExpression::ForLoop {
                        name: name,
@@ -222,11 +222,12 @@ named!(pub template_expression<&[u8], TemplateExpression>,
 named!(template_block<&[u8], Vec<TemplateExpression>>,
        do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
                  spacelike >>
-                 body: my_many_till!(template_expression, block_end) >>
+                 body: my_many_till!(
+                     return_error!(
+                         err_str!("Error in expression starting here:"),
+                         template_expression),
+                     char!('}')) >>
                  (body.0)));
-
-named!(block_end<&[u8], ()>,
-       value!((), tag!("}")));
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),

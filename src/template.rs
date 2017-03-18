@@ -57,7 +57,11 @@ named!(pub template<&[u8], Template>,
            args: separated_list!(tag!(", "), formal_argument) >>
            tag!(")") >>
            spacelike >>
-           body: my_many_till!(template_expression, end_of_file) >>
+           body: my_many_till!(
+               return_error!(
+                   err_str!("Error in expression starting here:"),
+                   template_expression),
+               call!(end_of_file)) >>
            (Template { preamble: preamble, args: args, body: body.0 })
            ));
 
