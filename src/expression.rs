@@ -1,10 +1,11 @@
-use nom::alpha;
+use nom::{alpha, digit};
 use std::str::from_utf8;
 
 named!(pub expression<&[u8], String>,
        do_parse!(
            pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) >>
            name: alt!(rust_name |
+                      map!(digit, |d| from_utf8(d).unwrap().to_string()) |
                       do_parse!(char!('"') >>
                                 text: escaped!(is_not!("\"\\"),
                                                '\\', one_of!("\"\\")) >>
@@ -106,6 +107,10 @@ mod test {
     #[test]
     fn expression_slice_empty() {
         check_expr("&[]");
+    }
+    #[test]
+    fn expression_number() {
+        check_expr("42");
     }
 
     fn check_expr(expr: &str) {
