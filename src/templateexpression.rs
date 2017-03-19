@@ -248,28 +248,34 @@ named!(cond_expression<&[u8], String>,
                       (format!("let {} = {}", lhs, rhs))) |
             expression));
 
-/* TODO Implement a sane way to test for error messages!
 #[cfg(test)]
 mod test {
     use super::*;
-    use nom::ErrorKind;
-    use nom::IResult::Error;
-    use nom::verbose_errors::Err;
+    use super::super::show_errors;
 
     #[test]
     fn if_missing_conditional() {
-        let t = b"@if { oops }";
-        assert_eq!(template_expression(t),
-                   Error(Err::NodePosition(
-                       ERR_TE.clone(), &t[..],
-                       Box::new(Err::NodePosition(
-                           ErrorKind::Switch, &t[..],
-                           Box::new(Err::NodePosition(
-                               ERR_IF.clone(), &t[4..],
-                               Box::new(Err::NodePosition(
-                                   ErrorKind::Custom(7), &t[4..],
-                                   Box::new(Err::Position(
-                                       ErrorKind::Alt, &t[4..])))))))))))
+        // TODO The actual message here should be improved.
+        assert_eq!(expression_error(b"@if { oops }"),
+                   ":   1:@if { oops }\n\
+                    :         ^ Error in conditional expression:\n\
+                    :   1:@if { oops }\n\
+                    :         ^ Alt\n")
+    }
+
+    #[test]
+    fn for_missig_in() {
+        // TODO The second part of this message isn't really helpful.
+        assert_eq!(expression_error(b"@for what ever { hello }"),
+                   ":   1:@for what ever { hello }\n\
+                    :               ^ Expected \"in\"\n\
+                    :   1:@for what ever { hello }\n\
+                    :               ^ Tag\n")
+    }
+
+    fn expression_error(input: &[u8]) -> String {
+        let mut buf = Vec::new();
+        show_errors(&mut buf, input, template_expression(input), ":");
+        String::from_utf8(buf).unwrap()
     }
 }
-*/

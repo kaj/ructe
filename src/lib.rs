@@ -245,12 +245,19 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
             println!("cargo:warning=\
                       Template parse error in {:?}:",
                      path);
-            if let Some(errors) = prepare_errors(&buf, result) {
-                for &(ref kind, ref from, ref _to) in &errors {
-                    show_error(&buf, *from, &get_message(kind));
-                }
-            }
+            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
             Ok(false)
+        }
+    }
+}
+
+pub fn show_errors<E>(out: &mut Write,
+                      buf: &[u8],
+                      result: nom::IResult<&[u8], E>,
+                      prefix: &str) {
+    if let Some(errors) = prepare_errors(&buf, result) {
+        for &(ref kind, ref from, ref _to) in &errors {
+            show_error(out, &buf, *from, &get_message(kind), prefix);
         }
     }
 }
@@ -267,7 +274,11 @@ fn get_message(err: &ErrorKind) -> String {
     }
 }
 
-fn show_error(buf: &[u8], pos: usize, msg: &str) {
+fn show_error(out: &mut Write,
+              buf: &[u8],
+              pos: usize,
+              msg: &str,
+              prefix: &str) {
     let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
     let _ = line_start.next();
     let line_start =
@@ -280,13 +291,16 @@ fn show_error(buf: &[u8], pos: usize, msg: &str) {
     let line_no = what_line(&buf, line_start);
     let pos_in_line =
         from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
-    println!("cargo:warning={:>4}:{}\n\
-              cargo:warning=     {:>pos$} {}",
+    writeln!(out,
+             "{prefix}{:>4}:{}\n\
+              {prefix}     {:>pos$} {}",
              line_no,
              line,
              "^",
              msg,
-             pos = pos_in_line);
+             pos = pos_in_line,
+             prefix = prefix)
+            .unwrap();
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {
