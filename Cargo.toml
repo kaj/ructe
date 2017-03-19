@@ -11,5 +11,6 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 base64 = "^0.3"
+lazy_static = "^0.2"
 md5 = "^0.3"
 nom = { version = "^2", features = ["verbose-errors"] }

@@ -3,6 +3,71 @@ use spacelike::{comment, spacelike};
 use std::fmt::{self, Display};
 use std::str::from_utf8;
 
+/// Copied from nom, but fixed for
+/// https://github.com/Geal/nom/issues/463
+///
+/// This should be removed when a fix for that is released from nom.
+#[macro_export]
+macro_rules! my_many_till(
+  ($i:expr, $submac1:ident!( $($args1:tt)* ), $submac2:ident!( $($args2:tt)* ))
+        => (
+    {
+      use nom::InputLength;
+      use nom::ErrorKind;
+      use nom::IResult;
+      use nom::Needed;
+
+      let ret;
+      let mut res   = ::std::vec::Vec::new();
+      let mut input = $i;
+
+      loop {
+        match $submac2!(input, $($args2)*) {
+          IResult::Done(i, o) => {
+            ret = IResult::Done(i, (res, o));
+            break;
+          },
+          _                           => {
+            match $submac1!(input, $($args1)*) {
+              IResult::Error(err)                            => {
+                ret = IResult::Error(error_node_position!(ErrorKind::ManyTill,
+                                                          input,
+                                                          err));
+                break;
+              },
+              IResult::Incomplete(Needed::Unknown) => {
+                ret = IResult::Incomplete(Needed::Unknown);
+                break;
+              },
+              IResult::Incomplete(Needed::Size(i)) => {
+                let size = i + ($i).input_len() - input.input_len();
+                ret = IResult::Incomplete(Needed::Size(size));
+                break;
+              },
+              IResult::Done(i, o)                          => {
+                // loop trip must always consume (otherwise infinite loops)
+                if i == input {
+                  ret = IResult::Error(error_position!(ErrorKind::ManyTill,
+                                                       input));
+                  break;
+                }
+
+                res.push(o);
+                input = i;
+              },
+            }
+          },
+        }
+      }
+
+      ret
+    }
+  );
+  ($i:expr, $f:expr, $g: expr) => (
+    my_many_till!($i, call!($f), call!($g));
+  );
+);
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateExpression {
     Comment,
@@ -86,58 +151,83 @@ impl TemplateExpression {
 }
 
 named!(pub template_expression<&[u8], TemplateExpression>,
-       alt!(
-           map!(comment, |()| TemplateExpression::Comment) |
-           do_parse!(
-               tag!("@:") >>
-               name: rust_name >>
-               args: delimited!(tag!("("),
-                                separated_list!(tag!(", "), template_argument),
-                                tag!(")")) >>
-               (TemplateExpression::CallTemplate {
-                   name: name,
-                   args: args,
-               })) |
-           do_parse!(
-               tag!("@for") >> spacelike >>
-               name: rust_name >>
-               spacelike >> tag!("in") >> spacelike >>
-               expr: expression >> spacelike >> tag!("{") >> spacelike >>
-               body: many0!(template_expression) >>
-               spacelike >> tag!("}") >>
-               (TemplateExpression::ForLoop {
-                   name: name,
-                   expr: expr,
-                   body: body,
-               })) |
-           do_parse!(
-               tag!("@if") >> spacelike >>
-               expr: cond_expression >> spacelike >> tag!("{") >> spacelike >>
-               body: many0!(template_expression) >> spacelike >>
-               tag!("}") >>
-               else_body: opt!(do_parse!(
-                   spacelike >> tag!("else") >> spacelike >>
-                   tag!("{") >>
-                   else_body: many0!(template_expression) >>
-                   tag!("}") >>
-                   (else_body))) >>
-               (TemplateExpression::IfBlock {
-                   expr: expr,
-                   body: body,
-                   else_body: else_body,
-               })) |
-           map!(tag!("@{"),
-                |_| TemplateExpression::Text { text: "{{".to_string() }) |
-           map!(tag!("@}"),
-                |_| TemplateExpression::Text { text: "}}".to_string() }) |
-           map!(is_not!("@{}"),
-                |text| TemplateExpression::Text {
-                    text: from_utf8(text).unwrap().to_string()
-                }) |
-           map!(preceded!(tag!("@"), expression),
-                |expr| TemplateExpression::Expression{ expr: expr })
-       )
-);
+       add_return_error!(
+           err_str!("In expression starting here"),
+           switch!(
+               opt!(preceded!(tag!("@"),
+                              alt!(tag!(":") | tag!("{") | tag!("}") |
+                                   terminated!(
+                                       alt!(tag!("if") |
+                                            tag!("for")),
+                                       tag!(" "))))),
+               Some(b":") => do_parse!(
+                   name: rust_name >>
+                   args: delimited!(tag!("("),
+                                    separated_list!(tag!(", "),
+                                                    template_argument),
+                                    tag!(")")) >>
+                   (TemplateExpression::CallTemplate {
+                       name: name,
+                       args: args,
+                   })) |
+               Some(b"{") => value!(TemplateExpression::Text {
+                   text: "{{".to_string()
+               }) |
+               Some(b"}") => value!(TemplateExpression::Text {
+                   text: "}}".to_string()
+               }) |
+               Some(b"if") => return_error!(
+                   err_str!("Error in conditional expression:"),
+                   do_parse!(
+                   spacelike >>
+                   expr: cond_expression >> spacelike >>
+                   body: template_block >>
+                   else_body: opt!(do_parse!(
+                       spacelike >> tag!("else") >> spacelike >>
+                       else_body: template_block >>
+                       (else_body))) >>
+                   (TemplateExpression::IfBlock {
+                       expr: expr,
+                       body: body,
+                       else_body: else_body,
+                   }))) |
+               Some(b"for") => do_parse!(
+                   spacelike >>
+                   name: return_error!(err_str!("Expected loop variable name"),
+                                       rust_name) >>
+                   spacelike >>
+                   return_error!(err_str!("Expected \"in\""), tag!("in")) >>
+                   spacelike >>
+                   expr: return_error!(err_str!("Expected iterable expression"),
+                                       expression) >>
+                   spacelike >>
+                   body: return_error!(err_str!("Error in loop block:"),
+                                       template_block) >> spacelike >>
+                   (TemplateExpression::ForLoop {
+                       name: name,
+                       expr: expr,
+                       body: body,
+                   })) |
+               None => alt!(
+                   map!(comment, |()| TemplateExpression::Comment) |
+                   map!(is_not!("@{}"),
+                        |text| TemplateExpression::Text {
+                            text: from_utf8(text).unwrap().to_string()
+                        }) |
+                   map!(preceded!(tag!("@"), expression),
+                        |expr| TemplateExpression::Expression{ expr: expr })
+                       )))
+       );
+
+named!(template_block<&[u8], Vec<TemplateExpression>>,
+       do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
+                 spacelike >>
+                 body: my_many_till!(
+                     return_error!(
+                         err_str!("Error in expression starting here:"),
+                         template_expression),
+                     char!('}')) >>
+                 (body.0)));
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
@@ -146,8 +236,46 @@ named!(template_argument<&[u8], TemplateArgument>,
 
 named!(cond_expression<&[u8], String>,
        alt!(do_parse!(tag!("let") >> spacelike >>
-                      lhs: expression >>
-                      spacelike >> char!('=') >> spacelike >>
-                      rhs: expression >>
+                      lhs: return_error!(
+                          err_str!("Expected LHS expression in let binding"),
+                          expression) >>
+                      spacelike >>
+                      return_error!(err_str!("Expected \"=\""), char!('=')) >>
+                      spacelike >>
+                      rhs: return_error!(
+                          err_str!("Expected RHS expression in let binding"),
+                          expression) >>
                       (format!("let {} = {}", lhs, rhs))) |
             expression));
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::show_errors;
+
+    #[test]
+    fn if_missing_conditional() {
+        // TODO The actual message here should be improved.
+        assert_eq!(expression_error(b"@if { oops }"),
+                   ":   1:@if { oops }\n\
+                    :         ^ Error in conditional expression:\n\
+                    :   1:@if { oops }\n\
+                    :         ^ Alt\n")
+    }
+
+    #[test]
+    fn for_missig_in() {
+        // TODO The second part of this message isn't really helpful.
+        assert_eq!(expression_error(b"@for what ever { hello }"),
+                   ":   1:@for what ever { hello }\n\
+                    :               ^ Expected \"in\"\n\
+                    :   1:@for what ever { hello }\n\
+                    :               ^ Tag\n")
+    }
+
+    fn expression_error(input: &[u8]) -> String {
+        let mut buf = Vec::new();
+        show_errors(&mut buf, input, template_expression(input), ":");
+        String::from_utf8(buf).unwrap()
+    }
+}

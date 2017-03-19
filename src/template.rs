@@ -57,10 +57,16 @@ named!(pub template<&[u8], Template>,
            args: separated_list!(tag!(", "), formal_argument) >>
            tag!(")") >>
            spacelike >>
-           body: many0!(template_expression) >>
-           eof!() >>
-           (Template { preamble: preamble, args: args, body: body })
+           body: my_many_till!(
+               return_error!(
+                   err_str!("Error in expression starting here:"),
+                   template_expression),
+               call!(end_of_file)) >>
+           (Template { preamble: preamble, args: args, body: body.0 })
            ));
+
+named!(end_of_file<&[u8], ()>,
+       value!((), eof!()));
 
 // TODO Actually parse arguments!
 named!(formal_argument<&[u8], String>,

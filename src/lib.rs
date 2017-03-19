@@ -73,18 +73,25 @@ extern crate base64;
 extern crate md5;
 #[macro_use]
 extern crate nom;
+#[macro_use]
+extern crate lazy_static;
 
 mod spacelike;
 mod expression;
+#[macro_use]
+mod errors;
+#[macro_use]
 mod templateexpression;
 mod template;
 
+use errors::get_error;
+use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
-
 use std::collections::BTreeSet;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
+use std::str::from_utf8;
 use template::template;
 
 /// Create a `statics` module inside `outdir`, containing static file data
@@ -234,51 +241,70 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
             File::create(fname).and_then(|mut f| t.write_rust(&mut f, name))?;
             Ok(true)
         }
-        Error(err) => {
+        result => {
             println!("cargo:warning=\
                       Template parse error in {:?}:",
                      path);
-            report_error(err);
-            Ok(false)
-        }
-        Incomplete(needed) => {
-            println!("cargo:warning=\
-                      Failed to parse template {:?}: \
-                      {:?} needed",
-                     path,
-                     needed);
+            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
             Ok(false)
         }
     }
 }
 
-use nom::verbose_errors::Err;
-use std::fmt::Debug;
-
-fn report_error<E>(err: Err<&[u8], E>)
-    where E: Debug
-{
-
-    match err {
-        Err::Code(kind) => {
-            println!("cargo:warning={:?}", kind);
-        }
-        Err::Node(kind, next) => {
-            println!("cargo:warning={:?}", kind);
-            report_error(*next);
-        }
-        Err::Position(kind, pos) => {
-            println!("cargo:warning=expected {:?}, got {:?}",
-                     kind,
-                     String::from_utf8_lossy(pos));
-        }
-        Err::NodePosition(kind, pos, next) => {
-            println!("cargo:warning=expected {:?}, got {:?}",
-                     kind,
-                     String::from_utf8_lossy(pos));
-            report_error(*next);
+pub fn show_errors<E>(out: &mut Write,
+                      buf: &[u8],
+                      result: nom::IResult<&[u8], E>,
+                      prefix: &str) {
+    if let Some(errors) = prepare_errors(&buf, result) {
+        for &(ref kind, ref from, ref _to) in &errors {
+            show_error(out, &buf, *from, &get_message(kind), prefix);
         }
     }
+}
+
+fn get_message(err: &ErrorKind) -> String {
+    match err {
+        &ErrorKind::Custom(n) => {
+            match get_error(n) {
+                Some(msg) => msg,
+                None => format!("Unknown error #{}", n),
+            }
+        }
+        err => format!("{:?}", err),
+    }
+}
+
+fn show_error(out: &mut Write,
+              buf: &[u8],
+              pos: usize,
+              msg: &str,
+              prefix: &str) {
+    let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
+    let _ = line_start.next();
+    let line_start =
+        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
+    let line = buf[line_start..]
+        .splitn(2, |c| *c == b'\n')
+        .next()
+        .and_then(|s| from_utf8(s).ok())
+        .unwrap_or("(Failed to display line)");
+    let line_no = what_line(&buf, line_start);
+    let pos_in_line =
+        from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
+    writeln!(out,
+             "{prefix}{:>4}:{}\n\
+              {prefix}     {:>pos$} {}",
+             line_no,
+             line,
+             "^",
+             msg,
+             pos = pos_in_line,
+             prefix = prefix)
+            .unwrap();
+}
+
+fn what_line(buf: &[u8], pos: usize) -> usize {
+    1 + buf[0..pos].iter().filter(|c| **c == b'\n').count()
 }
 
 /// The module containing your generated template code will also
