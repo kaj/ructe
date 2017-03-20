@@ -5,6 +5,7 @@ before_script:
 - cargo install -f rustfmt
 rust:
   - 1.14.0
+  - 1.15.1
   - stable
   - beta
   - nightly
