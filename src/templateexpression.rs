@@ -268,37 +268,43 @@ mod test {
     #[test]
     fn if_boolean_var() {
         assert_eq!(template_expression(b"@if cond { something }"),
-                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
-                       expr: "cond".to_string(),
-                       body: vec![TemplateExpression::Text {
-                           text: " something ".to_string(),
-                       }],
-                       else_body: None,
-                   }))
+                   IResult::Done(&b""[..],
+                                 TemplateExpression::IfBlock {
+                                     expr: "cond".to_string(),
+                                     body: vec![TemplateExpression::Text {
+                                                    text: " something "
+                                                        .to_string(),
+                                                }],
+                                     else_body: None,
+                                 }))
     }
 
     #[test]
     fn if_let() {
         assert_eq!(template_expression(b"@if let Some(x) = x { something }"),
-                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
-                       expr: "let Some(x) = x".to_string(),
-                       body: vec![TemplateExpression::Text {
-                           text: " something ".to_string(),
-                       }],
-                       else_body: None,
-                   }))
+                   IResult::Done(&b""[..],
+                                 TemplateExpression::IfBlock {
+                                     expr: "let Some(x) = x".to_string(),
+                                     body: vec![TemplateExpression::Text {
+                                                    text: " something "
+                                                        .to_string(),
+                                                }],
+                                     else_body: None,
+                                 }))
     }
 
     #[test]
     fn if_compare() {
         assert_eq!(template_expression(b"@if x == 17 { something }"),
-                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
-                       expr: "x == 17".to_string(),
-                       body: vec![TemplateExpression::Text {
-                           text: " something ".to_string(),
-                       }],
-                       else_body: None,
-                   }))
+                   IResult::Done(&b""[..],
+                                 TemplateExpression::IfBlock {
+                                     expr: "x == 17".to_string(),
+                                     body: vec![TemplateExpression::Text {
+                                                    text: " something "
+                                                        .to_string(),
+                                                }],
+                                     else_body: None,
+                                 }))
     }
 
     #[test]
