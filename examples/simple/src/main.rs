@@ -41,14 +41,15 @@ fn test_hello_args_two() {
 #[test]
 fn test_list() {
     assert_eq!(r2s(|o| list(o, &["foo", "bar"])),
-               "<ul>\n  <li>foo</li>\n  <li>bar</li>\n  </ul>\n");
+               "<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n");
 }
 
 #[test]
 fn test_uselist() {
     assert_eq!(r2s(|o| uselist(o)),
                "<h1>Two items</h1>\n\
-                <ul>\n  <li>foo</li>\n  <li>bar</li>\n  </ul>\n\n\
+                <ul>\n  \n    <li>foo</li>\n  \
+                \n    <li>bar</li>\n  </ul>\n\n\
                 <h2>No items</h2>\n\
                 <ul>\n  </ul>\n\n");
 }
@@ -114,7 +115,7 @@ fn test_hello_code() {
 #[test]
 fn test_for_loop() {
     assert_eq!(r2s(|o| for_loop(o, &vec!["Hello", "World"])),
-               "<h1>Looped paragraphs</h1>\n<p>Hello</p>\n<p>World</p>\n");
+               "<h1>Looped paragraphs</h1>\n\n  <p>Hello</p>\n\n  <p>World</p>\n");
 }
 
 #[test]

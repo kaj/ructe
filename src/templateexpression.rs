@@ -221,7 +221,6 @@ named!(pub template_expression<&[u8], TemplateExpression>,
 
 named!(template_block<&[u8], Vec<TemplateExpression>>,
        do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
-                 spacelike >>
                  body: my_many_till!(
                      return_error!(
                          err_str!("Error in expression starting here:"),
