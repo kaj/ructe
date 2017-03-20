@@ -182,10 +182,10 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                    spacelike >>
                    expr: cond_expression >> spacelike >>
                    body: template_block >>
-                   else_body: opt!(do_parse!(
+                   else_body: opt!(complete!(do_parse!(
                        spacelike >> tag!("else") >> spacelike >>
                        else_body: template_block >>
-                       (else_body))) >>
+                       (else_body)))) >>
                    (TemplateExpression::IfBlock {
                        expr: expr,
                        body: body,
@@ -245,12 +245,61 @@ named!(cond_expression<&[u8], String>,
                           err_str!("Expected RHS expression in let binding"),
                           expression) >>
                       (format!("let {} = {}", lhs, rhs))) |
-            expression));
+            do_parse!(a: expression >>
+                      b: opt!(do_parse!(spacelike >>
+                                        op: alt!(tag!("==") | tag!("!=") |
+                                                 tag!(">=") | tag!(">") |
+                                                 tag!("<=") | tag!("<")) >>
+                                        spacelike >>
+                                        rhs: expression >>
+                                        (from_utf8(op).unwrap(), rhs))) >>
+                      (if let Some((op, rhs)) = b {
+                          format!("{} {} {}", a, op, rhs)
+                      } else {
+                          a
+                      }))));
 
 #[cfg(test)]
 mod test {
     use super::*;
     use super::super::show_errors;
+    use nom::IResult;
+
+    #[test]
+    fn if_boolean_var() {
+        assert_eq!(template_expression(b"@if cond { something }"),
+                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
+                       expr: "cond".to_string(),
+                       body: vec![TemplateExpression::Text {
+                           text: " something ".to_string(),
+                       }],
+                       else_body: None,
+                   }))
+    }
+
+    #[test]
+    fn if_let() {
+        assert_eq!(template_expression(b"@if let Some(x) = x { something }"),
+                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
+                       expr: "let Some(x) = x".to_string(),
+                       body: vec![TemplateExpression::Text {
+                           text: " something ".to_string(),
+                       }],
+                       else_body: None,
+                   }))
+    }
+
+    #[test]
+    fn if_compare() {
+        assert_eq!(template_expression(b"@if x == 17 { something }"),
+                   IResult::Done(&b""[..], TemplateExpression::IfBlock {
+                       expr: "x == 17".to_string(),
+                       body: vec![TemplateExpression::Text {
+                           text: " something ".to_string(),
+                       }],
+                       else_body: None,
+                   }))
+    }
 
     #[test]
     fn if_missing_conditional() {
