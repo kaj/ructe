@@ -234,30 +234,34 @@ named!(template_argument<&[u8], TemplateArgument>,
             map!(expression, |expr| TemplateArgument::Rust(expr))));
 
 named!(cond_expression<&[u8], String>,
-       alt!(do_parse!(tag!("let") >> spacelike >>
-                      lhs: return_error!(
-                          err_str!("Expected LHS expression in let binding"),
-                          expression) >>
-                      spacelike >>
-                      return_error!(err_str!("Expected \"=\""), char!('=')) >>
-                      spacelike >>
-                      rhs: return_error!(
-                          err_str!("Expected RHS expression in let binding"),
-                          expression) >>
-                      (format!("let {} = {}", lhs, rhs))) |
-            do_parse!(a: expression >>
-                      b: opt!(do_parse!(spacelike >>
-                                        op: alt!(tag!("==") | tag!("!=") |
-                                                 tag!(">=") | tag!(">") |
-                                                 tag!("<=") | tag!("<")) >>
-                                        spacelike >>
-                                        rhs: expression >>
-                                        (from_utf8(op).unwrap(), rhs))) >>
-                      (if let Some((op, rhs)) = b {
-                          format!("{} {} {}", a, op, rhs)
-                      } else {
-                          a
-                      }))));
+       switch!(opt!(tag!("let")),
+               Some(b"let") => do_parse!(
+                   spacelike >>
+                   lhs: return_error!(
+                       err_str!("Expected LHS expression in let binding"),
+                       expression) >>
+                   spacelike >>
+                   return_error!(err_str!("Expected \"=\""), char!('=')) >>
+                   spacelike >>
+                   rhs: return_error!(
+                       err_str!("Expected RHS expression in let binding"),
+                       expression) >>
+                   (format!("let {} = {}", lhs, rhs))) |
+               None => do_parse!(
+                   a: return_error!(err_str!("Expected expression"),
+                                    expression) >>
+                   b: opt!(do_parse!(spacelike >>
+                                     op: alt!(tag!("==") | tag!("!=") |
+                                              tag!(">=") | tag!(">") |
+                                              tag!("<=") | tag!("<")) >>
+                                     spacelike >>
+                                     rhs: expression >>
+                                     (from_utf8(op).unwrap(), rhs))) >>
+                   (if let Some((op, rhs)) = b {
+                       format!("{} {} {}", a, op, rhs)
+                   } else {
+                       a
+                   }))));
 
 #[cfg(test)]
 mod test {
@@ -309,12 +313,24 @@ mod test {
 
     #[test]
     fn if_missing_conditional() {
-        // TODO The actual message here should be improved.
         assert_eq!(expression_error(b"@if { oops }"),
                    ":   1:@if { oops }\n\
                     :         ^ Error in conditional expression:\n\
                     :   1:@if { oops }\n\
+                    :         ^ Expected expression\n\
+                    :   1:@if { oops }\n\
                     :         ^ Alt\n")
+    }
+
+    #[test]
+    fn if_bad_let() {
+        assert_eq!(expression_error(b"@if let foo { oops }"),
+                   ":   1:@if let foo { oops }\n\
+                    :         ^ Error in conditional expression:\n\
+                    :   1:@if let foo { oops }\n\
+                    :                 ^ Expected \"=\"\n\
+                    :   1:@if let foo { oops }\n\
+                    :                 ^ Char\n")
     }
 
     #[test]
