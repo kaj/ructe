@@ -7,7 +7,6 @@ use std::str::from_utf8;
 /// https://github.com/Geal/nom/issues/463
 ///
 /// This should be removed when a fix for that is released from nom.
-#[macro_export]
 macro_rules! my_many_till(
   ($i:expr, $submac1:ident!( $($args1:tt)* ), $submac2:ident!( $($args2:tt)* ))
         => (
