@@ -30,7 +30,7 @@
 //! Then, in the build script, compile all templates found in the templates
 //! directory and put the output where cargo tells it to:
 //!
-//! ```no-run
+//! ```rust,no_run
 //! extern crate ructe;
 //!
 //! use ructe::compile_templates;
@@ -49,7 +49,7 @@
 //! The file `templates.rs` will contain `mod templates { ... }`,
 //! so I just include it in my `main.rs`:
 //!
-//! ```no-compile
+//! ```rust,ignore
 //! include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 //! ```
 //!
@@ -251,10 +251,10 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
     }
 }
 
-pub fn show_errors<E>(out: &mut Write,
-                      buf: &[u8],
-                      result: nom::IResult<&[u8], E>,
-                      prefix: &str) {
+fn show_errors<E>(out: &mut Write,
+                  buf: &[u8],
+                  result: nom::IResult<&[u8], E>,
+                  prefix: &str) {
     if let Some(errors) = prepare_errors(&buf, result) {
         for &(ref kind, ref from, ref _to) in &errors {
             show_error(out, &buf, *from, &get_message(kind), prefix);
