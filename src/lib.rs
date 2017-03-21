@@ -6,9 +6,8 @@
 //! [Play framework](https://www.playframework.com/) are translated to
 //! Rust language source code, to be compiled together with your
 //! program.
-//! The template syntax is currently documented only in the readme of
-//! [the github repository for ructe](https://github.com/kaj/ructe).
-//!
+//! The template syntax is documented in
+//! [the template syntax module](Template_syntax/index.html).
 //!
 //! # How to use ructe
 //!
@@ -83,6 +82,7 @@ mod errors;
 #[macro_use]
 mod templateexpression;
 mod template;
+pub mod Template_syntax;
 
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
