@@ -147,7 +147,7 @@ It can be used like this:
 ```
 
 It is also possible to send template blocks as parameters to templates.
-A structure similar to the above can breated by having something like
+A structure similar to the above can be created by having something like
 this in `base_page.rs.html`:
 
 ```
