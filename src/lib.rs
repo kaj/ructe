@@ -1,13 +1,44 @@
 //! Rust Compiled Templates is a HTML template system for Rust.
 //!
-//! Templates in a syntax inspired by
+//! Ructe works by converting your templates (and static files) to
+//! rust source code, which is then compiled with your project.
+//! This has the benefits that:
+//!
+//! 1. Many syntactical and logical errors in templates are caught
+//! compile-time, rather than in a running server.
+//! 2. No extra latency on the first request, since the template are
+//! compiled before starting the program.
+//! 3. The template files does not have to be distributed / installed.
+//! Templates are included in the compiled program, which can be a
+//! single binary.
+//!
+//! The template syntax, which is inspired by
 //! [Twirl](https://github.com/playframework/twirl), the Scala-based
 //! template engine in
-//! [Play framework](https://www.playframework.com/) are translated to
-//! Rust language source code, to be compiled together with your
-//! program.
-//! The template syntax is documented in
-//! [the template syntax module](Template_syntax/index.html).
+//! [Play framework](https://www.playframework.com/),
+//! is documented in [the _Template syntax_ module](Template_syntax/index.html).
+//! A sample template may look like this:
+//!
+//! ```html
+//! @use ::Group;
+//! @use templates::page_base;
+//!
+//! @(title: &str, user: Option<String>, groups: &[Group])
+//!
+//! @:page_base(title, &user, {
+//!   <div class="group">
+//!     @if groups.is_empty() {
+//!       <p>No pictures.</p>
+//!     }
+//!     @for g in groups {
+//!       <div class="item"><h2>@g.title</h2>
+//!         <p><a href="@g.url"><img src="/img/@g.photo.id-s.jpg"></a></p>
+//!         <p>@g.count pictures</p>
+//!       </div>
+//!     }
+//!   </div>
+//! })
+//! ```
 //!
 //! # How to use ructe
 //!
@@ -152,7 +183,7 @@ fn write_static_file(f: &mut Write,
                      suffix: &str)
                      -> io::Result<()> {
     write!(f,
-           "\n// From {path:?}\n\
+           "\n/// From {path:?}\n\
             #[allow(non_upper_case_globals)]\n\
             pub static {name}_{suf}: StaticFile = \
             StaticFile {{\n  \
@@ -177,7 +208,7 @@ fn checksum_slug(data: &[u8]) -> String {
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
         try!(write!(f,
-                    "mod templates {{\n\
+                    "pub mod templates {{\n\
                      use std::io::{{self, Write}};\n\
                      use std::fmt::Display;\n\n"));
 

@@ -1,5 +1,9 @@
 /// A static file has a name (so its url can be recognized) and the
 /// actual file contents.
+///
+/// The name includes a short (48 bits as 8 base64 characters) hash of
+/// the content, to enable long-time caching of static resourses in
+/// the clients.
 #[allow(dead_code)]
 pub struct StaticFile {
     pub content: &'static [u8],
