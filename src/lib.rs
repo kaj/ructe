@@ -130,41 +130,107 @@ use template::template;
 ///
 /// This must be called *before* `compile_templates`.
 pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
-    let outdir = outdir.join("templates");
-    try!(create_dir_all(&outdir));
-    File::create(outdir.join("statics.rs")).and_then(|mut f| {
-        try!(write!(f,
-                    "{}\n",
-                    include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                         "/src/statics_utils.rs"))));
-        // Note: The provided getter uses binary search.
-        // The fact that statics is a BTreeSet guarantees proper ordering.
-        let mut statics = BTreeSet::new();
-        for entry in try!(read_dir(indir)) {
-            let entry = try!(entry);
-            if try!(entry.file_type()).is_file() {
-                let path = entry.path();
-                if let Some((name, ext)) = name_and_ext(&path) {
-                    println!("cargo:rerun-if-changed={}",
-                             path.to_string_lossy());
-                    let mut input = try!(File::open(&path));
-                    let mut buf = Vec::new();
-                    try!(input.read_to_end(&mut buf));
+    let mut out = StaticFiles::new(outdir)?;
+    out.add_files(indir)
+}
 
-                    try!(write_static_file(&mut f, &path, name, &buf, &ext));
-                    statics.insert(format!("{}_{}", name, ext));
-                }
+/// Handler for static files.
+///
+/// To just add all files in a single directory, there is a shorthand method
+/// `compile_static_files`.
+/// For more complex setups (static files in more than one directory,
+/// generated static files, etc), use this struct.
+///
+/// Each static file will be available as a
+/// [StaticFile](templates/statics/index.html) struct instance in
+/// your `templates::statics` module.
+/// Also, the const `STATICS` array in the same module will contain a
+/// reference to each of those instances.
+pub struct StaticFiles {
+    src: File,
+    statics: BTreeSet<String>,
+}
+
+impl StaticFiles {
+    /// Create a new set of static files.
+    ///
+    /// There should only be one `StaticFiles` for a set of compiled templates.
+    /// The `outdir` should be the same as in the call to `compile_templates`.
+    pub fn new(outdir: &Path) -> io::Result<Self> {
+        let outdir = outdir.join("templates");
+        try!(create_dir_all(&outdir));
+        let mut src = File::create(outdir.join("statics.rs"))?;
+        write!(src,
+               "{}\n",
+               include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
+                                    "/src/statics_utils.rs")))?;
+        Ok(StaticFiles {
+               src: src,
+               statics: BTreeSet::new(),
+           })
+    }
+
+    /// Add all files from a specific directory, `indir`, as static files.
+    pub fn add_files(&mut self, indir: &Path) -> io::Result<()> {
+        for entry in read_dir(indir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_file() {
+                self.add_file(&entry.path())?;
             }
         }
-        try!(write!(f,
-                    "\npub static STATICS: &'static [&'static StaticFile] \
-                     = &[{}];\n",
-                    statics.iter()
-                        .map(|s| format!("&{}", s))
-                        .collect::<Vec<_>>()
-                        .join(", ")));
         Ok(())
-    })
+    }
+
+    /// Add one specific file as a static file.
+    pub fn add_file(&mut self, path: &Path) -> io::Result<()> {
+        if let Some((name, ext)) = name_and_ext(path) {
+            println!("cargo:rerun-if-changed={}", path.to_string_lossy());
+            let mut input = File::open(&path)?;
+            let mut buf = Vec::new();
+            input.read_to_end(&mut buf)?;
+
+            self.write_static_file(&path, name, &buf, &ext)?;
+            self.statics.insert(format!("{}_{}", name, ext));
+        }
+        Ok(())
+    }
+
+    fn write_static_file(&mut self,
+                         path: &Path,
+                         name: &str,
+                         content: &[u8],
+                         suffix: &str)
+                         -> io::Result<()> {
+        write!(self.src,
+               "\n/// From {path:?}\n\
+                #[allow(non_upper_case_globals)]\n\
+                pub static {name}_{suf}: StaticFile = \
+                StaticFile {{\n  \
+                content: &{content:?},\n  \
+                name: \"{name}-{hash}.{suf}\",\n\
+                }};\n",
+               path = path,
+               name = name,
+               content = content,
+               hash = checksum_slug(&content),
+               suf = suffix)
+    }
+}
+
+impl Drop for StaticFiles {
+    /// Write the ending of the statics source code, declaring the
+    /// `STATICS` variable.
+    fn drop(&mut self) {
+        // Ignore a possible write failure, rather than a panic in drop.
+        let _ = write!(self.src,
+                       "\npub static STATICS: &'static [&'static StaticFile] \
+                        = &[{}];\n",
+                       self.statics
+                           .iter()
+                           .map(|s| format!("&{}", s))
+                           .collect::<Vec<_>>()
+                           .join(", "));
+    }
 }
 
 fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
@@ -174,27 +240,6 @@ fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
         }
     }
     None
-}
-
-fn write_static_file(f: &mut Write,
-                     path: &Path,
-                     name: &str,
-                     content: &[u8],
-                     suffix: &str)
-                     -> io::Result<()> {
-    write!(f,
-           "\n/// From {path:?}\n\
-            #[allow(non_upper_case_globals)]\n\
-            pub static {name}_{suf}: StaticFile = \
-            StaticFile {{\n  \
-            content: &{content:?},\n  \
-            name: \"{name}-{hash}.{suf}\",\n\
-            }};\n",
-           path = path,
-           name = name,
-           content = content,
-           hash = checksum_slug(&content),
-           suf = suffix)
 }
 
 /// A short and url-safe checksum string from string data.
