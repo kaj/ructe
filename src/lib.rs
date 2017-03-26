@@ -199,6 +199,17 @@ impl StaticFiles {
         Ok(())
     }
 
+    pub fn add_file_data(&mut self, path: &Path, data: &[u8]) -> io::Result<()> {
+        if let Some((name, ext)) = name_and_ext(path) {
+            let from_name = format!("{}_{}", name, ext);
+            let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
+            self.write_static_file(&path, name, &data, &ext)?;
+            self.names.insert(from_name.clone(), to_name);
+            self.statics.insert(from_name);
+        }
+        Ok(())
+    }
+
     fn write_static_file(&mut self,
                          path: &Path,
                          name: &str,

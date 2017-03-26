@@ -4,7 +4,7 @@ extern crate ructe;
 use rsass::{OutputStyle, compile_scss};
 use ructe::{StaticFiles, compile_templates};
 use std::env;
-use std::fs::{File, create_dir_all};
+use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
@@ -33,11 +33,5 @@ fn add_static_sass(statics: &mut StaticFiles, src: &Path) -> io::Result<()> {
 
     let css = compile_scss(&scss_buf, OutputStyle::Compressed).unwrap();
 
-    // TODO Writing the css to an actual file should not be needed.
-    let css_dir = PathBuf::from(env::var("OUT_DIR").unwrap()).join("tmpcss");
-    create_dir_all(&css_dir)?;
-    let css_file = css_dir.join("style.css");
-    File::create(&css_file).and_then(|mut f| f.write(&css))?;
-
-    statics.add_file(&css_file)
+    statics.add_file_data("style.css".as_ref(), &css)
 }
