@@ -118,7 +118,7 @@ pub mod Template_syntax;
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -148,6 +148,7 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
 /// reference to each of those instances.
 pub struct StaticFiles {
     src: File,
+    names: BTreeMap<String, String>,
     statics: BTreeSet<String>,
 }
 
@@ -166,6 +167,7 @@ impl StaticFiles {
                                     "/src/statics_utils.rs")))?;
         Ok(StaticFiles {
                src: src,
+               names: BTreeMap::new(),
                statics: BTreeSet::new(),
            })
     }
@@ -188,9 +190,11 @@ impl StaticFiles {
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
-
+            let from_name = format!("{}_{}", name, ext);
+            let to_name = format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.write_static_file(&path, name, &buf, &ext)?;
-            self.statics.insert(format!("{}_{}", name, ext));
+            self.names.insert(from_name.clone(), to_name);
+            self.statics.insert(from_name);
         }
         Ok(())
     }
@@ -214,6 +218,10 @@ impl StaticFiles {
                content = content,
                hash = checksum_slug(&content),
                suf = suffix)
+    }
+
+    pub fn get_names(&self) -> &BTreeMap<String, String> {
+        &self.names
     }
 }
 
