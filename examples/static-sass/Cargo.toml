@@ -1,6 +1,6 @@
 [package]
 name = "statics"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 
 build = "src/build.rs"
