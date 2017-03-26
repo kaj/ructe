@@ -8,7 +8,7 @@ fn main() {
     page(&mut io::stdout()).unwrap();
     for s in statics::STATICS {
         println!("### /static/{}:", s.name);
-        io::stdout().write(s.content).unwrap();
+        io::stdout().write_all(s.content).unwrap();
     }
 }
 
