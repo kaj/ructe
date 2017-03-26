@@ -199,7 +199,10 @@ impl StaticFiles {
         Ok(())
     }
 
-    pub fn add_file_data(&mut self, path: &Path, data: &[u8]) -> io::Result<()> {
+    pub fn add_file_data(&mut self,
+                         path: &Path,
+                         data: &[u8])
+                         -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
