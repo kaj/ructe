@@ -105,6 +105,8 @@ extern crate md5;
 extern crate nom;
 #[macro_use]
 extern crate lazy_static;
+#[cfg(feature = "sass")]
+extern crate rsass;
 
 mod spacelike;
 mod expression;
@@ -211,6 +213,26 @@ impl StaticFiles {
             self.statics.insert(from_name);
         }
         Ok(())
+    }
+
+    #[cfg(feature = "sass")]
+    pub fn add_sass_file(&mut self, src: &Path) -> io::Result<()> {
+        use rsass::{OutputStyle, compile_scss};
+
+        // TODO Find any referenced files!
+        println!("cargo:rerun-if-changed={}", src.to_string_lossy());
+
+        let mut scss_buf = Vec::new();
+        // Define variables for all previously known static files.
+        for (x, y) in self.get_names() {
+            writeln!(scss_buf, "${}: {:?};", x, y)?;
+        }
+        let mut f = File::open(src)?;
+        f.read_to_end(&mut scss_buf)?;
+
+        let css = compile_scss(&scss_buf, OutputStyle::Compressed).unwrap();
+
+        self.add_file_data("style.css".as_ref(), &css)
     }
 
     fn write_static_file(&mut self,

@@ -10,8 +10,13 @@ keywords = ["template", "html"]
 readme = "README.md"
 license = "MIT/Apache-2.0"
 
+[features]
+sass = ["rsass"]
+
 [dependencies]
 base64 = "^0.3"
 lazy_static = "^0.2"
 md5 = "^0.3"
 nom = { version = "^2", features = ["verbose-errors"] }
+
+rsass = { version = "^0.1", optional = true }
