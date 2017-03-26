@@ -10,7 +10,7 @@
 //! but of course with rust types expressions instead of scala.
 //!
 //! A template consists of three basic parts:
-//! First a preamle of `use` statements, each prepended by an @ sign.
+//! First a preamble of `use` statements, each prepended by an @ sign.
 //! Secondly a declaration of the parameters the template takes.
 //! And third, the template body.
 //!
