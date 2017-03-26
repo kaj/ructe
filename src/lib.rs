@@ -201,6 +201,10 @@ impl StaticFiles {
         Ok(())
     }
 
+    /// Add a file by its name and content.
+    ///
+    /// The `path` parameter is used only to create a file name, the actual
+    /// content of the static file will be the `data` parameter.
     pub fn add_file_data(&mut self,
                          path: &Path,
                          data: &[u8])
@@ -215,6 +219,15 @@ impl StaticFiles {
         Ok(())
     }
 
+    /// Compile a sass file and add the resulting css.
+    ///
+    /// If `src` is `"somefile.sass"`, then that file will be copiled
+    /// with rsass (using the `Comressed` output style).
+    /// The result will be addes as if if was an existing
+    /// `"somefile.css"` file.
+    ///
+    /// This method is only available when ructe is built with the
+    /// "sass" feature.
     #[cfg(feature = "sass")]
     pub fn add_sass_file(&mut self, src: &Path) -> io::Result<()> {
         use rsass::{OutputStyle, compile_scss};
@@ -256,6 +269,23 @@ impl StaticFiles {
                suf = suffix)
     }
 
+    /// Get a mapping of names, from without has to with.
+    ///
+    /// ````
+    /// # use ructe::StaticFiles;
+    /// # use std::path::PathBuf;
+    /// # use std::vec::Vec;
+    /// # let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    /// #     .join("target").join("test-tmp");
+    /// let mut statics = StaticFiles::new(&p).unwrap();
+    /// statics.add_file_data("black.css".as_ref(), b"body{color:black}\n");
+    /// statics.add_file_data("blue.css".as_ref(), b"body{color:blue}\n");
+    /// assert_eq!(statics.get_names().iter()
+    ///                .map(|(a, b)| format!("{} -> {}", a, b))
+    ///                .collect::<Vec<_>>(),
+    ///            vec!["black_css -> black-r3rltVhW.css".to_string(),
+    ///                 "blue_css -> blue-GZGxfXag.css".to_string()])
+    /// ````
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
     }
