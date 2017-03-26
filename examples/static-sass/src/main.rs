@@ -26,7 +26,7 @@ mod test {
                     <head>\n    \
                     <title>Example with stylesheet</title>\n    \
                     <link rel=\"stylesheet\" \
-                    href=\"/static/style-uX6Opvce.css\" \
+                    href=\"/static/style-YntjOhkp.css\" \
                     type=\"text/css\"/>\n  \
                     </head>\n  \
                     <body>\n    \
@@ -40,14 +40,14 @@ mod test {
         use templates::statics::style_css;
         use std::str::from_utf8;
         assert_eq!(from_utf8(&style_css.content).unwrap(),
-                   "body{background:\"tiles-HWiVA8MP.jpg\"}\n");
+                   "body{background:\"burlap-oPfjAg2n.jpg\"}\n");
     }
 
     #[test]
     fn get_static_by_name() {
         use templates::statics::StaticFile;
-        assert_eq!(StaticFile::get("style-uX6Opvce.css").map(|s| s.name),
-                   Some("style-uX6Opvce.css"))
+        assert_eq!(StaticFile::get("style-YntjOhkp.css").map(|s| s.name),
+                   Some("style-YntjOhkp.css"))
     }
 
     #[test]
@@ -60,7 +60,7 @@ mod test {
     fn all_statics_known() {
         use templates::statics::STATICS;
         assert_eq!(STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-                   ["style-uX6Opvce.css", "tiles-HWiVA8MP.jpg"]);
+                   ["burlap-oPfjAg2n.jpg", "style-YntjOhkp.css"]);
     }
 
     fn r2s<Call>(call: Call) -> String
