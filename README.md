@@ -35,146 +35,35 @@ format can be seen below, and in
 ### Template format
 
 A template consists of three basic parts:
-First a preamle of `use` statements, each prepended by an @ sign.
+First a preamble of `use` statements, each prepended by an @ sign.
 Secondly a declaration of the parameters the template takes.
 And third, the template body.
 
+The full syntax is described [in the
+documentation](https://docs.rs/ructe/0.2.6/ructe/Template_syntax/index.html).
+A template may look something like this:
+
 ```
 @use any::rust::Type;
+@use templates::statics::style_css;
 
 @(name: &str, items: Vec<Type>)
 
 <html>
-   ...
+   <head>
+     <title>@name</title>
+     <link rel="stylesheet" href="/static/@style_css.name" type="text/css"/>
+   </head>
+   <body>
+     <h1>@name</h1>
+     <dl>
+     @for item in items {
+       <dt>@item.title()
+       <dd>@item.description()
+     }
+     </dl>
+   <body>
 </html>
-```
-
-The curly brackets, `{` and `}`, is used for blocks (see Loops,
-Conditionals, and Calling other templates below).
-To use them in the template body, they must be escaped as `@{` and
-`@}`.
-
-### Value expressions
-
-A parameter can be used in an expression preceded by an @ sign.
-
-```
-<h1>@name</h1>
-```
-
-If a parameter is a struct or a trait object, its fields or methods can
-be used, and if it is a callable, it can be called.
-
-```
-<p>The user @user.name has email @user.email.</p>
-```
-
-Standard function and macros can also be used, e.g. for specific
-formatting needs:
-
-```
-<p>The value is @format!("{:.1}", float_value).</p>
-```
-
-### Loops
-
-Rust-like loops are supported like this:
-
-```
-<ul>@for item in items {
-  <li>@item</li>
-}</ul>
-```
-
-Note that the thing to loop over (items, in the example) is a rust
-expression, while the contents of the block is template code.
-
-### Conditionals
-
-Rust-like conditionals are supported in a style similar to the loops:
-
-```
-@if items.is_empty() {
-  <p>There are no items.</p>
-}
-```
-
-Pattern matching let expressions are also supported, as well as an
-optional else part.
-
-```
-@if let Some(foo) = foo {
-  <p>Foo is @foo.</p>
-} else {
-  <p>There is no foo.</p>
-}
-```
-
-### Calling other templates
-
-While rust methods can be called as a simple expression, there is a
-special syntax for calling other templates:
-`@:template_name(template_arguments)`.
-Also, before calling a template, it has to be imported by a `use`
-statement.
-Templates are declared in a `templates` module.
-
-So, given something like this in `header.rs.html`:
-
-```
-@(title: &str)
-
-<head>
-  <title>@title</title>
-  <link rel="stylesheet" href="/my/style.css" type="text/css">
-</head>
-```
-
-It can be used like this:
-
-```
-@use templates::header;
-
-@()
-
-<html>
-  @:header("Example")
-  <body>
-    <h1>Example</h1>
-    <p>page content ...</p>
-  </body>
-</html>
-```
-
-It is also possible to send template blocks as parameters to templates.
-A structure similar to the above can be created by having something like
-this in `base_page.rs.html`:
-
-```
-@(title: &str, body: Content)
-
-<html>
-  <head>
-    <title>@title</title>
-    <link rel="stylesheet" href="/my/style.css" type="text/css">
-  </head>
-  <body>
-    <h1>@title</h1>
-    @:body()
-  </body>
-</html>
-```
-
-And use it like this:
-
-```
-@use templates::base_page;
-
-@()
-
-@:base_page("Example", {
-    <p>page content ...</p>
-})
 ```
 
 ## How to use ructe

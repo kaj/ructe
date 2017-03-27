@@ -144,7 +144,7 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
 /// generated static files, etc), use this struct.
 ///
 /// Each static file will be available as a
-/// [StaticFile](templates/statics/index.html) struct instance in
+/// [`StaticFile`](templates/statics/index.html) struct instance in
 /// your `templates::statics` module.
 /// Also, the const `STATICS` array in the same module will contain a
 /// reference to each of those instances.
@@ -194,7 +194,7 @@ impl StaticFiles {
             input.read_to_end(&mut buf)?;
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
-            self.write_static_file(&path, name, &buf, &ext)?;
+            self.write_static_file(path, name, &buf, ext)?;
             self.names.insert(from_name.clone(), to_name);
             self.statics.insert(from_name);
         }
@@ -405,9 +405,9 @@ fn show_errors<E>(out: &mut Write,
                   buf: &[u8],
                   result: nom::IResult<&[u8], E>,
                   prefix: &str) {
-    if let Some(errors) = prepare_errors(&buf, result) {
+    if let Some(errors) = prepare_errors(buf, result) {
         for &(ref kind, ref from, ref _to) in &errors {
-            show_error(out, &buf, *from, &get_message(kind), prefix);
+            show_error(out, buf, *from, &get_message(kind), prefix);
         }
     }
 }
@@ -438,7 +438,7 @@ fn show_error(out: &mut Write,
         .next()
         .and_then(|s| from_utf8(s).ok())
         .unwrap_or("(Failed to display line)");
-    let line_no = what_line(&buf, line_start);
+    let line_no = what_line(buf, line_start);
     let pos_in_line =
         from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
     writeln!(out,
