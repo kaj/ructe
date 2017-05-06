@@ -230,21 +230,37 @@ impl StaticFiles {
     /// "sass" feature.
     #[cfg(feature = "sass")]
     pub fn add_sass_file(&mut self, src: &Path) -> io::Result<()> {
-        use rsass::{OutputStyle, compile_scss};
+        use rsass::*;
+        use std::sync::Arc;
+        let mut scope = GlobalScope::new();
 
         // TODO Find any referenced files!
         println!("cargo:rerun-if-changed={}", src.to_string_lossy());
 
-        let mut scss_buf = Vec::new();
-        // Define variables for all previously known static files.
-        for (x, y) in self.get_names() {
-            writeln!(scss_buf, "${}: {:?};", x, y)?;
-        }
-        let mut f = File::open(src)?;
-        f.read_to_end(&mut scss_buf)?;
+        let existing_statics = Arc::new(self.get_names().clone());
+        scope.define_function("static_name",
+                              SassFunction::builtin(vec![("name".into(),
+                                                          Value::Null)],
+                                                    false,
+                                                    Arc::new(move |s| {
+            match s.get("name") {
+                Value::Literal(name, _) => {
+                    let name = name.replace('-', "_").replace('.', "_");
+                    for (n, v) in existing_statics.as_ref() {
+                        if name == *n {
+                            return Ok(Value::Literal(v.clone(), Quotes::Double));
+                        }
+                    }
+                    Err(Error::S(format!("Static file {} not found", name)))
+                }
+                name => Err(Error::badarg("string", &name)),
+            }
+        })));
 
-        let css = compile_scss(&scss_buf, OutputStyle::Compressed).unwrap();
-
+        let parsed = parse_scss_file(src).unwrap();
+        let style = OutputStyle::Compressed;
+        let file_context = FileContext::new();
+        let css = style.write_root(&parsed, &mut scope, file_context).unwrap();
         self.add_file_data("style.css".as_ref(), &css)
     }
 
