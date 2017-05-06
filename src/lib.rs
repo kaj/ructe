@@ -164,10 +164,7 @@ impl StaticFiles {
                "{}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
                                     "/src/statics_utils.rs")))?;
-        Ok(StaticFiles {
-               src: src,
-               statics: BTreeSet::new(),
-           })
+        Ok(StaticFiles { src: src, statics: BTreeSet::new() })
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
