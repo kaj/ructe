@@ -248,7 +248,8 @@ impl StaticFiles {
                     let name = name.replace('-', "_").replace('.', "_");
                     for (n, v) in existing_statics.as_ref() {
                         if name == *n {
-                            return Ok(Value::Literal(v.clone(), Quotes::Double));
+                            return Ok(Value::Literal(v.clone(),
+                                                     Quotes::Double));
                         }
                     }
                     Err(Error::S(format!("Static file {} not found", name)))
