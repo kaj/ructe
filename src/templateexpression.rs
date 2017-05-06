@@ -72,20 +72,13 @@ pub enum TemplateExpression {
     Comment,
     Text { text: String },
     Expression { expr: String },
-    ForLoop {
-        name: String,
-        expr: String,
-        body: Vec<TemplateExpression>,
-    },
+    ForLoop { name: String, expr: String, body: Vec<TemplateExpression> },
     IfBlock {
         expr: String,
         body: Vec<TemplateExpression>,
         else_body: Option<Vec<TemplateExpression>>,
     },
-    CallTemplate {
-        name: String,
-        args: Vec<TemplateArgument>,
-    },
+    CallTemplate { name: String, args: Vec<TemplateArgument> },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -123,13 +116,16 @@ impl TemplateExpression {
                         expr,
                         body.iter().map(|b| b.code()).collect::<String>())
             }
-            TemplateExpression::IfBlock { ref expr,
-                                          ref body,
-                                          ref else_body } => {
+            TemplateExpression::IfBlock {
+                ref expr,
+                ref body,
+                ref else_body,
+            } => {
                 format!("if {} {{\n{}}}{}\n",
                         expr,
                         body.iter().map(|b| b.code()).collect::<String>(),
-                        else_body.iter()
+                        else_body
+                            .iter()
                             .map(|ref b| {
                                      format!(" else {{\n{}}}",
                                              b.iter()

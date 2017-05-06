@@ -36,9 +36,9 @@ impl Template {
                name = name,
                type_args = type_args.0,
                args = self.args
-            .iter()
-            .map(|a| format!(", {}", a))
-            .collect::<String>(),
+                   .iter()
+                   .map(|a| format!(", {}", a))
+                   .collect::<String>(),
                type_spec = type_args.1,
                body = self.body.iter().map(|b| b.code()).collect::<String>())
     }
