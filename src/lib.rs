@@ -258,11 +258,11 @@ impl StaticFiles {
             }
         })));
 
-        let parsed = parse_scss_file(src).unwrap();
+        let scss = parse_scss_file(src).unwrap();
         let style = OutputStyle::Compressed;
         let file_context = FileContext::new();
-        let css = style.write_root(&parsed, &mut scope, file_context).unwrap();
-        self.add_file_data("style.css".as_ref(), &css)
+        let css = style.write_root(&scss, &mut scope, file_context).unwrap();
+        self.add_file_data(&src.with_extension("css"), &css)
     }
 
     fn write_static_file(&mut self,
