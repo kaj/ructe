@@ -54,7 +54,7 @@
 //! build = "src/build.rs"
 //!
 //! [build-dependencies]
-//! ructe = "^0.2"
+//! ructe = "^0.3"
 //! ```
 //!
 //! Then, in the build script, compile all templates found in the templates

@@ -40,7 +40,7 @@ Secondly a declaration of the parameters the template takes.
 And third, the template body.
 
 The full syntax is described [in the
-documentation](https://docs.rs/ructe/0.2.6/ructe/Template_syntax/index.html).
+documentation](https://docs.rs/ructe/0.3.0/ructe/Template_syntax/index.html).
 A template may look something like this:
 
 ```
