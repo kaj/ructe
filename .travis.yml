@@ -19,4 +19,5 @@ script:
   cargo build &&
   cargo test &&
   (cd examples/simple && cargo test) &&
-  (cd examples/statics && cargo test)
+  (cd examples/statics && cargo test) &&
+  (cd examples/static-sass && cargo test)

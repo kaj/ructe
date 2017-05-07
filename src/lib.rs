@@ -105,6 +105,8 @@ extern crate md5;
 extern crate nom;
 #[macro_use]
 extern crate lazy_static;
+#[cfg(feature = "sass")]
+extern crate rsass;
 
 mod spacelike;
 mod expression;
@@ -118,7 +120,7 @@ pub mod Template_syntax;
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -148,6 +150,7 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
 /// reference to each of those instances.
 pub struct StaticFiles {
     src: File,
+    names: BTreeMap<String, String>,
     statics: BTreeSet<String>,
 }
 
@@ -164,7 +167,11 @@ impl StaticFiles {
                "{}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
                                     "/src/statics_utils.rs")))?;
-        Ok(StaticFiles { src: src, statics: BTreeSet::new() })
+        Ok(StaticFiles {
+               src: src,
+               names: BTreeMap::new(),
+               statics: BTreeSet::new(),
+           })
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
@@ -185,11 +192,77 @@ impl StaticFiles {
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
-
+            let from_name = format!("{}_{}", name, ext);
+            let to_name = format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.write_static_file(path, name, &buf, ext)?;
-            self.statics.insert(format!("{}_{}", name, ext));
+            self.names.insert(from_name.clone(), to_name);
+            self.statics.insert(from_name);
         }
         Ok(())
+    }
+
+    /// Add a file by its name and content.
+    ///
+    /// The `path` parameter is used only to create a file name, the actual
+    /// content of the static file will be the `data` parameter.
+    pub fn add_file_data(&mut self,
+                         path: &Path,
+                         data: &[u8])
+                         -> io::Result<()> {
+        if let Some((name, ext)) = name_and_ext(path) {
+            let from_name = format!("{}_{}", name, ext);
+            let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
+            self.write_static_file(&path, name, &data, &ext)?;
+            self.names.insert(from_name.clone(), to_name);
+            self.statics.insert(from_name);
+        }
+        Ok(())
+    }
+
+    /// Compile a sass file and add the resulting css.
+    ///
+    /// If `src` is `"somefile.sass"`, then that file will be copiled
+    /// with rsass (using the `Comressed` output style).
+    /// The result will be addes as if if was an existing
+    /// `"somefile.css"` file.
+    ///
+    /// This method is only available when ructe is built with the
+    /// "sass" feature.
+    #[cfg(feature = "sass")]
+    pub fn add_sass_file(&mut self, src: &Path) -> io::Result<()> {
+        use rsass::*;
+        use std::sync::Arc;
+        let mut scope = GlobalScope::new();
+
+        // TODO Find any referenced files!
+        println!("cargo:rerun-if-changed={}", src.to_string_lossy());
+
+        let existing_statics = Arc::new(self.get_names().clone());
+        scope.define_function("static_name",
+                              SassFunction::builtin(vec![("name".into(),
+                                                          Value::Null)],
+                                                    false,
+                                                    Arc::new(move |s| {
+            match s.get("name") {
+                Value::Literal(name, _) => {
+                    let name = name.replace('-', "_").replace('.', "_");
+                    for (n, v) in existing_statics.as_ref() {
+                        if name == *n {
+                            return Ok(Value::Literal(v.clone(),
+                                                     Quotes::Double));
+                        }
+                    }
+                    Err(Error::S(format!("Static file {} not found", name)))
+                }
+                name => Err(Error::badarg("string", &name)),
+            }
+        })));
+
+        let parsed = parse_scss_file(src).unwrap();
+        let style = OutputStyle::Compressed;
+        let file_context = FileContext::new();
+        let css = style.write_root(&parsed, &mut scope, file_context).unwrap();
+        self.add_file_data("style.css".as_ref(), &css)
     }
 
     fn write_static_file(&mut self,
@@ -211,6 +284,27 @@ impl StaticFiles {
                content = content,
                hash = checksum_slug(&content),
                suf = suffix)
+    }
+
+    /// Get a mapping of names, from without has to with.
+    ///
+    /// ````
+    /// # use ructe::StaticFiles;
+    /// # use std::path::PathBuf;
+    /// # use std::vec::Vec;
+    /// # let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    /// #     .join("target").join("test-tmp");
+    /// let mut statics = StaticFiles::new(&p).unwrap();
+    /// statics.add_file_data("black.css".as_ref(), b"body{color:black}\n");
+    /// statics.add_file_data("blue.css".as_ref(), b"body{color:blue}\n");
+    /// assert_eq!(statics.get_names().iter()
+    ///                .map(|(a, b)| format!("{} -> {}", a, b))
+    ///                .collect::<Vec<_>>(),
+    ///            vec!["black_css -> black-r3rltVhW.css".to_string(),
+    ///                 "blue_css -> blue-GZGxfXag.css".to_string()])
+    /// ````
+    pub fn get_names(&self) -> &BTreeMap<String, String> {
+        &self.names
     }
 }
 
