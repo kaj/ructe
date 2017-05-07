@@ -1,6 +1,6 @@
 extern crate ructe;
 
-use ructe::{compile_templates, compile_static_files};
+use ructe::{compile_static_files, compile_templates};
 use std::env;
 use std::path::PathBuf;
 

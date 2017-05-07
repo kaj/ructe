@@ -1,4 +1,5 @@
 #![allow(dead_code)] // Most templates here are only used in tests.
+
 use std::io::{self, Write};
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
@@ -85,10 +86,7 @@ mod models {
 
 #[test]
 fn test_hello_fields() {
-    let user = models::User {
-        name: "Tom Puss",
-        email: "tom@example.nl",
-    };
+    let user = models::User { name: "Tom Puss", email: "tom@example.nl" };
     assert_eq!(r2s(|o| hello_fields(o, &user)),
                "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
                 tom@example.nl</p>\n");
@@ -96,10 +94,7 @@ fn test_hello_fields() {
 
 #[test]
 fn test_hello_method() {
-    let user = models::User {
-        name: "Tom Puss",
-        email: "tom@example.nl",
-    };
+    let user = models::User { name: "Tom Puss", email: "tom@example.nl" };
     assert_eq!(r2s(|o| hello_method(o, &user)),
                "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
                 <a href=\"mailto:tom@example.nl\">tom@example.nl</a></p>\n");
@@ -115,7 +110,8 @@ fn test_hello_code() {
 #[test]
 fn test_for_loop() {
     assert_eq!(r2s(|o| for_loop(o, &vec!["Hello", "World"])),
-               "<h1>Looped paragraphs</h1>\n\n  <p>Hello</p>\n\n  <p>World</p>\n");
+               "<h1>Looped paragraphs</h1>\n\n  \
+                <p>Hello</p>\n\n  <p>World</p>\n");
 }
 
 #[test]
