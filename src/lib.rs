@@ -368,6 +368,7 @@ fn handle_entries(f: &mut Write,
                   indir: &Path,
                   outdir: &Path)
                   -> io::Result<()> {
+    println!("cargo:rerun-if-changed={}", indir.to_string_lossy());
     let suffix = ".rs.html";
     for entry in try!(read_dir(indir)) {
         let entry = try!(entry);
