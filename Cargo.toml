@@ -1,13 +1,13 @@
 [package]
 name = "ructe"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
-description = "Rust Compiled Templates, a build-time template system"
+description = "Rust Compiled Templates, efficient type-safe templates."
 documentation = "https://docs.rs/ructe"
 repository = "https://github.com/kaj/ructe"
-categories = ["template-engine"]
-keywords = ["template", "html"]
 readme = "README.md"
+keywords = ["web", "templating", "html"]
+categories = ["template-engine", "web-programming"]
 license = "MIT/Apache-2.0"
 
 [features]
@@ -20,3 +20,6 @@ md5 = "^0.3"
 nom = { version = "^2", features = ["verbose-errors"] }
 
 rsass = { version = "^0.3.2", optional = true }
+
+[badges]
+travis-ci = { repository = "kaj/ructe" }
