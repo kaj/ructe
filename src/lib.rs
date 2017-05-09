@@ -120,7 +120,7 @@ pub mod Template_syntax;
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -149,9 +149,12 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
 /// Also, the const `STATICS` array in the same module will contain a
 /// reference to each of those instances.
 pub struct StaticFiles {
+    /// Rust source file `statics.rs` beeing written.
     src: File,
+    /// Maps rust names to public names (foo_jpg -> foo-abc123.jpg)
     names: BTreeMap<String, String>,
-    statics: BTreeSet<String>,
+    /// Maps public names to rust names (foo-abc123.jpg -> foo_jpg)
+    names_r: BTreeMap<String, String>,
 }
 
 impl StaticFiles {
@@ -170,7 +173,7 @@ impl StaticFiles {
         Ok(StaticFiles {
                src: src,
                names: BTreeMap::new(),
-               statics: BTreeSet::new(),
+               names_r: BTreeMap::new(),
            })
     }
 
@@ -195,8 +198,8 @@ impl StaticFiles {
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.write_static_file(path, name, &buf, ext)?;
-            self.names.insert(from_name.clone(), to_name);
-            self.statics.insert(from_name);
+            self.names.insert(from_name.clone(), to_name.clone());
+            self.names_r.insert(to_name, from_name.clone());
         }
         Ok(())
     }
@@ -213,8 +216,8 @@ impl StaticFiles {
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
             self.write_static_file(&path, name, &data, &ext)?;
-            self.names.insert(from_name.clone(), to_name);
-            self.statics.insert(from_name);
+            self.names.insert(from_name.clone(), to_name.clone());
+            self.names_r.insert(to_name, from_name.clone());
         }
         Ok(())
     }
@@ -286,7 +289,7 @@ impl StaticFiles {
                suf = suffix)
     }
 
-    /// Get a mapping of names, from without has to with.
+    /// Get a mapping of names, from without hash to with.
     ///
     /// ````
     /// # use ructe::StaticFiles;
@@ -316,9 +319,9 @@ impl Drop for StaticFiles {
         let _ = write!(self.src,
                        "\npub static STATICS: &'static [&'static StaticFile] \
                         = &[{}];\n",
-                       self.statics
+                       self.names_r
                            .iter()
-                           .map(|s| format!("&{}", s))
+                           .map(|s| format!("&{}", s.1))
                            .collect::<Vec<_>>()
                            .join(", "));
     }
