@@ -133,7 +133,7 @@ fn render<'mw, F>(res: Response<'mw>, do_render: F)
                   ->MiddlewareResult<'mw>
     where F: FnOnce(&mut Write) -> io::Result<()>
 {
-    let mut stream = try!(res.start());
+    let mut stream = res.start()?;
     match do_render(&mut stream) {
         Ok(()) => Ok(Halt(stream)),
         Err(e) => stream.bail(format!("Problem rendering template: {:?}", e))

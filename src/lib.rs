@@ -164,7 +164,7 @@ impl StaticFiles {
     /// The `outdir` should be the same as in the call to `compile_templates`.
     pub fn new(outdir: &Path) -> io::Result<Self> {
         let outdir = outdir.join("templates");
-        try!(create_dir_all(&outdir));
+        create_dir_all(&outdir)?;
         let mut src = File::create(outdir.join("statics.rs"))?;
         write!(src,
                "{}\n",
@@ -366,18 +366,18 @@ fn checksum_slug(data: &[u8]) -> String {
 /// all templates found in `indir`.
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
-        try!(write!(f,
-                    "pub mod templates {{\n\
-                     use std::io::{{self, Write}};\n\
-                     use std::fmt::Display;\n\n"));
+        write!(f,
+               "pub mod templates {{\n\
+                use std::io::{{self, Write}};\n\
+                use std::fmt::Display;\n\n")?;
 
         let outdir = outdir.join("templates");
-        try!(create_dir_all(&outdir));
+        create_dir_all(&outdir)?;
 
-        try!(handle_entries(&mut f, indir, &outdir));
+        handle_entries(&mut f, indir, &outdir)?;
 
         if outdir.join("statics.rs").exists() {
-            try!(write!(f, "pub mod statics;\n"));
+            write!(f, "pub mod statics;\n")?;
         }
 
         write!(f,
@@ -393,29 +393,27 @@ fn handle_entries(f: &mut Write,
                   -> io::Result<()> {
     println!("cargo:rerun-if-changed={}", indir.to_string_lossy());
     let suffix = ".rs.html";
-    for entry in try!(read_dir(indir)) {
-        let entry = try!(entry);
+    for entry in read_dir(indir)? {
+        let entry = entry?;
         let path = entry.path();
-        if try!(entry.file_type()).is_dir() {
+        if entry.file_type()?.is_dir() {
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
-                try!(create_dir_all(&outdir));
-                try!(File::create(outdir.join("mod.rs")).and_then(|mut f| {
-                    handle_entries(&mut f, &path, &outdir)
-                }));
-                try!(write!(f, "pub mod {name};\n\n", name = filename));
+                create_dir_all(&outdir)?;
+                File::create(outdir.join("mod.rs"))
+                    .and_then(|mut f| handle_entries(&mut f, &path, &outdir))?;
+                write!(f, "pub mod {name};\n\n", name = filename)?;
             }
 
         } else if let Some(filename) = entry.file_name().to_str() {
             if filename.ends_with(suffix) {
                 println!("cargo:rerun-if-changed={}", path.to_string_lossy());
                 let name = &filename[..filename.len() - suffix.len()];
-                if try!(handle_template(name, &path, &outdir)) {
-                    try!(write!(f,
-                                "mod template_{name};\npub use \
-                                 self::template_{name}\
-                                 ::{name};\n\n",
-                                name = name));
+                if handle_template(name, &path, &outdir)? {
+                    write!(f,
+                           "mod template_{name};\n\
+                            pub use self::template_{name}::{name};\n\n",
+                           name = name)?;
                 }
             }
         }
@@ -424,9 +422,9 @@ fn handle_entries(f: &mut Write,
 }
 
 fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
-    let mut input = try!(File::open(path));
+    let mut input = File::open(path)?;
     let mut buf = Vec::new();
-    try!(input.read_to_end(&mut buf));
+    input.read_to_end(&mut buf)?;
     match template(&buf) {
         Done(_, t) => {
             let fname = outdir.join(format!("template_{}.rs", name));

@@ -105,10 +105,10 @@ impl TemplateExpression {
         match *self {
             TemplateExpression::Comment => String::new(),
             TemplateExpression::Text { ref text } => {
-                format!("try!(write!(out, {:?}));\n", text)
+                format!("write!(out, {:?})?;\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("try!({}.to_html(out));\n", expr)
+                format!("{}.to_html(out)?;\n", expr)
             }
             TemplateExpression::ForLoop { ref name, ref expr, ref body } => {
                 format!("for {} in {} {{\n{}}}\n",
@@ -135,7 +135,7 @@ impl TemplateExpression {
                             .collect::<String>())
             }
             TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!("try!({}(out{}));\n",
+                format!("{}(out{})?;\n",
                         name,
                         args.iter()
                             .map(|b| format!(", {}", b))
