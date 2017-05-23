@@ -215,7 +215,7 @@ impl StaticFiles {
         if let Some((name, ext)) = name_and_ext(path) {
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
-            self.write_static_file(&path, name, &data, &ext)?;
+            self.write_static_buf(&path, name, &data, &ext)?;
             self.names.insert(from_name.clone(), to_name.clone());
             self.names_r.insert(to_name, from_name.clone());
         }
@@ -274,6 +274,26 @@ impl StaticFiles {
                          content: &[u8],
                          suffix: &str)
                          -> io::Result<()> {
+        write!(self.src,
+               "\n/// From {path:?}\n\
+                #[allow(non_upper_case_globals)]\n\
+                pub static {name}_{suf}: StaticFile = \
+                StaticFile {{\n  \
+                content: include_bytes!({path:?}),\n  \
+                name: \"{name}-{hash}.{suf}\",\n\
+                }};\n",
+               path = path,
+               name = name,
+               hash = checksum_slug(&content),
+               suf = suffix)
+    }
+
+    fn write_static_buf(&mut self,
+                        path: &Path,
+                        name: &str,
+                        content: &[u8],
+                        suffix: &str)
+                        -> io::Result<()> {
         write!(self.src,
                "\n/// From {path:?}\n\
                 #[allow(non_upper_case_globals)]\n\
@@ -380,8 +400,9 @@ fn handle_entries(f: &mut Write,
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
                 try!(create_dir_all(&outdir));
-                try!(File::create(outdir.join("mod.rs"))
-                    .and_then(|mut f| handle_entries(&mut f, &path, &outdir)));
+                try!(File::create(outdir.join("mod.rs")).and_then(|mut f| {
+                    handle_entries(&mut f, &path, &outdir)
+                }));
                 try!(write!(f, "pub mod {name};\n\n", name = filename));
             }
 
