@@ -107,6 +107,8 @@ extern crate nom;
 extern crate lazy_static;
 #[cfg(feature = "sass")]
 extern crate rsass;
+#[cfg(feature = "mime")]
+extern crate mime;
 
 mod spacelike;
 mod expression;
@@ -170,6 +172,12 @@ impl StaticFiles {
                "{}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
                                     "/src/statics_utils.rs")))?;
+        if cfg!(feature = "mime") {
+            write!(src,
+                   "{}\n",
+                   include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
+                                        "/src/statics_mime.rs")))?;
+        }
         Ok(StaticFiles {
                src: src,
                names: BTreeMap::new(),
@@ -281,11 +289,13 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: include_bytes!({path:?}),\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
+                _mime: StaticMime({mime:?}),\n\
                 }};\n",
                path = path,
                name = name,
                hash = checksum_slug(&content),
-               suf = suffix)
+               suf = suffix,
+               mime = mime_from_suffix(suffix))
     }
 
     fn write_static_buf(&mut self,
@@ -301,12 +311,14 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: &{content:?},\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
+                _mime: StaticMime({mime:?}),\n\
                 }};\n",
                path = path,
                name = name,
                content = content,
                hash = checksum_slug(&content),
-               suf = suffix)
+               suf = suffix,
+               mime = mime_from_suffix(suffix))
     }
 
     /// Get a mapping of names, from without hash to with.
@@ -328,6 +340,20 @@ impl StaticFiles {
     /// ````
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
+    }
+}
+
+fn mime_from_suffix(suffix: &str) -> &'static str {
+    // TODO This is just enough for some examples.  Need more types.
+    // Should probably look at content as well.
+    match suffix.to_lowercase().as_ref() {
+        "css" => "text/css",
+        "eot" => "application/vnd.ms-fontobject",
+        "jpg" | "jpeg" => "image/jpeg",
+        "js" =>  "application/javascript",
+        "png" => "image/png",
+        "woff" => "application/font-woff",
+        _ => "Application/OctetStream",
     }
 }
 

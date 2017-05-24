@@ -8,6 +8,7 @@
 pub struct StaticFile {
     pub content: &'static [u8],
     pub name: &'static str,
+    _mime: StaticMime,
 }
 
 #[allow(dead_code)]
@@ -21,3 +22,6 @@ impl StaticFile {
         }
     }
 }
+
+#[derive(Clone, Copy)]
+pub struct StaticMime(&'static str);
