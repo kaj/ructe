@@ -350,7 +350,7 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
         "css" => "text/css",
         "eot" => "application/vnd.ms-fontobject",
         "jpg" | "jpeg" => "image/jpeg",
-        "js" =>  "application/javascript",
+        "js" => "application/javascript",
         "png" => "image/png",
         "woff" => "application/font-woff",
         _ => "Application/OctetStream",
