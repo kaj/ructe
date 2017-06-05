@@ -19,7 +19,7 @@ lazy_static = "^0.2"
 md5 = "^0.3"
 nom = { version = "^2", features = ["verbose-errors"] }
 
-rsass = { version = "^0.3.2", optional = true }
+rsass = { version = "^0.3.4", optional = true }
 
 [badges]
 travis-ci = { repository = "kaj/ructe" }
