@@ -2,14 +2,12 @@ extern crate mime;
 use self::mime::Mime;
 
 impl StaticFile {
+    /// Get the mime type of this static file.
+    ///
+    /// Currently, this method parses a (static) string every time.
+    /// A future release of `mime` may support statically created
+    /// `Mime` structs, which will make this nicer.
     pub fn mime(&self) -> Mime {
-        (&self._mime).into()
-    }
-}
-
-impl<'a> Into<Mime> for &'a StaticMime {
-    fn into(self) -> Mime {
-        // TODO Should not need to parse all the time!
-        self.0.parse().unwrap()
+        self._mime.parse().unwrap()
     }
 }

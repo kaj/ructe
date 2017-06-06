@@ -290,7 +290,7 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: include_bytes!({path:?}),\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
-                _mime: StaticMime({mime:?}),\n\
+                _mime: {mime:?},\n\
                 }};\n",
                path = path,
                name = name,
@@ -312,7 +312,7 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: &{content:?},\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
-                _mime: StaticMime({mime:?}),\n\
+                _mime: {mime:?},\n\
                 }};\n",
                path = path,
                name = name,
