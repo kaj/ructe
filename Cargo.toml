@@ -12,6 +12,8 @@ license = "MIT/Apache-2.0"
 
 [features]
 sass = ["rsass"]
+mime02 = []
+mime03 = []
 
 [dependencies]
 base64 = "^0.3"

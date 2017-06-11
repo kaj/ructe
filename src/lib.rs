@@ -166,10 +166,63 @@ impl StaticFiles {
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
         let mut src = File::create(outdir.join("statics.rs"))?;
+        if cfg!(feature = "mime03") {
+            write!(src,
+                   "extern crate mime;\n\
+                    use self::mime::Mime;\n\n")?;
+        }
         write!(src,
-               "{}\n",
-               include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                    "/src/statics_utils.rs")))?;
+               "/// A static file has a name (so its url can be recognized) \
+                and the\n\
+                /// actual file contents.\n\
+                ///\n\
+                /// The name includes a short (48 bits as 8 base64 characters) \
+                hash of\n\
+                /// the content, to enable long-time caching of static \
+                resourses in\n\
+                /// the clients.\n\
+                #[allow(dead_code)]\n\
+                pub struct StaticFile {{\n    \
+                    pub content: &'static [u8],\n    \
+                    pub name: &'static str,\n")?;
+        if cfg!(feature = "mime02") {
+            write!(src, "    _mime: &'static str,\n")?;
+        }
+        if cfg!(feature = "mime03") {
+            write!(src, "    pub mime: &'static Mime,\n")?;
+        }
+        write!(src,
+               "}}\n\n\
+                #[allow(dead_code)]\n\
+                impl StaticFile {{\n    \
+                /// Get a single `StaticFile` by name, if it exists.\n    \
+                pub fn get(name: &str) -> Option<&'static Self> {{\n        \
+                if let Ok(pos) = STATICS.\
+                binary_search_by_key(&name, |s| s.name) {{\n            \
+                return Some(STATICS[pos]);\n        \
+                }} else {{\n            \
+                None\n        \
+                }}\n    \
+                }}\n\
+                }}\n")?;
+        if cfg!(feature = "mime02") {
+            write!(src,
+                   "extern crate mime;\n\
+                    use self::mime::Mime;\n\n\
+                    impl StaticFile {{\n    \
+                    /// Get the mime type of this static file.\n    \
+                    ///\n    \
+                    /// Currently, this method parses a (static) string every \
+                    time.\n    \
+                    /// A future release of `mime` may support statically \
+                    created\n    \
+                    /// `Mime` structs, which will make this nicer.\n    \
+                    #[allow(unused)]\n    \
+                    pub fn mime(&self) -> Mime {{\n        \
+                    self._mime.parse().unwrap()\n    \
+                    }}\n\
+                    }}\n")?;
+        }
         Ok(StaticFiles {
                src: src,
                names: BTreeMap::new(),
@@ -282,11 +335,13 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: include_bytes!({path:?}),\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
+                {mime}\
                 }};\n",
                path = path,
                name = name,
                hash = checksum_slug(&content),
-               suf = suffix)
+               suf = suffix,
+               mime = mime_arg(suffix))
     }
 
     fn write_static_buf(&mut self,
@@ -302,12 +357,14 @@ impl StaticFiles {
                 StaticFile {{\n  \
                 content: &{content:?},\n  \
                 name: \"{name}-{hash}.{suf}\",\n\
+                {mime}\
                 }};\n",
                path = path,
                name = name,
                content = content,
                hash = checksum_slug(&content),
-               suf = suffix)
+               suf = suffix,
+               mime = mime_arg(suffix))
     }
 
     /// Get a mapping of names, from without hash to with.
@@ -329,6 +386,54 @@ impl StaticFiles {
     /// ````
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
+    }
+}
+
+#[cfg(not(feature = "mime02"))]
+#[cfg(not(feature = "mime03"))]
+fn mime_arg(_: &str) -> String {
+    "".to_string()
+}
+#[cfg(feature = "mime02")]
+fn mime_arg(suffix: &str) -> String {
+    format!("_mime: {:?},\n", mime_from_suffix(suffix))
+}
+
+#[cfg(feature = "mime02")]
+//#[cfg(feature = "mime03")]
+fn mime_from_suffix(suffix: &str) -> &'static str {
+    // TODO This is just enough for some examples.  Need more types.
+    // Should probably look at content as well.
+    match suffix.to_lowercase().as_ref() {
+        "css" => "text/css",
+        "eot" => "application/vnd.ms-fontobject",
+        "jpg" | "jpeg" => "image/jpeg",
+        "js" => "application/javascript",
+        "png" => "image/png",
+        "woff" => "application/font-woff",
+        _ => "Application/OctetStream",
+    }
+}
+
+#[cfg(feature = "mime03")]
+fn mime_arg(suffix: &str) -> String {
+    format!("mime: &mime::{},\n", mime_from_suffix(suffix))
+}
+
+#[cfg(feature = "mime03")]
+fn mime_from_suffix(suffix: &str) -> &'static str {
+    // TODO This is just enough for some examples.  Need more types.
+    // Should probably look at content as well.
+    // This is limited to the constants that is defined in mime 0.3.
+    match suffix.to_lowercase().as_ref() {
+        "bmp" => "IMAGE_BMP",
+        "css" => "TEXT_CSS",
+        "gif" => "IMAGE_GIF",
+        "jpg" | "jpeg" => "IMAGE_JPEG",
+        "js" => "TEXT_JAVASCRIPT",
+        "json" => "APPLICATION_JSON",
+        "png" => "IMAGE_PNG",
+        _ => "APPLICATION_OCTET_STREAM",
     }
 }
 
@@ -508,18 +613,6 @@ pub mod templates {
     use std::fmt::Display;
     use std::io::{self, Write};
     include!("template_utils.rs");
-
-    /// Your `templates::statics` module will mirror this module.
-    ///
-    /// The name `ructe::templates::statics` should never be used.
-    /// Instead, you should use the module `templates::statics` created
-    /// when compiling your templates.
-    pub mod statics {
-        include!("statics_utils.rs");
-
-        /// An array of all known `StaticFile`s.
-        pub static STATICS: &'static [&'static StaticFile] = &[];
-    }
 
     #[test]
     fn encoded() {
