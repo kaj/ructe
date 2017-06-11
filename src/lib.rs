@@ -107,8 +107,6 @@ extern crate nom;
 extern crate lazy_static;
 #[cfg(feature = "sass")]
 extern crate rsass;
-#[cfg(feature = "mime")]
-extern crate mime;
 
 mod spacelike;
 mod expression;
@@ -172,7 +170,7 @@ impl StaticFiles {
                "{}\n",
                include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
                                     "/src/statics_utils.rs")))?;
-        if cfg!(feature = "mime") {
+        if cfg!(feature = "mime02") {
             write!(src,
                    "{}\n",
                    include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
