@@ -166,6 +166,11 @@ impl StaticFiles {
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
         let mut src = File::create(outdir.join("statics.rs"))?;
+        if cfg!(feature = "mime03") {
+            write!(src,
+                   "extern crate mime;\n\
+                    use self::mime::Mime;\n\n")?;
+        }
         write!(src,
                "/// A static file has a name (so its url can be recognized) \
                 and the\n\
@@ -182,6 +187,9 @@ impl StaticFiles {
                     pub name: &'static str,\n")?;
         if cfg!(feature = "mime02") {
             write!(src, "    _mime: &'static str,\n")?;
+        }
+        if cfg!(feature = "mime03") {
+            write!(src, "    pub mime: &'static Mime,\n")?;
         }
         write!(src,
                "}}\n\n\
@@ -382,6 +390,7 @@ impl StaticFiles {
 }
 
 #[cfg(not(feature = "mime02"))]
+#[cfg(not(feature = "mime03"))]
 fn mime_arg(_: &str) -> String {
     "".to_string()
 }
@@ -391,6 +400,7 @@ fn mime_arg(suffix: &str) -> String {
 }
 
 #[cfg(feature = "mime02")]
+//#[cfg(feature = "mime03")]
 fn mime_from_suffix(suffix: &str) -> &'static str {
     // TODO This is just enough for some examples.  Need more types.
     // Should probably look at content as well.
@@ -402,6 +412,28 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
         "png" => "image/png",
         "woff" => "application/font-woff",
         _ => "Application/OctetStream",
+    }
+}
+
+#[cfg(feature = "mime03")]
+fn mime_arg(suffix: &str) -> String {
+    format!("mime: &mime::{},\n", mime_from_suffix(suffix))
+}
+
+#[cfg(feature = "mime03")]
+fn mime_from_suffix(suffix: &str) -> &'static str {
+    // TODO This is just enough for some examples.  Need more types.
+    // Should probably look at content as well.
+    // This is limited to the constants that is defined in mime 0.3.
+    match suffix.to_lowercase().as_ref() {
+        "bmp" => "IMAGE_BMP",
+        "css" => "TEXT_CSS",
+        "gif" => "IMAGE_GIF",
+        "jpg" | "jpeg" => "IMAGE_JPEG",
+        "js" => "TEXT_JAVASCRIPT",
+        "json" => "APPLICATION_JSON",
+        "png" => "IMAGE_PNG",
+        _ => "APPLICATION_OCTET_STREAM",
     }
 }
 
