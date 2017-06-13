@@ -237,25 +237,26 @@ impl StaticFiles {
         println!("cargo:rerun-if-changed={}", src.to_string_lossy());
 
         let existing_statics = Arc::new(self.get_names().clone());
-        scope.define_function("static_name",
-                              SassFunction::builtin(vec![("name".into(),
-                                                          Value::Null)],
-                                                    false,
-                                                    Arc::new(move |s| {
-            match s.get("name") {
-                Value::Literal(name, _) => {
-                    let name = name.replace('-', "_").replace('.', "_");
-                    for (n, v) in existing_statics.as_ref() {
-                        if name == *n {
-                            return Ok(Value::Literal(v.clone(),
-                                                     Quotes::Double));
+        scope.define_function(
+            "static_name",
+            SassFunction::builtin(
+                vec![("name".into(), Value::Null)],
+                false,
+                Arc::new(move |s| match s.get("name") {
+                    Value::Literal(name, _) => {
+                        let name = name.replace('-', "_").replace('.', "_");
+                        for (n, v) in existing_statics.as_ref() {
+                            if name == *n {
+                                return Ok(Value::Literal(v.clone(),
+                                                         Quotes::Double));
+                            }
                         }
+                        Err(Error::S(format!("Static file {} not found", name)))
                     }
-                    Err(Error::S(format!("Static file {} not found", name)))
-                }
-                name => Err(Error::badarg("string", &name)),
-            }
-        })));
+                    name => Err(Error::badarg("string", &name)),
+                }),
+            ),
+        );
 
         let file_context = FileContext::new();
         let (file_context, src) = file_context.file(src);
@@ -538,7 +539,7 @@ fn show_error(out: &mut Write,
              msg,
              pos = pos_in_line,
              prefix = prefix)
-            .unwrap();
+        .unwrap();
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {
