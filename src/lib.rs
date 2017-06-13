@@ -9,8 +9,8 @@
 //! 2. No extra latency on the first request, since the template are
 //! compiled before starting the program.
 //! 3. The template files does not have to be distributed / installed.
-//! Templates are included in the compiled program, which can be a
-//! single binary.
+//! Templates (and static assets) are included in the compiled
+//! program, which can be a single binary.
 //!
 //! The template syntax, which is inspired by
 //! [Twirl](https://github.com/playframework/twirl), the Scala-based
@@ -343,7 +343,6 @@ fn mime_arg(suffix: &str) -> String {
 }
 
 #[cfg(feature = "mime02")]
-//#[cfg(feature = "mime03")]
 fn mime_from_suffix(suffix: &str) -> &'static str {
     // TODO This is just enough for some examples.  Need more types.
     // Should probably look at content as well.
@@ -555,6 +554,44 @@ fn what_line(buf: &[u8], pos: usize) -> usize {
 pub mod templates {
     use std::fmt::Display;
     use std::io::{self, Write};
+
+    /// Documentation mock.  The real Mime type comes from the `mime` crate.
+    pub type Mime = u8; // mock
+
+    /// A static file has a name (so its url can be recognized) and the
+    /// actual file contents.
+    ///
+    /// The content-type (mime type) of the file is available as a
+    /// static field when building ructe with the `mime03` feature or
+    /// as the return value of a method when building ructe with the
+    /// `mime02` feature (in `mime` version 0.2.x, a Mime cannot be
+    /// defined as a part of a const static value.
+    pub struct StaticFile {
+        /// The actual static file contents.
+        pub content: &'static [u8],
+        /// The file name as used in a url, including a short (48 bits
+        /// as 8 base64 characters) hash of the content, to enable
+        /// long-time caching of static resourses in the clients.
+        pub name: &'static str,
+        /// The Mime type of this static file, as defined in the mime
+        /// crate version 0.3.x.
+        #[cfg(feature = "mime03")]
+        pub mime: &'static Mime,
+    }
+
+    impl StaticFile {
+        /// Get the mime type of this static file.
+        ///
+        /// Currently, this method parses a (static) string every time.
+        /// A future release of `mime` may support statically created
+        /// `Mime` structs, which will make this nicer.
+        #[allow(unused)]
+        #[cfg(feature = "mime02")]
+        pub fn mime(&self) -> Mime {
+            unimplemented!()
+        }
+    }
+
     include!("template_utils.rs");
 
     #[test]
