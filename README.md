@@ -10,7 +10,7 @@ as well as plain old jsp.
 
 ## Design criteria
 
-* As many errors as possible should be caught in compile-time.
+* As many errors as possible should be caught at compile-time.
 * A compiled binary should include all the template code it needs,
   no need to read template files at runtime.
 * Compilation may take time, running should be fast.
@@ -24,13 +24,9 @@ as well as plain old jsp.
 
 ## Current status
 
-This is currently more of a proof of concept that anyting ready for
-actual production use.
-That said, it actually does work; templates can be transpiled to rust
-functions, which are then compiled and can be called from rust code.
-The template syntax is not stable yet, but some examples in the current
-format can be seen below, and in
-[examples/simple/templates](examples/simple/templates).
+Ructes is in a rather early stage, but does work;
+templates can be transpiled to rust functions, which are then compiled
+and can be called from rust code.
 
 ### Template format
 
@@ -41,6 +37,8 @@ And third, the template body.
 
 The full syntax is described [in the
 documentation](https://docs.rs/ructe/0.3.0/ructe/Template_syntax/index.html).
+Some examples can be seen in
+[examples/simple/templates](examples/simple/templates).
 A template may look something like this:
 
 ```
@@ -69,61 +67,10 @@ A template may look something like this:
 ## How to use ructe
 
 Ructe compiles your templates to rust code that should be compiled with
-your other rust code, so it needs to be called before compiling.
-Assuming you use [cargo](http://doc.crates.io/), it can be done like
-this:
-First, specify a build script and ructe as a build dependency in
-`Cargo.toml`:
-
-```toml
-build = "src/build.rs"
-
-[build-dependencies]
-ructe = "^0.2"
-```
-
-Then, in the build script, compile all templates found in the templates
-directory and put the output where cargo tells it to:
-
-```rust
-extern crate ructe;
-
-use ructe::compile_templates;
-use std::env;
-use std::path::PathBuf;
-
-fn main() {
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let in_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("templates");
-    compile_templates(&in_dir, &out_dir).expect("foo");
-}
-```
-
-And finally, include and use the generated code in your code.
-The file `templates.rs` will contain `mod templates { ... }`,
-so I just include it in my `main.rs`:
-
-```rust
-include!(concat!(env!("OUT_DIR"), "/templates.rs"));
-```
-
-When calling a template, the arguments declared in the template will be
-prepended by an argument that is the `std::io::Write` to write the
-output to.
-It can be a `Vec<u8>` as a buffer or for testing, or an actual output
-destination.
-The return value of a template is `std::io::Result<()>`, which should be
-`Ok(())` unless writing to the destination fails.
-
-```rust
-#[test]
-fn test_hello() {
-    let mut buf = Vec::new();
-    templates::hello(&mut buf, "World").unwrap();
-    assert_eq!(from_utf8(&buf).unwrap(), "<h1>Hello World!</h1>\n");
-}
-```
+your other rust code, so it needs to be called before compiling,
+as described [in "How to use ructe", in the
+documentation](https://docs.rs/ructe/0.3.0/ructe/#how-to-use-ructe).
+There are also [examples](examples).
 
 When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
 rendering function that looks like this:
