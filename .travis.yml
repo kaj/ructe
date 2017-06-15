@@ -13,7 +13,8 @@ matrix:
   include:
    - rust: stable
      env: TASK=rustfmt
-     script: cargo install -f rustfmt && PATH=${HOME}/.cargo/bin:$PATH cargo fmt
+     before_script: cargo install -f rustfmt --vers=0.8.6
+     script: PATH=${HOME}/.cargo/bin:$PATH cargo fmt
   allow_failures:
     - rust: nightly
 script:
