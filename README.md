@@ -45,7 +45,7 @@ A template may look something like this:
 @use any::rust::Type;
 @use templates::statics::style_css;
 
-@(name: &str, items: Vec<Type>)
+@(name: &str, items: &[Type])
 
 <html>
    <head>

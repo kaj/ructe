@@ -17,7 +17,7 @@
 //! ```text
 //! @use any::rust::Type;
 //!
-//! @(name: &str, items: Vec<Type>)
+//! @(name: &str, items: &[Type])
 //!
 //! <html>
 //!    ...
