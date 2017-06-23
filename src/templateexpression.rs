@@ -314,6 +314,8 @@ mod test {
                     :   1:@if { oops }\n\
                     :         ^ Expected expression\n\
                     :   1:@if { oops }\n\
+                    :         ^ Expected rust expression\n\
+                    :   1:@if { oops }\n\
                     :         ^ Alt\n")
     }
 

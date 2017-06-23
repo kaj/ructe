@@ -52,9 +52,9 @@ extern crate rsass;
 
 pub mod How_to_use_ructe;
 mod spacelike;
-mod expression;
 #[macro_use]
 mod errors;
+mod expression;
 #[macro_use]
 mod templateexpression;
 mod template;

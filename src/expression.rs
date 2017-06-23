@@ -4,7 +4,8 @@ use std::str::from_utf8;
 named!(pub expression<&[u8], String>,
        do_parse!(
            pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) >>
-           name: alt!(rust_name |
+           name: return_error!(err_str!("Expected rust expression"),
+                              alt!(rust_name |
                       map!(digit, |d| from_utf8(d).unwrap().to_string()) |
                       do_parse!(char!('"') >>
                                 text: escaped!(is_not!("\"\\"),
@@ -14,7 +15,7 @@ named!(pub expression<&[u8], String>,
                                          from_utf8(text).unwrap()))) |
                       do_parse!(tag!("[") >> args: comma_expressions >>
                                 tag!("]") >>
-                                (format!("[{}]", args)))) >>
+                                (format!("[{}]", args))))) >>
            post: fold_many0!(
                alt_complete!(
                    do_parse!(tag!(".") >> post: expression >>
@@ -52,9 +53,7 @@ named!(pub rust_name<&[u8], String>,
 #[cfg(test)]
 mod test {
     use expression::expression;
-    use nom::ErrorKind;
-    use nom::IResult::{Done, Error};
-    use nom::verbose_errors::Err;
+    use nom::IResult::Done;
 
     #[test]
     fn expression_1() {
@@ -122,12 +121,33 @@ mod test {
     }
 
     #[test]
-    fn non_expressions() {
-        // non-expressions
-        // TODO See if I can get nom to produce more helpfull errors.
-        for input in &[&b".foo"[..], &b" foo"[..], &b"()"[..]] {
-            assert_eq!(expression(*input),
-                       Error(Err::Position(ErrorKind::Alt, *input)))
-        }
+    fn non_expression_a() {
+        assert_eq!(expression_error_message(b".foo"),
+                   ":   1:.foo\n\
+                    :     ^ Expected rust expression\n\
+                    :   1:.foo\n\
+                    :     ^ Alt\n");
+    }
+    #[test]
+    fn non_expression_b() {
+        assert_eq!(expression_error_message(b" foo"),
+                   ":   1: foo\n\
+                    :     ^ Expected rust expression\n\
+                    :   1: foo\n\
+                    :     ^ Alt\n");
+    }
+    #[test]
+    fn non_expression_c() {
+        assert_eq!(expression_error_message(b"()"),
+                   ":   1:()\n\
+                    :     ^ Expected rust expression\n\
+                    :   1:()\n\
+                    :     ^ Alt\n");
+    }
+    fn expression_error_message(input: &[u8]) -> String {
+        use super::super::show_errors;
+        let mut buf = Vec::new();
+        show_errors(&mut buf, input, expression(input), ":");
+        String::from_utf8(buf).unwrap()
     }
 }
