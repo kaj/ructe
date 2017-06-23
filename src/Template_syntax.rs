@@ -1,6 +1,4 @@
 // This module is only a chapter of the documentation.
-// TODO It is copied from README.md, most of it should be removed from there.
-// ... but only after this is released and available at docs.rs.
 //! This module describes the template syntax used by ructe.
 //!
 //! The syntax is inspired by
