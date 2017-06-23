@@ -36,7 +36,7 @@ Secondly a declaration of the parameters the template takes.
 And third, the template body.
 
 The full syntax is described [in the
-documentation](https://docs.rs/ructe/0.3.0/ructe/Template_syntax/index.html).
+documentation](https://docs.rs/ructe/~0.3/ructe/Template_syntax/index.html).
 Some examples can be seen in
 [examples/simple/templates](examples/simple/templates).
 A template may look something like this:
@@ -69,7 +69,7 @@ A template may look something like this:
 Ructe compiles your templates to rust code that should be compiled with
 your other rust code, so it needs to be called before compiling,
 as described [in "How to use ructe", in the
-documentation](https://docs.rs/ructe/0.3.0/ructe/#how-to-use-ructe).
+documentation](https://docs.rs/ructe/~0.3/ructe/#how-to-use-ructe).
 There are also [examples](examples).
 
 When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
