@@ -13,6 +13,9 @@ named!(pub expression<&[u8], String>,
                                 char!('"') >>
                                 (format!("\"{}\"",
                                          from_utf8(text).unwrap()))) |
+                      do_parse!(tag!("(") >> args: comma_expressions >>
+                                tag!(")") >>
+                                (format!("({})", args))) |
                       do_parse!(tag!("[") >> args: comma_expressions >>
                                 tag!("]") >>
                                 (format!("[{}]", args))))) >>

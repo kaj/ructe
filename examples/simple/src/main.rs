@@ -53,6 +53,13 @@ fn test_list_destructure() {
 }
 
 #[test]
+fn test_list_destructure_2() {
+    assert_eq!(r2s(|o| list_destructure_2(o)),
+               "\n    <p>Rasmus is 44 years old.</p>\n\n    \
+                <p>Mike is 36 years old.</p>\n");
+}
+
+#[test]
 fn test_uselist() {
     assert_eq!(r2s(|o| uselist(o)),
                "<h1>Two items</h1>\n\

@@ -84,6 +84,15 @@ pub mod b_Loops {
     //!     <p>@n: @item</p>
     //! }
     //! ```
+    //!
+    //! It is also possible to loop over a literal array (which may be
+    //! an array of tuples), as long as you do it by reference:
+    //!
+    //! ```text
+    //! @for &(name, age) in &[("Rasmus", 44), ("Mike", 36)] {
+    //!     <p>@name is @age years old.</p>
+    //! }
+    //! ```
 }
 
 pub mod c_Conditionals {
