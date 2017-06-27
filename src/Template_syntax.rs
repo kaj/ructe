@@ -74,6 +74,16 @@ pub mod b_Loops {
     //!
     //! Note that the thing to loop over (items, in the example) is a rust
     //! expression, while the contents of the block is template code.
+    //!
+    //! If items is a slice of tuples (or really, anything that is
+    //! iterable yielding tuples), it is possible to deconstruct the
+    //! tuples into separate values directly:
+    //!
+    //! ```text
+    //! @for (n, item) in items.iter().enumerate() {
+    //!     <p>@n: @item</p>
+    //! }
+    //! ```
 }
 
 pub mod c_Conditionals {
