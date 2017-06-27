@@ -39,7 +39,7 @@ named!(pub expression<&[u8], String>,
                }) >>
            (format!("{}{}{}", from_utf8(pre).unwrap(), name, post))));
 
-named!(comma_expressions<&[u8], String>,
+named!(pub comma_expressions<&[u8], String>,
        map!(separated_list!(tag!(", "), expression),
             |list: Vec<_>| list.join(", ")));
 

@@ -46,6 +46,13 @@ fn test_list() {
 }
 
 #[test]
+fn test_list_destructure() {
+    assert_eq!(r2s(|o| list_destructure(o, &["foo", "bar"])),
+               "<ul>\n  \n    <li>0: foo</li>\n  \n    \
+                <li>1: bar</li>\n  </ul>\n");
+}
+
+#[test]
 fn test_uselist() {
     assert_eq!(r2s(|o| uselist(o)),
                "<h1>Two items</h1>\n\

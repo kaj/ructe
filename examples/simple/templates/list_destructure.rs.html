@@ -1,0 +1,7 @@
+@(items: &[&str])
+
+<ul>
+  @for (n, item) in items.iter().enumerate() {
+    <li>@n: @item</li>
+  }
+</ul>
