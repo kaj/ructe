@@ -1,3 +1,4 @@
+use engine;
 use expression::rust_name;
 use spacelike::spacelike;
 use std::io::{self, Write};
@@ -6,42 +7,15 @@ use templateexpression::{TemplateExpression, template_expression};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
-    preamble: Vec<String>,
-    args: Vec<String>,
-    body: Vec<TemplateExpression>,
+    pub preamble: Vec<String>,
+    pub args: Vec<String>,
+    pub body: Vec<TemplateExpression>,
 }
 
 impl Template {
+    #[deprecated(note = "use instead: engine::write_rust(out, &self, name, \"templates\")")]
     pub fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
-        write!(out,
-               "use std::io::{{self, Write}};\n\
-                #[allow(unused)]\n\
-                use ::templates::{{Html,ToHtml}};\n")?;
-        for l in &self.preamble {
-            write!(out, "{};\n", l)?;
-        }
-        let type_args = if self.args.contains(&"content: Content".to_owned()) {
-            ("<Content>",
-             "\nwhere Content: FnOnce(&mut Write) \
-              -> io::Result<()>")
-        } else {
-            ("", "")
-        };
-        write!(out,
-               "\n\
-                pub fn {name}{type_args}(out: &mut Write{args})\n\
-                -> io::Result<()> {type_spec}{{\n\
-                {body}\
-                Ok(())\n\
-                }}\n",
-               name = name,
-               type_args = type_args.0,
-               args = self.args
-                   .iter()
-                   .map(|a| format!(", {}", a))
-                   .collect::<String>(),
-               type_spec = type_args.1,
-               body = self.body.iter().map(|b| b.code()).collect::<String>())
+        engine::write_rust(out, &self, name, "templates")
     }
 }
 
