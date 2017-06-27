@@ -141,10 +141,10 @@ mod test {
     }
     #[test]
     fn non_expression_c() {
-        assert_eq!(expression_error_message(b"()"),
-                   ":   1:()\n\
+        assert_eq!(expression_error_message(b"(+)"),
+                   ":   1:(+)\n\
                     :     ^ Expected rust expression\n\
-                    :   1:()\n\
+                    :   1:(+)\n\
                     :     ^ Alt\n");
     }
     fn expression_error_message(input: &[u8]) -> String {
