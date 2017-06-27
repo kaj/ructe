@@ -58,7 +58,7 @@ pub mod a_Value_expressions {
 }
 
 pub mod b_Loops {
-    //! A ructe `@for` loop works works just as a rust `for` loop,
+    //! A ructe `@for` loop works just as a rust `for` loop,
     //! iterating over anything that implements `std::iter::IntoIterator`,
     //! such as a `Vec` or a slice.
     //!
