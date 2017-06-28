@@ -1,4 +1,4 @@
-use expression::{expression, rust_name};
+use expression::{comma_expressions, expression, rust_name};
 use spacelike::{comment, spacelike};
 use std::fmt::{self, Display};
 use std::str::from_utf8;
@@ -188,8 +188,18 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                    }))) |
                Some(b"for") => do_parse!(
                    spacelike >>
-                   name: return_error!(err_str!("Expected loop variable name"),
-                                       rust_name) >>
+                   name: return_error!(
+                       err_str!("Expected loop variable name \
+                                 or destructuring tuple"),
+                       alt!(rust_name |
+                            do_parse!(pre: opt!(char!('&')) >>
+                                      tag!("(") >>
+                                      args: comma_expressions >>
+                                      tag!(")") >>
+                                      (format!("{}({})",
+                                               pre.unwrap_or(' '),
+                                               args)))
+                            )) >>
                    spacelike >>
                    return_error!(err_str!("Expected \"in\""), tag!("in")) >>
                    spacelike >>

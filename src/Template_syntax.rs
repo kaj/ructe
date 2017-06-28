@@ -74,6 +74,25 @@ pub mod b_Loops {
     //!
     //! Note that the thing to loop over (items, in the example) is a rust
     //! expression, while the contents of the block is template code.
+    //!
+    //! If items is a slice of tuples (or really, anything that is
+    //! iterable yielding tuples), it is possible to deconstruct the
+    //! tuples into separate values directly:
+    //!
+    //! ```text
+    //! @for (n, item) in items.iter().enumerate() {
+    //!     <p>@n: @item</p>
+    //! }
+    //! ```
+    //!
+    //! It is also possible to loop over a literal array (which may be
+    //! an array of tuples), as long as you do it by reference:
+    //!
+    //! ```text
+    //! @for &(name, age) in &[("Rasmus", 44), ("Mike", 36)] {
+    //!     <p>@name is @age years old.</p>
+    //! }
+    //! ```
 }
 
 pub mod c_Conditionals {

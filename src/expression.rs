@@ -13,6 +13,9 @@ named!(pub expression<&[u8], String>,
                                 char!('"') >>
                                 (format!("\"{}\"",
                                          from_utf8(text).unwrap()))) |
+                      do_parse!(tag!("(") >> args: comma_expressions >>
+                                tag!(")") >>
+                                (format!("({})", args))) |
                       do_parse!(tag!("[") >> args: comma_expressions >>
                                 tag!("]") >>
                                 (format!("[{}]", args))))) >>
@@ -39,7 +42,7 @@ named!(pub expression<&[u8], String>,
                }) >>
            (format!("{}{}{}", from_utf8(pre).unwrap(), name, post))));
 
-named!(comma_expressions<&[u8], String>,
+named!(pub comma_expressions<&[u8], String>,
        map!(separated_list!(tag!(", "), expression),
             |list: Vec<_>| list.join(", ")));
 
@@ -138,10 +141,10 @@ mod test {
     }
     #[test]
     fn non_expression_c() {
-        assert_eq!(expression_error_message(b"()"),
-                   ":   1:()\n\
+        assert_eq!(expression_error_message(b"(+)"),
+                   ":   1:(+)\n\
                     :     ^ Expected rust expression\n\
-                    :   1:()\n\
+                    :   1:(+)\n\
                     :     ^ Alt\n");
     }
     fn expression_error_message(input: &[u8]) -> String {
