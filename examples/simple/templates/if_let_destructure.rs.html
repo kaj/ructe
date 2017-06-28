@@ -1,0 +1,3 @@
+@(item: Option<(u32, u32)>)
+
+<p>@if let Some((a, b)) = item { We have @a and @b } else { Got nothing }</p>

@@ -40,6 +40,23 @@ fn test_hello_args_two() {
 }
 
 #[test]
+fn test_if_let_some() {
+    assert_eq!(r2s(|o| if_let(o, Some("thing"))),
+               "<p> The item is thing </p>\n")
+}
+#[test]
+fn test_if_let_none() {
+    assert_eq!(r2s(|o| if_let(o, None)),
+               "<p> Got nothing </p>\n")
+}
+
+#[test]
+fn test_if_let_destructure() {
+    assert_eq!(r2s(|o| if_let_destructure(o, Some((47, 11)))),
+               "<p> We have 47 and 11 </p>\n")
+}
+
+#[test]
 fn test_list() {
     assert_eq!(r2s(|o| list(o, &["foo", "bar"])),
                "<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n");
