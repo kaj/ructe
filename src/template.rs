@@ -2,6 +2,7 @@ use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
 use templateexpression::{TemplateExpression, template_expression};
+use expression::rust_name;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
@@ -68,7 +69,25 @@ named!(pub template<&[u8], Template>,
 named!(end_of_file<&[u8], ()>,
        value!((), eof!()));
 
-// TODO Actually parse arguments!
 named!(formal_argument<&[u8], String>,
-       map!(is_not!(",)"),
-            |raw| from_utf8(raw).unwrap().to_string()));
+       map!(recognize!(do_parse!(rust_name >> spacelike >>
+                            char!(':') >> spacelike >>
+                            type_expression >>
+                                 ())),
+            |a| from_utf8(a).unwrap().to_string()));
+
+named!(type_expression<&[u8], ()>,
+       do_parse!(
+           alt!(tag!("&") | tag!("")) >>
+           return_error!(err_str!("Expected rust type expression"),
+                         alt!(map!(rust_name, |_| ()) |
+                              do_parse!(tag!("[") >> type_expression >> tag!("]") >>
+                                        ()) |
+                              do_parse!(tag!("(") >> comma_type_expressions >>
+                                        tag!(")") >>
+                                        ()))) >>
+           opt!(do_parse!(tag!("<") >> comma_type_expressions >> tag!(">") >> ())) >>
+           ()));
+
+named!(pub comma_type_expressions<&[u8], ()>,
+       map!(separated_list!(tag!(", "), type_expression), |_| ()));
