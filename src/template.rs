@@ -1,8 +1,8 @@
+use expression::rust_name;
 use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
 use templateexpression::{TemplateExpression, template_expression};
-use expression::rust_name;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
@@ -81,12 +81,14 @@ named!(type_expression<&[u8], ()>,
            alt!(tag!("&") | tag!("")) >>
            return_error!(err_str!("Expected rust type expression"),
                          alt!(map!(rust_name, |_| ()) |
-                              do_parse!(tag!("[") >> type_expression >> tag!("]") >>
+                              do_parse!(tag!("[") >> type_expression >>
+                                        tag!("]") >>
                                         ()) |
                               do_parse!(tag!("(") >> comma_type_expressions >>
                                         tag!(")") >>
                                         ()))) >>
-           opt!(do_parse!(tag!("<") >> comma_type_expressions >> tag!(">") >> ())) >>
+           opt!(do_parse!(tag!("<") >> comma_type_expressions >> tag!(">") >>
+                          ())) >>
            ()));
 
 named!(pub comma_type_expressions<&[u8], ()>,
