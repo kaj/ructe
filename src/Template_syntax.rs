@@ -196,7 +196,3 @@ pub mod d_Calling_other_templates {
     //! })
     //! ```
 }
-#[cfg(doc_test)]
-pub fn test_template(code: &str) {
-    // ok
-}
