@@ -94,8 +94,55 @@ pub mod b_Content_types {
 }
 
 pub mod c_Iron {
-    //! TODO: Write this section
+    //! How to serve static files with the Iron web framework.
+    //!
+    //! Somewhere (maybe in `main`), you probably create a router.
+    //! To add a static handler could look something like this:
+    //!
+    //! ```ignore
+    //! // Somewhere (maybe in main) you create a router
+    //! let mut router = Router::new();
+    //! // Among the routes, you add this:
+    //! router.get("/static/:name", static_file, "static_file");
+    //! // Go on to start an Iron server with the router
+    //! ```
+    //!
+    //! Then the actual handler needs to be implemented.
+    //! Here's one implementation.
+    //!
+    //! ```ignore
+    //! fn static_file(req: &mut Request) -> IronResult<Response> {
+    //!     // Extract the requested file name from the router
+    //!     let router = req.extensions.get::<Router>().expect("router");
+    //!     let name = router.find("name").expect("name");
+    //!     // If the static files exists, serve it
+    //!     if let Some(data) = statics::StaticFile::get(name) {
+    //!         Ok(Response::with((status::Ok, data.mime(), data.content)))
+    //!     } else {
+    //!         debug!("Static file {} not found", name);
+    //!         Ok(Response::with((
+    //!             status::NotFound,
+    //!             mime!(Text / Plain),
+    //!             "not found",
+    //!         )))
+    //!     }
+    //! }
+    //! ```
+    //!
+    //! This implementation uses the `mime02` feature of ructe.
+    //! Relevant parts of `Cargo.toml` might look like this:
+    //!
+    //! ```toml
+    //! [build-dependencies]
+    //! ructe = { version = "^0.3.2", features = ["sass", "mime02"] }
+    //!
+    //! [dependencies]
+    //! iron = "^0.5.1"
+    //! router = "^0.5.1"
+    //! mime = "0.2.6"
+    //! ```
 }
+
 pub mod d_Nickel {
     //! TODO: Write this section
 }
