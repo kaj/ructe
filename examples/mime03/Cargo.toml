@@ -9,4 +9,4 @@ build = "src/build.rs"
 ructe = { path = "../..", features = ["mime03"] }
 
 [dependencies]
-mime = "0.3.1"
+mime = "~0.3"

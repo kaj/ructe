@@ -90,7 +90,79 @@ pub mod a_Overview {
 }
 
 pub mod b_Content_types {
-    //! TODO: Write this section
+    //! How to get the content type of static files.
+    //!
+    //! Ructe has support for making the content-type of each static
+    //! file availiable using the
+    //! [mime](https://crates.io/crates/mime) crate.
+    //! Since mime version 0.3.0 was a breaking change of how the
+    //! `mime::Mime` type was implemented, and both Nickel and Iron
+    //! currently require the old version (0.2.x), ructe provides
+    //! support for both mime 0.2.x and mime 0.3.x with separate
+    //! feature flags.
+    //!
+    //! # Mime 0.2.x
+    //!
+    //! To use the mime 0.2.x support, enable the `mime02` feature and
+    //! add mime 0.2.x as a dependency:
+    //!
+    //! ```toml
+    //! [build-dependencies]
+    //! ructe = { version = "^0.3.2", features = ["mime02"] }
+    //!
+    //! [dependencies]
+    //! mime = "~0.2"
+    //! ```
+    //!
+    //! A `Mime` as implemented in `mime` version 0.2.x cannot be
+    //! created statically, so instead a `StaticFile` provides
+    //! `pub fn mime(&self) -> Mime`.
+    //!
+    //! ```
+    //! # // Test and doc even without the feature, so mock functionality.
+    //! # pub mod templates { pub mod statics {
+    //! # pub struct FakeFile;
+    //! # impl FakeFile { pub fn mime(&self) -> &'static str { "image/png" } }
+    //! # pub static image_png: FakeFile = FakeFile;
+    //! # }}
+    //! use templates::statics::image_png;
+    //!
+    //! # fn main() {
+    //! assert_eq!(format!("Type is {}", image_png.mime()),
+    //!            "Type is image/png");
+    //! # }
+    //! ```
+    //!
+    //! # Mime 0.3.x
+    //!
+    //! To use the mime 0.3.x support, enable the `mime3` feature and
+    //! add mime 0.3.x as a dependency:
+    //!
+    //! ```toml
+    //! [build-dependencies]
+    //! ructe = { version = "^0.3.2", features = ["mime03"] }
+    //!
+    //! [dependencies]
+    //! mime = "~0.3"
+    //! ```
+    //!
+    //! From version 0.3, the `mime` crates supports creating const
+    //! static `Mime` objects, so with this feature, a `StaticFile`
+    //! simply has a `pub mime: &'static Mime` field.
+    //!
+    //! ```
+    //! # // Test and doc even without the feature, so mock functionality.
+    //! # pub mod templates { pub mod statics {
+    //! # pub struct FakeFile { pub mime: &'static str }
+    //! # pub static image_png: FakeFile = FakeFile { mime: "image/png", };
+    //! # }}
+    //! use templates::statics::image_png;
+    //!
+    //! # fn main() {
+    //! assert_eq!(format!("Type is {}", image_png.mime),
+    //!            "Type is image/png");
+    //! # }
+    //! ```
 }
 
 pub mod c_Iron {
