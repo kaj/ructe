@@ -126,7 +126,7 @@ impl TemplateExpression {
                         body.iter().map(|b| b.code()).collect::<String>(),
                         else_body
                             .iter()
-                            .map(|ref b| {
+                            .map(|b| {
                                      format!(" else {{\n{}}}",
                                              b.iter()
                                                  .map(|b| b.code())

@@ -210,8 +210,8 @@ impl StaticFiles {
                          -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
             let from_name = format!("{}_{}", name, ext);
-            let to_name = format!("{}-{}.{}", name, checksum_slug(&data), &ext);
-            self.write_static_buf(&path, name, &data, &ext)?;
+            let to_name = format!("{}-{}.{}", name, checksum_slug(data), &ext);
+            self.write_static_buf(path, name, data, ext)?;
             self.names.insert(from_name.clone(), to_name.clone());
             self.names_r.insert(to_name, from_name.clone());
         }
@@ -283,7 +283,7 @@ impl StaticFiles {
                 }};\n",
                path = path,
                name = name,
-               hash = checksum_slug(&content),
+               hash = checksum_slug(content),
                suf = suffix,
                mime = mime_arg(suffix))
     }
@@ -306,7 +306,7 @@ impl StaticFiles {
                path = path,
                name = name,
                content = content,
-               hash = checksum_slug(&content),
+               hash = checksum_slug(content),
                suf = suffix,
                mime = mime_arg(suffix))
     }
@@ -458,7 +458,7 @@ fn handle_entries(f: &mut Write,
             if filename.ends_with(suffix) {
                 println!("cargo:rerun-if-changed={}", path.to_string_lossy());
                 let name = &filename[..filename.len() - suffix.len()];
-                if handle_template(name, &path, &outdir)? {
+                if handle_template(name, &path, outdir)? {
                     write!(f,
                            "mod template_{name};\n\
                             pub use self::template_{name}::{name};\n\n",
