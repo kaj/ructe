@@ -216,5 +216,55 @@ pub mod c_Iron {
 }
 
 pub mod d_Nickel {
-    //! TODO: Write this section
+    //! How to serve static files with the Nickel framework.
+    //!
+    //! Somewhere (maybe in `main`), you probably create a Nickel server.
+    //! To add a static handler could look something like this:
+    //!
+    //! ```ignore
+    //! // Somewhere (maybe in main) you create a Nickel server
+    //! let mut server = Nickel::new();
+    //! // Among the routes, you add this:
+    //! server.get("/static/:name.:ext", static_file);
+    //! // Then you add more routes and start the server as usual
+    //! ```
+    //!
+    //! Then the actual handler needs to be implemented.
+    //! Here's one implementation.
+    //!
+    //! ```ignore
+    //! fn static_file<'mw>(req: &mut Request,
+    //!                     mut res: Response<'mw>)
+    //!                     -> MiddlewareResult<'mw> {
+    //!
+    //!     if let (Some(name), Some(ext)) =
+    //!            (req.param("name"), req.param("ext"))
+    //!     {
+    //!         use templates::statics::StaticFile;
+    //!         if let Some(s) = StaticFile::get(&format!("{}.{}", name, ext)) {
+    //!             res.set(ContentType(s.mime()));
+    //!             res.set(Expires(HttpDate(now() + Duration::days(300))));
+    //!             return res.send(s.content);
+    //!         }
+    //!     }
+    //!     res.error(StatusCode::NotFound, "Not found")
+    //! }
+    //! ```
+    //!
+    //! This implementation uses the `mime02` feature of ructe.
+    //! Relevant parts of `Cargo.toml` might look like this:
+    //!
+    //! ```toml
+    //! [build-dependencies]
+    //! ructe = { version = "^0.3.2", features = ["mime02"] }
+    //!
+    //! [dependencies]
+    //! nickel = "~0.10"
+    //! hyper = "~0.10"
+    //! time = "*"
+    //! mime = "~0.2"
+    //! ```
+    //!
+    //! There is a full example as `examples/nickel` in
+    //! [the ructe repository](https://github.com/kaj/ructe/).
 }
