@@ -15,6 +15,12 @@ matrix:
      env: TASK=rustfmt
      before_script: cargo install -f rustfmt --vers=0.8.6
      script: PATH=${HOME}/.cargo/bin:$PATH cargo fmt
+   - rust: stable
+     env: TASK=iron
+     script: cd examples/iron && cargo test
+   - rust: stable
+     env: TASK=nickel
+     script: cd examples/nickel && cargo test
   allow_failures:
     - rust: nightly
 script:
@@ -23,5 +29,4 @@ script:
   cargo test &&
   (cd examples/simple && cargo test) &&
   (cd examples/statics && cargo test) &&
-  (cd examples/static-sass && cargo test) &&
-  (cd examples/nickel && cargo test)
+  (cd examples/static-sass && cargo test)
