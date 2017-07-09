@@ -23,4 +23,5 @@ script:
   cargo test &&
   (cd examples/simple && cargo test) &&
   (cd examples/statics && cargo test) &&
-  (cd examples/static-sass && cargo test)
+  (cd examples/static-sass && cargo test) &&
+  (cd examples/nickel && cargo test)
