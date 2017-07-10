@@ -213,6 +213,9 @@ pub mod c_Iron {
     //! router = "^0.5.1"
     //! mime = "0.2.6"
     //! ```
+    //!
+    //! There is a full example as `examples/iron` in
+    //! [the ructe repository](https://github.com/kaj/ructe/).
 }
 
 pub mod d_Nickel {
