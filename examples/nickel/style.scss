@@ -1,0 +1,20 @@
+html {
+    background: url(static_name("burlap.jpg"));
+}
+
+body {
+    background: rgba(255, 255, 255, 0.7);
+    border: solid 1px #530;
+    border-radius: 1em;
+    margin: 2em auto 0;
+    max-width: 30em;
+    padding: 1em;
+}
+
+p { margin: 0; }
+p + p { margin-top: 1em; }
+
+img {
+    width: 100%;
+    height: auto;
+}

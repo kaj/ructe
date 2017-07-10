@@ -59,6 +59,7 @@ mod expression;
 mod templateexpression;
 mod template;
 pub mod Template_syntax;
+pub mod Using_static_files;
 
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
