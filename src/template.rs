@@ -22,8 +22,8 @@ impl Template {
 named!(pub template<&[u8], Template>,
        do_parse!(
            spacelike >>
-           preamble: many0!(do_parse!(tag!("@") >>
-                                      code: is_not!(";()") >>
+           preamble: many0!(do_parse!(tag!("@") >> not!(char!('(')) >>
+                                      code: is_not!(";") >>
                                       tag!(";") >>
                                       spacelike >>
                                       (from_utf8(code).unwrap().to_string())
