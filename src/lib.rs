@@ -69,7 +69,9 @@ use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
 use std::collections::BTreeMap;
 use std::env;
+use std::error::Error;
 use std::ffi::OsString;
+use std::fmt;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
@@ -516,7 +518,15 @@ pub fn traverse_dir<E: RenderEngine>(
 
         if name.ends_with(conf.suffix) {
             let old_len = buf.len();
-            File::open(&path)?.read_to_end(&mut buf)?;
+            match File::open(&path) {
+                Ok(f) => f,
+                Err(e) => {
+                    return Err(wrap_err(
+                        e,
+                        format!("Error while opening {:?}", path),
+                    ))
+                }
+            }.read_to_end(&mut buf)?;
 
             if let Some(tpl) = (conf.parser)(&buf, &path) {
                 let name = &name[..name.len() - conf.suffix.len()];
@@ -528,6 +538,38 @@ pub fn traverse_dir<E: RenderEngine>(
     }
 
     Ok(())
+}
+
+fn wrap_err(err: io::Error, msg: String) -> io::Error {
+    io::Error::new(err.kind(), ErrorWrapper::new(err, msg))
+}
+
+#[derive(Debug)]
+pub struct ErrorWrapper<T: Error> {
+    description: String,
+    inner: T,
+}
+
+impl<T: Error> ErrorWrapper<T> {
+    pub fn new(err: T, msg: String) -> Self {
+        ErrorWrapper { description: msg, inner: err }
+    }
+}
+
+impl<T: Error> Error for ErrorWrapper<T> {
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        Some(&self.inner)
+    }
+}
+
+impl<T: Error> fmt::Display for ErrorWrapper<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description)
+    }
 }
 
 fn show_errors<E>(out: &mut Write,
