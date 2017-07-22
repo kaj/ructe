@@ -23,8 +23,7 @@ named!(pub template<&[u8], Template>,
        do_parse!(
            spacelike >>
            preamble: many0!(do_parse!(tag!("@") >> not!(char!('(')) >>
-                                      code: is_not!(";") >>
-                                      tag!(";") >>
+                                      code: is_not!("\n") >>
                                       spacelike >>
                                       (from_utf8(code).unwrap().to_string())
                                       )) >>

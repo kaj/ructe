@@ -104,7 +104,7 @@ pub fn write_rust(
     )?;
 
     for l in &tpl.preamble {
-        write!(out, "{};\n", l)?;
+        writeln!(out, "{}", l)?;
     }
 
     let type_args = if tpl.args.contains(&"content: Content".to_owned()) {
