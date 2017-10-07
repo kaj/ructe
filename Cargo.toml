@@ -19,7 +19,7 @@ mime03 = []
 base64 = "^0.7.0"
 lazy_static = "^0.2"
 md5 = "^0.3"
-nom = { version = "^2", features = ["verbose-errors"] }
+nom = { version = "^3.2", features = ["verbose-errors"] }
 
 rsass = { version = "^0.3.4", optional = true }
 
