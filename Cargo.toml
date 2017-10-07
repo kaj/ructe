@@ -1,6 +1,6 @@
 [package]
 name = "ructe"
-version = "0.3.4"
+version = "0.3.5-PRE"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 description = "Rust Compiled Templates, efficient type-safe templates."
 documentation = "https://docs.rs/ructe"
@@ -16,7 +16,7 @@ mime02 = []
 mime03 = []
 
 [dependencies]
-base64 = "^0.3"
+base64 = "^0.7.0"
 lazy_static = "^0.2"
 md5 = "^0.3"
 nom = { version = "^2", features = ["verbose-errors"] }
