@@ -1,0 +1,9 @@
+[package]
+name = "prelude"
+version = "0.1.0"
+authors = ["Jörg Sommer <joerg@alea.gnuu.de>"]
+
+build = "build.rs"
+
+[build-dependencies]
+ructe = { path = "../.." }

@@ -52,6 +52,7 @@ extern crate rsass;
 
 pub mod How_to_use_ructe;
 mod spacelike;
+mod engine;
 #[macro_use]
 mod errors;
 mod expression;
@@ -61,15 +62,21 @@ mod template;
 pub mod Template_syntax;
 pub mod Using_static_files;
 
+pub use engine::{RenderEngine, TEMPLATE_UTILS};
+use engine::Engine;
 use errors::get_error;
 use nom::{ErrorKind, prepare_errors};
 use nom::IResult::*;
 use std::collections::BTreeMap;
+use std::env;
+use std::error::Error;
+use std::ffi::OsString;
+use std::fmt;
 use std::fs::{File, create_dir_all, read_dir};
 use std::io::{self, Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::from_utf8;
-use template::template;
+pub use template::Template;
 
 /// Create a `statics` module inside `outdir`, containing static file data
 /// for all files in `indir`.
@@ -411,83 +418,157 @@ fn checksum_slug(data: &[u8]) -> String {
     base64::encode_config(&md5::compute(data)[..6], base64::URL_SAFE)
 }
 
+pub struct TraverseConf<'a> {
+    pub suffix: &'a str,
+    pub prelude_name: &'a OsString,
+    pub parser: &'a Fn(&[u8], &Path) -> Option<Template>,
+}
+
+pub fn parse_and_report_cargo(buf: &[u8], path: &Path) -> Option<Template> {
+    match template::template(&buf) {
+        Done(_, tpl) => {
+            println!("cargo:rerun-if-changed={}", path.display());
+            Some(tpl)
+        }
+        result => {
+            println!("cargo:warning=Template parse error in {:?}:", path);
+            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
+
+            None
+        }
+    }
+}
 
 /// Create a `templates` module in `outdir` containing rust code for
 /// all templates found in `indir`.
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
-    File::create(outdir.join("templates.rs")).and_then(|mut f| {
-        write!(f,
-               "pub mod templates {{\n\
-                use std::io::{{self, Write}};\n\
-                use std::fmt::Display;\n\n")?;
+    let conf = TraverseConf {
+        suffix: ".rs.html",
+        prelude_name: &OsString::new(),
+        parser: &parse_and_report_cargo,
+    };
 
-        let outdir = outdir.join("templates");
-        create_dir_all(&outdir)?;
+    let en = Engine::new(outdir, "templates")?;
+    if outdir.join("templates").join("statics.rs").exists() {
+        en.add_mod("statics")?;
+    }
 
-        handle_entries(&mut f, indir, &outdir)?;
-
-        if outdir.join("statics.rs").exists() {
-            write!(f, "pub mod statics;\n")?;
-        }
-
-        write!(f,
-               "{}\n}}\n",
-               include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                    "/src/template_utils.rs")))
-    })
+    traverse_dir(indir, &en, &conf, &[])
 }
 
-fn handle_entries(f: &mut Write,
-                  indir: &Path,
-                  outdir: &Path)
-                  -> io::Result<()> {
-    println!("cargo:rerun-if-changed={}", indir.to_string_lossy());
-    let suffix = ".rs.html";
-    for entry in read_dir(indir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if entry.file_type()?.is_dir() {
-            if let Some(filename) = entry.file_name().to_str() {
-                let outdir = outdir.join(filename);
-                create_dir_all(&outdir)?;
-                File::create(outdir.join("mod.rs"))
-                    .and_then(|mut f| handle_entries(&mut f, &path, &outdir))?;
-                write!(f, "pub mod {name};\n\n", name = filename)?;
-            }
+pub fn compile_templates_cargo(tmpl_dir: &str) -> io::Result<()> {
+    let outdir = PathBuf::from(env::var("OUT_DIR").expect(
+        "Environment variable OUT_DIR not set by cargo",
+    ));
 
-        } else if let Some(filename) = entry.file_name().to_str() {
-            if filename.ends_with(suffix) {
-                println!("cargo:rerun-if-changed={}", path.to_string_lossy());
-                let name = &filename[..filename.len() - suffix.len()];
-                if handle_template(name, &path, outdir)? {
-                    write!(f,
-                           "mod template_{name};\n\
-                            pub use self::template_{name}::{name};\n\n",
-                           name = name)?;
-                }
-            }
+    let indir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect(
+        "Environment variable CARGO_MANIFEST_DIR not set by cargo",
+    )).join(tmpl_dir);
+
+    let conf = TraverseConf {
+        suffix: ".rs.html",
+        prelude_name: &OsString::from("_prelude.rs.html"),
+        parser: &parse_and_report_cargo,
+    };
+
+    let en = Engine::new(&outdir, tmpl_dir)?;
+    if outdir.join(tmpl_dir).join("statics.rs").exists() {
+        en.add_mod("statics")?;
+    }
+
+    traverse_dir(&indir, &en, &conf, &[])
+}
+
+pub fn traverse_dir<E: RenderEngine>(
+    dir: &Path,
+    en: &E,
+    conf: &TraverseConf,
+    prelude: &[u8],
+) -> io::Result<()> {
+    let mut buf = Vec::from(prelude);
+    if conf.prelude_name.len() > 0 {
+        if let Ok(mut f) = File::open(dir.join(conf.prelude_name)) {
+            f.read_to_end(&mut buf)?;
         }
     }
+
+    for e in dir.read_dir()? {
+        let e = e?;
+        let path = e.path();
+        let file_name = e.file_name();
+        if file_name == *conf.prelude_name {
+            continue;
+        }
+        let name = match file_name.to_str() {
+            Some(x) => x,
+            _ => {
+                let msg = format!(
+                    "Broken file name {} in {:?}",
+                    e.file_name().to_string_lossy(),
+                    path
+                );
+                return Err(io::Error::new(io::ErrorKind::Other, msg));
+            }
+        };
+
+        if path.is_dir() {
+            traverse_dir(&path, &*en.sublevel(name)?, conf, &buf)?;
+            continue;
+        }
+
+        if name.ends_with(conf.suffix) {
+            let old_len = buf.len();
+            match File::open(&path) {
+                Ok(f) => f,
+                Err(e) => {
+                    return Err(wrap_err(
+                        e,
+                        format!("Error while opening {:?}", path),
+                    ))
+                }
+            }.read_to_end(&mut buf)?;
+
+            if let Some(tpl) = (conf.parser)(&buf, &path) {
+                let name = &name[..name.len() - conf.suffix.len()];
+                en.render(name, &tpl)?;
+            }
+
+            buf.truncate(old_len);
+        }
+    }
+
     Ok(())
 }
 
-fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
-    let mut input = File::open(path)?;
-    let mut buf = Vec::new();
-    input.read_to_end(&mut buf)?;
-    match template(&buf) {
-        Done(_, t) => {
-            let fname = outdir.join(format!("template_{}.rs", name));
-            File::create(fname).and_then(|mut f| t.write_rust(&mut f, name))?;
-            Ok(true)
-        }
-        result => {
-            println!("cargo:warning=\
-                      Template parse error in {:?}:",
-                     path);
-            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
-            Ok(false)
-        }
+fn wrap_err(err: io::Error, msg: String) -> io::Error {
+    io::Error::new(err.kind(), ErrorWrapper::new(err, msg))
+}
+
+#[derive(Debug)]
+pub struct ErrorWrapper<T: Error> {
+    description: String,
+    inner: T,
+}
+
+impl<T: Error> ErrorWrapper<T> {
+    pub fn new(err: T, msg: String) -> Self {
+        ErrorWrapper { description: msg, inner: err }
+    }
+}
+
+impl<T: Error> Error for ErrorWrapper<T> {
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        Some(&self.inner)
+    }
+}
+
+impl<T: Error> fmt::Display for ErrorWrapper<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description)
     }
 }
 

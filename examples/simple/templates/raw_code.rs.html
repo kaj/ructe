@@ -1,0 +1,19 @@
+@(foo: &ToHtml, bar: &ToHtml)
+
+@@let val_42 = "42";
+@@
+@@let write_42 = |my_out: &mut Write| -> io::Result<()> {
+@@    write!(my_out, "{}", val_42)
+@@};
+
+<h2>@foo</h2>
+@bar
+<p>@:write_42()</p>
+@@match String::from_utf8(b"TEST".to_vec()) {
+@@  Ok(val) => {
+@val
+@@  },
+@@  Err(err) => {
+Sad :( There was an error <em>@err</em>
+@@  },
+@@}

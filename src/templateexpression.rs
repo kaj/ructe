@@ -71,6 +71,7 @@ macro_rules! my_many_till(
 pub enum TemplateExpression {
     Comment,
     Text { text: String },
+    Raw { text: String },
     Expression { expr: String },
     ForLoop { name: String, expr: String, body: Vec<TemplateExpression> },
     IfBlock {
@@ -107,6 +108,7 @@ impl TemplateExpression {
             TemplateExpression::Text { ref text } => {
                 format!("write!(out, {:?})?;\n", text)
             }
+            TemplateExpression::Raw { ref text } => text.to_owned(),
             TemplateExpression::Expression { ref expr } => {
                 format!("{}.to_html(out)?;\n", expr)
             }
@@ -150,7 +152,7 @@ named!(pub template_expression<&[u8], TemplateExpression>,
            err_str!("In expression starting here"),
            switch!(
                opt!(preceded!(tag!("@"),
-                              alt!(tag!(":") | tag!("{") | tag!("}") |
+                              alt!(tag!(":") | tag!("{") | tag!("}") | tag!("@") |
                                    terminated!(
                                        alt!(tag!("if") |
                                             tag!("for")),
@@ -171,6 +173,10 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                Some(b"}") => value!(TemplateExpression::Text {
                    text: "}}".to_string()
                }) |
+               Some(b"@") => do_parse!(
+                   text: take_until_and_consume!("\n") >>
+                   (TemplateExpression::Raw { text: from_utf8(text).unwrap().to_string() + "\n" })
+               ) |
                Some(b"if") => return_error!(
                    err_str!("Error in conditional expression:"),
                    do_parse!(
