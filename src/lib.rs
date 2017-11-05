@@ -241,15 +241,15 @@ impl StaticFiles {
         scope.define_function(
             "static_name",
             SassFunction::builtin(
-                vec![("name".into(), Value::Null)],
+                vec![("name".into(), sass::Value::Null)],
                 false,
                 Arc::new(move |s| match s.get("name") {
-                    Value::Literal(name, _) => {
+                    css::Value::Literal(name, _) => {
                         let name = name.replace('-', "_").replace('.', "_");
                         for (n, v) in existing_statics.as_ref() {
                             if name == *n {
-                                return Ok(Value::Literal(v.clone(),
-                                                         Quotes::Double));
+                                return Ok(css::Value::Literal(v.clone(),
+                                                              Quotes::Double));
                             }
                         }
                         Err(Error::S(format!("Static file {} not found", name)))
