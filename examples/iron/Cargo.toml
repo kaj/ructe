@@ -1,6 +1,6 @@
 [package]
-name = "homesite"
-version = "0.3.4"
+name = "iron-ructe"
+version = "0.3.6"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 
 build = "src/build.rs"
