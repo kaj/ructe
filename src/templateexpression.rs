@@ -4,7 +4,7 @@ use std::fmt::{self, Display};
 use std::str::from_utf8;
 
 /// Copied from nom, but fixed for
-/// https://github.com/Geal/nom/issues/463
+/// <https://github.com/Geal/nom/issues/463>
 ///
 /// This should be removed when a fix for that is released from nom.
 macro_rules! my_many_till(
@@ -235,8 +235,8 @@ named!(template_block<&[u8], Vec<TemplateExpression>>,
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
-                 |body| TemplateArgument::Body(body)) |
-            map!(expression, |expr| TemplateArgument::Rust(expr))));
+                 TemplateArgument::Body) |
+            map!(expression, TemplateArgument::Rust)));
 
 named!(cond_expression<&[u8], String>,
        switch!(opt!(tag!("let")),
