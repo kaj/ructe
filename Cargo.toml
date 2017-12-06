@@ -16,7 +16,7 @@ mime02 = []
 mime03 = []
 
 [dependencies]
-base64 = "^0.7.0"
+base64 = "^0.8.0"
 lazy_static = "1.0"
 md5 = "^0.3"
 nom = { version = "^3.2", features = ["verbose-errors"] }
