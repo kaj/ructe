@@ -35,7 +35,7 @@ fn test_hello_encodes_args() {
 
 #[test]
 fn test_hello_args_two() {
-    assert_eq!(r2s(|o| hello_args_two(o, 56, "prime".to_string(), false)),
+    assert_eq!(r2s(|o| hello_args_two(o, 56, "prime", false)),
                "<p class=\"foo\" data-n=\"56\">Is 56 a prime? false!</p>\n");
 }
 

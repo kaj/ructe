@@ -15,6 +15,8 @@ impl Template {
     pub fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
         write!(out,
                "use std::io::{{self, Write}};\n\
+                #[cfg_attr(feature=\"cargo-clippy\", \
+                allow(useless_attribute))]\n\
                 #[allow(unused)]\n\
                 use ::templates::{{Html,ToHtml}};\n")?;
         for l in &self.preamble {

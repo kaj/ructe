@@ -1,7 +1,7 @@
 @use templates::hello;
 @use templates::hello_code;
 
-@(foo: &ToHtml)
+@(body: &ToHtml)
 
 @:hello()
-@:hello_code(&"foo", foo)
+@:hello_code(&"foo", body)
