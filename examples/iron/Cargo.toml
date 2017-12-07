@@ -1,6 +1,6 @@
 [package]
 name = "iron-ructe"
-version = "0.3.6"
+version = "0.3.8"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 
 build = "src/build.rs"
