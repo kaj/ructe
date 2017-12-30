@@ -18,8 +18,10 @@ matrix:
       - export PATH="$PATH:$HOME/.cargo/bin"
       - CFG_RELEASE_CHANNEL=nightly cargo install -f rustfmt-nightly
      script:
-      - cargo fmt -- --unstable-features --write-mode=diff
-      - cd examples/simple && cargo fmt -- --unstable-features --write-mode=diff
+      - cargo fmt -- --write-mode=diff
+      - cd examples/simple && cargo fmt -- --write-mode=diff
+      - cd ../statics && cargo fmt -- --write-mode=diff
+      - cd ../static-sass && cargo fmt -- --write-mode=diff
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
