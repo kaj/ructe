@@ -12,10 +12,13 @@ rust:
   - nightly
 matrix:
   include:
-   - rust: stable
+   - rust: nightly
      env: TASK=rustfmt
-     before_script: cargo install -f rustfmt --vers=0.8.6
-     script: PATH=${HOME}/.cargo/bin:$PATH cargo fmt
+     before_script:
+      - export PATH="$PATH:$HOME/.cargo/bin"
+      - CFG_RELEASE_CHANNEL=nightly cargo install -f rustfmt-nightly
+     script:
+      - cargo fmt -- --unstable-features --write-mode=diff
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test

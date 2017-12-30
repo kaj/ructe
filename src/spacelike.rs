@@ -28,28 +28,38 @@ mod test {
     #[test]
     fn comment2() {
         let space_before = b" @* comment *@";
-        assert_eq!(comment(space_before),
-                   Error(Err::Position(ErrorKind::Tag, &space_before[..])))
+        assert_eq!(
+            comment(space_before),
+            Error(Err::Position(ErrorKind::Tag, &space_before[..]))
+        )
     }
     #[test]
     fn comment3() {
-        assert_eq!(comment(b"@* comment *@ & stuff"),
-                   Done(&b" & stuff"[..], ()));
+        assert_eq!(
+            comment(b"@* comment *@ & stuff"),
+            Done(&b" & stuff"[..], ())
+        );
     }
     #[test]
     fn comment4() {
-        assert_eq!(comment(b"@* comment *@ and @* another *@"),
-                   Done(&b" and @* another *@"[..], ()));
+        assert_eq!(
+            comment(b"@* comment *@ and @* another *@"),
+            Done(&b" and @* another *@"[..], ())
+        );
     }
     #[test]
     fn comment5() {
-        assert_eq!(comment(b"@* comment containing * and @ *@"),
-                   Done(&b""[..], ()));
+        assert_eq!(
+            comment(b"@* comment containing * and @ *@"),
+            Done(&b""[..], ())
+        );
     }
     #[test]
     fn comment6() {
-        assert_eq!(comment(b"@*** peculiar comment ***@***"),
-                   Done(&b"***"[..], ()));
+        assert_eq!(
+            comment(b"@*** peculiar comment ***@***"),
+            Done(&b"***"[..], ())
+        );
     }
 
     #[test]
@@ -62,10 +72,14 @@ mod test {
     }
     #[test]
     fn spacelike_long() {
-        assert_eq!(spacelike(b"\n\
-                               @* a comment on a line by itself *@\n\
-                               \t\t   \n\n\r\n\
-                               @*another comment*@    something else"),
-                   Done(&b"something else"[..], ()));
+        assert_eq!(
+            spacelike(
+                b"\n\
+                  @* a comment on a line by itself *@\n\
+                  \t\t   \n\n\r\n\
+                  @*another comment*@    something else"
+            ),
+            Done(&b"something else"[..], ())
+        );
     }
 }

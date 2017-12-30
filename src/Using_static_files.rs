@@ -24,7 +24,6 @@
 //! contents into a constant struct that you can access from rust
 //! code.
 
-
 pub mod a_Overview {
     //! This section describes how to set up your project to serve
     //! static content using ructe.

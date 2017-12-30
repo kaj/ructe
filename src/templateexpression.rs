@@ -70,15 +70,26 @@ macro_rules! my_many_till(
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateExpression {
     Comment,
-    Text { text: String },
-    Expression { expr: String },
-    ForLoop { name: String, expr: String, body: Vec<TemplateExpression> },
+    Text {
+        text: String,
+    },
+    Expression {
+        expr: String,
+    },
+    ForLoop {
+        name: String,
+        expr: String,
+        body: Vec<TemplateExpression>,
+    },
     IfBlock {
         expr: String,
         body: Vec<TemplateExpression>,
         else_body: Option<Vec<TemplateExpression>>,
     },
-    CallTemplate { name: String, args: Vec<TemplateArgument> },
+    CallTemplate {
+        name: String,
+        args: Vec<TemplateArgument>,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -91,16 +102,21 @@ impl Display for TemplateArgument {
     fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             TemplateArgument::Rust(ref s) => write!(out, "{}", s),
-            TemplateArgument::Body(ref v) => {
-                write!(out,
-                       "|out| {{\n{}\nOk(())\n}}\n",
-                       v.iter().map(|b| b.code()).collect::<String>())
-            }
+            TemplateArgument::Body(ref v) => write!(
+                out,
+                "|out| {{\n{}\nOk(())\n}}\n",
+                v.iter().map(|b| b.code()).collect::<String>(),
+            ),
         }
     }
 }
 
 impl TemplateExpression {
+    pub fn text(text: &str) -> Self {
+        TemplateExpression::Text {
+            text: text.to_string(),
+        }
+    }
     pub fn code(&self) -> String {
         match *self {
             TemplateExpression::Comment => String::new(),
@@ -110,36 +126,40 @@ impl TemplateExpression {
             TemplateExpression::Expression { ref expr } => {
                 format!("{}.to_html(out)?;\n", expr)
             }
-            TemplateExpression::ForLoop { ref name, ref expr, ref body } => {
-                format!("for {} in {} {{\n{}}}\n",
-                        name,
-                        expr,
-                        body.iter().map(|b| b.code()).collect::<String>())
-            }
+            TemplateExpression::ForLoop {
+                ref name,
+                ref expr,
+                ref body,
+            } => format!(
+                "for {} in {} {{\n{}}}\n",
+                name,
+                expr,
+                body.iter().map(|b| b.code()).collect::<String>(),
+            ),
             TemplateExpression::IfBlock {
                 ref expr,
                 ref body,
                 ref else_body,
-            } => {
-                format!("if {} {{\n{}}}{}\n",
-                        expr,
-                        body.iter().map(|b| b.code()).collect::<String>(),
-                        else_body
-                            .iter()
-                            .map(|b| {
-                                     format!(" else {{\n{}}}",
-                                             b.iter()
-                                                 .map(|b| b.code())
-                                                 .collect::<String>())
-                                 })
-                            .collect::<String>())
-            }
+            } => format!(
+                "if {} {{\n{}}}{}\n",
+                expr,
+                body.iter().map(|b| b.code()).collect::<String>(),
+                else_body
+                    .iter()
+                    .map(|b| format!(
+                        " else {{\n{}}}",
+                        b.iter().map(|b| b.code()).collect::<String>(),
+                    ))
+                    .collect::<String>(),
+            ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!("{}(out{})?;\n",
-                        name,
-                        args.iter()
-                            .map(|b| format!(", {}", b))
-                            .collect::<String>())
+                format!(
+                    "{}(out{})?;\n",
+                    name,
+                    args.iter()
+                        .map(|b| format!(", {}", b))
+                        .collect::<String>(),
+                )
             }
         }
     }
@@ -165,12 +185,8 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                        name: name,
                        args: args,
                    })) |
-               Some(b"{") => value!(TemplateExpression::Text {
-                   text: "{{".to_string()
-               }) |
-               Some(b"}") => value!(TemplateExpression::Text {
-                   text: "}}".to_string()
-               }) |
+               Some(b"{") => value!(TemplateExpression::text("{{")) |
+               Some(b"}") => value!(TemplateExpression::text("}}")) |
                Some(b"if") => return_error!(
                    err_str!("Error in conditional expression:"),
                    do_parse!(
@@ -276,78 +292,87 @@ mod test {
 
     #[test]
     fn if_boolean_var() {
-        assert_eq!(template_expression(b"@if cond { something }"),
-                   IResult::Done(&b""[..],
-                                 TemplateExpression::IfBlock {
-                                     expr: "cond".to_string(),
-                                     body: vec![TemplateExpression::Text {
-                                                    text: " something "
-                                                        .to_string(),
-                                                }],
-                                     else_body: None,
-                                 }))
+        assert_eq!(
+            template_expression(b"@if cond { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "cond".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
     }
 
     #[test]
     fn if_let() {
-        assert_eq!(template_expression(b"@if let Some(x) = x { something }"),
-                   IResult::Done(&b""[..],
-                                 TemplateExpression::IfBlock {
-                                     expr: "let Some(x) = x".to_string(),
-                                     body: vec![TemplateExpression::Text {
-                                                    text: " something "
-                                                        .to_string(),
-                                                }],
-                                     else_body: None,
-                                 }))
+        assert_eq!(
+            template_expression(b"@if let Some(x) = x { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "let Some(x) = x".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
     }
 
     #[test]
     fn if_compare() {
-        assert_eq!(template_expression(b"@if x == 17 { something }"),
-                   IResult::Done(&b""[..],
-                                 TemplateExpression::IfBlock {
-                                     expr: "x == 17".to_string(),
-                                     body: vec![TemplateExpression::Text {
-                                                    text: " something "
-                                                        .to_string(),
-                                                }],
-                                     else_body: None,
-                                 }))
+        assert_eq!(
+            template_expression(b"@if x == 17 { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "x == 17".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
     }
 
     #[test]
     fn if_missing_conditional() {
-        assert_eq!(expression_error(b"@if { oops }"),
-                   ":   1:@if { oops }\n\
-                    :         ^ Error in conditional expression:\n\
-                    :   1:@if { oops }\n\
-                    :         ^ Expected expression\n\
-                    :   1:@if { oops }\n\
-                    :         ^ Expected rust expression\n\
-                    :   1:@if { oops }\n\
-                    :         ^ Alt\n")
+        assert_eq!(
+            expression_error(b"@if { oops }"),
+            ":   1:@if { oops }\n\
+             :         ^ Error in conditional expression:\n\
+             :   1:@if { oops }\n\
+             :         ^ Expected expression\n\
+             :   1:@if { oops }\n\
+             :         ^ Expected rust expression\n\
+             :   1:@if { oops }\n\
+             :         ^ Alt\n"
+        )
     }
 
     #[test]
     fn if_bad_let() {
-        assert_eq!(expression_error(b"@if let foo { oops }"),
-                   ":   1:@if let foo { oops }\n\
-                    :         ^ Error in conditional expression:\n\
-                    :   1:@if let foo { oops }\n\
-                    :                 ^ Expected \"=\"\n\
-                    :   1:@if let foo { oops }\n\
-                    :                 ^ Char\n")
+        assert_eq!(
+            expression_error(b"@if let foo { oops }"),
+            ":   1:@if let foo { oops }\n\
+             :         ^ Error in conditional expression:\n\
+             :   1:@if let foo { oops }\n\
+             :                 ^ Expected \"=\"\n\
+             :   1:@if let foo { oops }\n\
+             :                 ^ Char\n"
+        )
     }
 
     #[test]
     fn for_missig_in() {
         // TODO The second part of this message isn't really helpful.
-        assert_eq!(expression_error(b"@for what ever { hello }"),
-                   ":   1:@for what ever { hello }\n\
-                    :               ^ Expected \"in\"\n\
-                    :   1:@for what ever { hello }\n\
-                    :               ^ Tag\n")
+        assert_eq!(
+            expression_error(b"@for what ever { hello }"),
+            ":   1:@for what ever { hello }\n\
+             :               ^ Expected \"in\"\n\
+             :   1:@for what ever { hello }\n\
+             :               ^ Tag\n"
+        )
     }
 
     fn expression_error(input: &[u8]) -> String {

@@ -118,35 +118,42 @@ mod test {
 
     fn check_expr(expr: &str) {
         for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"] {
-            let input = format!("{}{}", expr, post);
-            assert_eq!(expression(input.as_bytes()),
-                       Done(post.as_bytes(), expr.to_string()));
+            assert_eq!(
+                expression(format!("{}{}", expr, post).as_bytes()),
+                Done(post.as_bytes(), expr.to_string())
+            );
         }
     }
 
     #[test]
     fn non_expression_a() {
-        assert_eq!(expression_error_message(b".foo"),
-                   ":   1:.foo\n\
-                    :     ^ Expected rust expression\n\
-                    :   1:.foo\n\
-                    :     ^ Alt\n");
+        assert_eq!(
+            expression_error_message(b".foo"),
+            ":   1:.foo\n\
+             :     ^ Expected rust expression\n\
+             :   1:.foo\n\
+             :     ^ Alt\n"
+        );
     }
     #[test]
     fn non_expression_b() {
-        assert_eq!(expression_error_message(b" foo"),
-                   ":   1: foo\n\
-                    :     ^ Expected rust expression\n\
-                    :   1: foo\n\
-                    :     ^ Alt\n");
+        assert_eq!(
+            expression_error_message(b" foo"),
+            ":   1: foo\n\
+             :     ^ Expected rust expression\n\
+             :   1: foo\n\
+             :     ^ Alt\n"
+        );
     }
     #[test]
     fn non_expression_c() {
-        assert_eq!(expression_error_message(b"(+)"),
-                   ":   1:(+)\n\
-                    :     ^ Expected rust expression\n\
-                    :   1:(+)\n\
-                    :     ^ Alt\n");
+        assert_eq!(
+            expression_error_message(b"(+)"),
+            ":   1:(+)\n\
+             :     ^ Expected rust expression\n\
+             :   1:(+)\n\
+             :     ^ Alt\n"
+        );
     }
     fn expression_error_message(input: &[u8]) -> String {
         use super::super::show_errors;

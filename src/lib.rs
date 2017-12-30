@@ -42,11 +42,11 @@
 //!
 
 extern crate base64;
+#[macro_use]
+extern crate lazy_static;
 extern crate md5;
 #[macro_use]
 extern crate nom;
-#[macro_use]
-extern crate lazy_static;
 #[cfg(feature = "sass")]
 extern crate rsass;
 
@@ -62,10 +62,10 @@ pub mod Template_syntax;
 pub mod Using_static_files;
 
 use errors::get_error;
-use nom::{ErrorKind, prepare_errors};
+use nom::{prepare_errors, ErrorKind};
 use nom::IResult::*;
 use std::collections::BTreeMap;
-use std::fs::{File, create_dir_all, read_dir};
+use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::from_utf8;
@@ -111,67 +111,71 @@ impl StaticFiles {
         create_dir_all(&outdir)?;
         let mut src = File::create(outdir.join("statics.rs"))?;
         if cfg!(feature = "mime03") {
-            write!(src,
-                   "extern crate mime;\n\
-                    use self::mime::Mime;\n\n")?;
+            write!(src, "extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
-        write!(src,
-               "/// A static file has a name (so its url can be recognized) \
-                and the\n\
-                /// actual file contents.\n\
-                ///\n\
-                /// The name includes a short (48 bits as 8 base64 characters) \
-                hash of\n\
-                /// the content, to enable long-time caching of static \
-                resourses in\n\
-                /// the clients.\n\
-                #[allow(dead_code)]\n\
-                pub struct StaticFile {{\n    \
-                    pub content: &'static [u8],\n    \
-                    pub name: &'static str,\n")?;
+        write!(
+            src,
+            "/// A static file has a name (so its url can be recognized) \
+             and the\n\
+             /// actual file contents.\n\
+             ///\n\
+             /// The name includes a short (48 bits as 8 base64 characters) \
+             hash of\n\
+             /// the content, to enable long-time caching of static \
+             resourses in\n\
+             /// the clients.\n\
+             #[allow(dead_code)]\n\
+             pub struct StaticFile {{\n    \
+             pub content: &'static [u8],\n    \
+             pub name: &'static str,\n"
+        )?;
         if cfg!(feature = "mime02") {
             write!(src, "    _mime: &'static str,\n")?;
         }
         if cfg!(feature = "mime03") {
             write!(src, "    pub mime: &'static Mime,\n")?;
         }
-        write!(src,
-               "}}\n\n\
-                #[allow(dead_code)]\n\
-                impl StaticFile {{\n    \
-                /// Get a single `StaticFile` by name, if it exists.\n    \
-                pub fn get(name: &str) -> Option<&'static Self> {{\n        \
-                if let Ok(pos) = STATICS.\
-                binary_search_by_key(&name, |s| s.name) {{\n            \
-                return Some(STATICS[pos]);\n        \
-                }} else {{\n            \
-                None\n        \
-                }}\n    \
-                }}\n\
-                }}\n")?;
+        write!(
+            src,
+            "}}\n\n\
+             #[allow(dead_code)]\n\
+             impl StaticFile {{\n    \
+             /// Get a single `StaticFile` by name, if it exists.\n    \
+             pub fn get(name: &str) -> Option<&'static Self> {{\n        \
+             if let Ok(pos) = STATICS.\
+             binary_search_by_key(&name, |s| s.name) {{\n            \
+             return Some(STATICS[pos]);\n        \
+             }} else {{\n            \
+             None\n        \
+             }}\n    \
+             }}\n\
+             }}\n"
+        )?;
         if cfg!(feature = "mime02") {
-            write!(src,
-                   "extern crate mime;\n\
-                    use self::mime::Mime;\n\n\
-                    impl StaticFile {{\n    \
-                    /// Get the mime type of this static file.\n    \
-                    ///\n    \
-                    /// Currently, this method parses a (static) string every \
-                    time.\n    \
-                    /// A future release of `mime` may support statically \
-                    created\n    \
-                    /// `Mime` structs, which will make this nicer.\n    \
-                    #[allow(unused)]\n    \
-                    pub fn mime(&self) -> Mime {{\n        \
-                    self._mime.parse().unwrap()\n    \
-                    }}\n\
-                    }}\n")?;
+            write!(
+                src,
+                "extern crate mime;\n\
+                 use self::mime::Mime;\n\n\
+                 impl StaticFile {{\n    \
+                 /// Get the mime type of this static file.\n    \
+                 ///\n    \
+                 /// Currently, this method parses a (static) string every \
+                 time.\n    \
+                 /// A future release of `mime` may support statically \
+                 created\n    \
+                 /// `Mime` structs, which will make this nicer.\n    \
+                 #[allow(unused)]\n    \
+                 pub fn mime(&self) -> Mime {{\n        \
+                 self._mime.parse().unwrap()\n    \
+                 }}\n\
+                 }}\n"
+            )?;
         }
         Ok(StaticFiles {
-               src: src,
-               names: BTreeMap::new(),
-               names_r: BTreeMap::new(),
-           })
+            src: src,
+            names: BTreeMap::new(),
+            names_r: BTreeMap::new(),
+        })
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
@@ -205,10 +209,11 @@ impl StaticFiles {
     ///
     /// The `path` parameter is used only to create a file name, the actual
     /// content of the static file will be the `data` parameter.
-    pub fn add_file_data(&mut self,
-                         path: &Path,
-                         data: &[u8])
-                         -> io::Result<()> {
+    pub fn add_file_data(
+        &mut self,
+        path: &Path,
+        data: &[u8],
+    ) -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
             let from_name = format!("{}_{}", name, ext);
             let to_name = format!("{}-{}.{}", name, checksum_slug(data), &ext);
@@ -248,11 +253,16 @@ impl StaticFiles {
                         let name = name.replace('-', "_").replace('.', "_");
                         for (n, v) in existing_statics.as_ref() {
                             if name == *n {
-                                return Ok(css::Value::Literal(v.clone(),
-                                                              Quotes::Double));
+                                return Ok(css::Value::Literal(
+                                    v.clone(),
+                                    Quotes::Double,
+                                ));
                             }
                         }
-                        Err(Error::S(format!("Static file {} not found", name)))
+                        Err(Error::S(format!(
+                            "Static file {} not found",
+                            name,
+                        )))
                     }
                     name => Err(Error::badarg("string", &name)),
                 }),
@@ -267,49 +277,53 @@ impl StaticFiles {
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
-    fn write_static_file(&mut self,
-                         path: &Path,
-                         name: &str,
-                         content: &[u8],
-                         suffix: &str)
-                         -> io::Result<()> {
-        write!(self.src,
-               "\n/// From {path:?}\n\
-                #[allow(non_upper_case_globals)]\n\
-                pub static {name}_{suf}: StaticFile = \
-                StaticFile {{\n  \
-                content: include_bytes!({path:?}),\n  \
-                name: \"{name}-{hash}.{suf}\",\n\
-                {mime}\
-                }};\n",
-               path = path,
-               name = name,
-               hash = checksum_slug(content),
-               suf = suffix,
-               mime = mime_arg(suffix))
+    fn write_static_file(
+        &mut self,
+        path: &Path,
+        name: &str,
+        content: &[u8],
+        suffix: &str,
+    ) -> io::Result<()> {
+        write!(
+            self.src,
+            "\n/// From {path:?}\n\
+             #[allow(non_upper_case_globals)]\n\
+             pub static {name}_{suf}: StaticFile = StaticFile {{\n  \
+             content: include_bytes!({path:?}),\n  \
+             name: \"{name}-{hash}.{suf}\",\n\
+             {mime}\
+             }};\n",
+            path = path,
+            name = name,
+            hash = checksum_slug(content),
+            suf = suffix,
+            mime = mime_arg(suffix),
+        )
     }
 
-    fn write_static_buf(&mut self,
-                        path: &Path,
-                        name: &str,
-                        content: &[u8],
-                        suffix: &str)
-                        -> io::Result<()> {
-        write!(self.src,
-               "\n/// From {path:?}\n\
-                #[allow(non_upper_case_globals)]\n\
-                pub static {name}_{suf}: StaticFile = \
-                StaticFile {{\n  \
-                content: &{content:?},\n  \
-                name: \"{name}-{hash}.{suf}\",\n\
-                {mime}\
-                }};\n",
-               path = path,
-               name = name,
-               content = content,
-               hash = checksum_slug(content),
-               suf = suffix,
-               mime = mime_arg(suffix))
+    fn write_static_buf(
+        &mut self,
+        path: &Path,
+        name: &str,
+        content: &[u8],
+        suffix: &str,
+    ) -> io::Result<()> {
+        write!(
+            self.src,
+            "\n/// From {path:?}\n\
+             #[allow(non_upper_case_globals)]\n\
+             pub static {name}_{suf}: StaticFile = StaticFile {{\n  \
+             content: &{content:?},\n  \
+             name: \"{name}-{hash}.{suf}\",\n\
+             {mime}\
+             }};\n",
+            path = path,
+            name = name,
+            content = content,
+            hash = checksum_slug(content),
+            suf = suffix,
+            mime = mime_arg(suffix),
+        )
     }
 
     /// Get a mapping of names, from without hash to with.
@@ -386,14 +400,16 @@ impl Drop for StaticFiles {
     /// `STATICS` variable.
     fn drop(&mut self) {
         // Ignore a possible write failure, rather than a panic in drop.
-        let _ = write!(self.src,
-                       "\npub static STATICS: &'static [&'static StaticFile] \
-                        = &[{}];\n",
-                       self.names_r
-                           .iter()
-                           .map(|s| format!("&{}", s.1))
-                           .collect::<Vec<_>>()
-                           .join(", "));
+        let _ = write!(
+            self.src,
+            "\npub static STATICS: &'static [&'static StaticFile] \
+             = &[{}];\n",
+            self.names_r
+                .iter()
+                .map(|s| format!("&{}", s.1))
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
     }
 }
 
@@ -411,15 +427,16 @@ fn checksum_slug(data: &[u8]) -> String {
     base64::encode_config(&md5::compute(data)[..6], base64::URL_SAFE)
 }
 
-
 /// Create a `templates` module in `outdir` containing rust code for
 /// all templates found in `indir`.
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
-        write!(f,
-               "pub mod templates {{\n\
-                use std::io::{{self, Write}};\n\
-                use std::fmt::Display;\n\n")?;
+        write!(
+            f,
+            "pub mod templates {{\n\
+             use std::io::{{self, Write}};\n\
+             use std::fmt::Display;\n\n",
+        )?;
 
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
@@ -430,17 +447,22 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
             write!(f, "pub mod statics;\n")?;
         }
 
-        write!(f,
-               "{}\n}}\n",
-               include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                    "/src/template_utils.rs")))
+        write!(
+            f,
+            "{}\n}}\n",
+            include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/src/template_utils.rs",
+            )),
+        )
     })
 }
 
-fn handle_entries(f: &mut Write,
-                  indir: &Path,
-                  outdir: &Path)
-                  -> io::Result<()> {
+fn handle_entries(
+    f: &mut Write,
+    indir: &Path,
+    outdir: &Path,
+) -> io::Result<()> {
     println!("cargo:rerun-if-changed={}", indir.to_string_lossy());
     let suffix = ".rs.html";
     for entry in read_dir(indir)? {
@@ -454,16 +476,17 @@ fn handle_entries(f: &mut Write,
                     .and_then(|mut f| handle_entries(&mut f, &path, &outdir))?;
                 write!(f, "pub mod {name};\n\n", name = filename)?;
             }
-
         } else if let Some(filename) = entry.file_name().to_str() {
             if filename.ends_with(suffix) {
                 println!("cargo:rerun-if-changed={}", path.to_string_lossy());
                 let name = &filename[..filename.len() - suffix.len()];
                 if handle_template(name, &path, outdir)? {
-                    write!(f,
-                           "mod template_{name};\n\
-                            pub use self::template_{name}::{name};\n\n",
-                           name = name)?;
+                    write!(
+                        f,
+                        "mod template_{name};\n\
+                         pub use self::template_{name}::{name};\n\n",
+                        name = name,
+                    )?;
                 }
             }
         }
@@ -471,7 +494,11 @@ fn handle_entries(f: &mut Write,
     Ok(())
 }
 
-fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
+fn handle_template(
+    name: &str,
+    path: &Path,
+    outdir: &Path,
+) -> io::Result<bool> {
     let mut input = File::open(path)?;
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
@@ -482,19 +509,19 @@ fn handle_template(name: &str, path: &Path, outdir: &Path) -> io::Result<bool> {
             Ok(true)
         }
         result => {
-            println!("cargo:warning=\
-                      Template parse error in {:?}:",
-                     path);
+            println!("cargo:warning=Template parse error in {:?}:", path);
             show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
             Ok(false)
         }
     }
 }
 
-fn show_errors<E>(out: &mut Write,
-                  buf: &[u8],
-                  result: nom::IResult<&[u8], E>,
-                  prefix: &str) {
+fn show_errors<E>(
+    out: &mut Write,
+    buf: &[u8],
+    result: nom::IResult<&[u8], E>,
+    prefix: &str,
+) {
     if let Some(errors) = prepare_errors(buf, result) {
         for &(ref kind, ref from, ref _to) in &errors {
             show_error(out, buf, *from, &get_message(kind), prefix);
@@ -504,21 +531,21 @@ fn show_errors<E>(out: &mut Write,
 
 fn get_message(err: &ErrorKind) -> String {
     match err {
-        &ErrorKind::Custom(n) => {
-            match get_error(n) {
-                Some(msg) => msg,
-                None => format!("Unknown error #{}", n),
-            }
-        }
+        &ErrorKind::Custom(n) => match get_error(n) {
+            Some(msg) => msg,
+            None => format!("Unknown error #{}", n),
+        },
         err => format!("{:?}", err),
     }
 }
 
-fn show_error(out: &mut Write,
-              buf: &[u8],
-              pos: usize,
-              msg: &str,
-              prefix: &str) {
+fn show_error(
+    out: &mut Write,
+    buf: &[u8],
+    pos: usize,
+    msg: &str,
+    prefix: &str,
+) {
     let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
     let _ = line_start.next();
     let line_start =
@@ -531,16 +558,17 @@ fn show_error(out: &mut Write,
     let line_no = what_line(buf, line_start);
     let pos_in_line =
         from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
-    writeln!(out,
-             "{prefix}{:>4}:{}\n\
-              {prefix}     {:>pos$} {}",
-             line_no,
-             line,
-             "^",
-             msg,
-             pos = pos_in_line,
-             prefix = prefix)
-        .unwrap();
+    writeln!(
+        out,
+        "{prefix}{:>4}:{}\n\
+         {prefix}     {:>pos$} {}",
+        line_no,
+        line,
+        "^",
+        msg,
+        pos = pos_in_line,
+        prefix = prefix,
+    ).unwrap();
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {
