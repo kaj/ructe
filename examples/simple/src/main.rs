@@ -52,7 +52,7 @@ fn test_if_let_none() {
 
 #[test]
 fn test_if_let_destructure() {
-    assert_eq!(r2s(|o| if_let_destructure(o, Some((47, 11)))),
+    assert_eq!(r2s(|o| if_let_destructure(o, &Some((47, 11)))),
                "<p> We have 47 and 11 </p>\n")
 }
 

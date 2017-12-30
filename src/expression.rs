@@ -3,7 +3,8 @@ use std::str::from_utf8;
 
 named!(pub expression<&[u8], String>,
        do_parse!(
-           pre: alt!(tag!("&") | tag!("!") | tag!("ref ") | tag!("")) >>
+           pre: alt!(tag!("&") | tag!("!") | tag!("*") | tag!("ref ") |
+                     tag!("")) >>
            name: return_error!(err_str!("Expected rust expression"),
                               alt!(rust_name |
                       map!(digit, |d| from_utf8(d).unwrap().to_string()) |
