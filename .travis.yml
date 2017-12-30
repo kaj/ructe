@@ -19,6 +19,7 @@ matrix:
       - CFG_RELEASE_CHANNEL=nightly cargo install -f rustfmt-nightly
      script:
       - cargo fmt -- --unstable-features --write-mode=diff
+      - cd examples/simple && cargo fmt -- --unstable-features --write-mode=diff
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
