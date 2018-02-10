@@ -189,7 +189,30 @@ impl StaticFiles {
         Ok(())
     }
 
+    /// Add all files from a specific directory, `indir`, as static files.
+    ///
+    /// The `to` string is used as a directory path of the resulting
+    /// urls, the file names are taken as is, without adding any hash.
+    /// This is usefull for resources used by preexisting javascript
+    /// packages, where it might be hard to change the used urls.
+    pub fn add_files_as(&mut self, indir: &Path, to: &str) -> io::Result<()> {
+        for entry in read_dir(indir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_file() {
+                self.add_file_as(
+                    &entry.path(),
+                    &format!("{}/{}", to, entry.file_name().to_string_lossy()),
+                )?;
+            }
+        }
+        Ok(())
+    }
+
     /// Add one specific file as a static file.
+    ///
+    /// Create a name to use in the url like `name-hash.ext` where
+    /// name and ext are the name and extension from `path` and has is
+    /// a few url-friendly bytes from a hash of the file content.
     pub fn add_file(&mut self, path: &Path) -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
             println!("cargo:rerun-if-changed={}", path.to_string_lossy());
@@ -201,6 +224,30 @@ impl StaticFiles {
             self.write_static_file(path, name, &buf, ext)?;
             self.names.insert(from_name.clone(), to_name.clone());
             self.names_r.insert(to_name, from_name.clone());
+        }
+        Ok(())
+    }
+
+    /// Add one specific file as a static file.
+    ///
+    /// Use `to_name` in the url without adding any hash characters.
+    pub fn add_file_as(
+        &mut self,
+        path: &Path,
+        to_name: &str,
+    ) -> io::Result<()> {
+        if let Some((_name, ext)) = name_and_ext(path) {
+            println!("cargo:rerun-if-changed={}", path.to_string_lossy());
+            let mut input = File::open(&path)?;
+            let mut buf = Vec::new();
+            input.read_to_end(&mut buf)?;
+            let from_name = to_name
+                .replace("/", "_")
+                .replace("-", "_")
+                .replace(".", "_");
+            self.write_static_file2(path, &from_name, to_name, ext)?;
+            self.names.insert(from_name.clone(), to_name.to_string());
+            self.names_r.insert(to_name.to_string(), from_name.clone());
         }
         Ok(())
     }
@@ -297,6 +344,29 @@ impl StaticFiles {
             name = name,
             hash = checksum_slug(content),
             suf = suffix,
+            mime = mime_arg(suffix),
+        )
+    }
+
+    fn write_static_file2(
+        &mut self,
+        path: &Path,
+        name: &str,
+        as_name: &str,
+        suffix: &str,
+    ) -> io::Result<()> {
+        write!(
+            self.src,
+            "\n/// From {path:?}\n\
+             #[allow(non_upper_case_globals)]\n\
+             pub static {name}: StaticFile = StaticFile {{\n  \
+             content: include_bytes!({path:?}),\n  \
+             name: \"{as_name}\",\n\
+             {mime}\
+             }};\n",
+            path = path,
+            name = name,
+            as_name = as_name,
             mime = mime_arg(suffix),
         )
     }
