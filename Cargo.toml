@@ -25,3 +25,4 @@ rsass = { version = "^0.7.0", optional = true }
 
 [badges]
 travis-ci = { repository = "kaj/ructe" }
+maintenance = { status = "actively-developed" }
