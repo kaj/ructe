@@ -198,11 +198,12 @@ impl StaticFiles {
     pub fn add_files_as(&mut self, indir: &Path, to: &str) -> io::Result<()> {
         for entry in read_dir(indir)? {
             let entry = entry?;
-            if entry.file_type()?.is_file() {
-                self.add_file_as(
-                    &entry.path(),
-                    &format!("{}/{}", to, entry.file_name().to_string_lossy()),
-                )?;
+            let file_type = entry.file_type()?;
+            let to = format!("{}/{}", to, entry.file_name().to_string_lossy());
+            if file_type.is_file() {
+                self.add_file_as(&entry.path(), &to)?;
+            } else if file_type.is_dir() {
+                self.add_files_as(&entry.path(), &to)?;
             }
         }
         Ok(())
