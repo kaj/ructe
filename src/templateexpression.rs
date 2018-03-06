@@ -321,6 +321,21 @@ mod test {
     }
 
     #[test]
+    fn if_let_2() {
+        assert_eq!(
+            template_expression(b"@if let Some((x,y)) = x { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "let Some((x, y)) = x".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
+    }
+
+    #[test]
     fn if_compare() {
         assert_eq!(
             template_expression(b"@if x == 17 { something }"),

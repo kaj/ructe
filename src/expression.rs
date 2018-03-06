@@ -44,7 +44,8 @@ named!(pub expression<&[u8], String>,
            (format!("{}{}{}", from_utf8(pre).unwrap(), name, post))));
 
 named!(pub comma_expressions<&[u8], String>,
-       map!(separated_list!(tag!(", "), expression),
+       map!(separated_list!(preceded!(tag!(","), many0!(tag!(" "))),
+                            expression),
             |list: Vec<_>| list.join(", ")));
 
 named!(pub rust_name<&[u8], String>,
