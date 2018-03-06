@@ -24,6 +24,8 @@ named!(pub expression<&[u8], String>,
                alt_complete!(
                    do_parse!(tag!(".") >> post: expression >>
                              (format!(".{}", post))) |
+                   do_parse!(tag!("::") >> post: expression >>
+                             (format!("::{}", post))) |
                    do_parse!(tag!("(") >> args: comma_expressions >>
                              tag!(")") >>
                              (format!("({})", args))) |
@@ -99,6 +101,10 @@ mod test {
     #[test]
     fn expression_str() {
         check_expr("\"foo\"");
+    }
+    #[test]
+    fn expression_enum_variant() {
+        check_expr("MyEnum::Variant.method()");
     }
     #[test]
     fn expression_str_with_escaped_quotes() {
