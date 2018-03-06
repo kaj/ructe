@@ -22,22 +22,18 @@ named!(pub expression<&[u8], String>,
                                 (format!("[{}]", args))))) >>
            post: fold_many0!(
                alt_complete!(
-                   do_parse!(tag!(".") >> post: expression >>
-                             (format!(".{}", post))) |
-                   do_parse!(tag!("::") >> post: expression >>
-                             (format!("::{}", post))) |
-                   do_parse!(tag!("(") >> args: comma_expressions >>
-                             tag!(")") >>
-                             (format!("({})", args))) |
-                   do_parse!(tag!("[") >> args: comma_expressions >>
-                             tag!("]") >>
-                             (format!("[{}]", args))) |
-                   do_parse!(tag!("!(") >> args: comma_expressions >>
-                             tag!(")") >>
-                             (format!("!({})", args))) |
-                   do_parse!(tag!("![") >> args: comma_expressions >>
-                             tag!("]") >>
-                             (format!("![{}]", args)))),
+                   map!(preceded!(tag!("."), expression),
+                        |expr| format!(".{}", expr)) |
+                   map!(preceded!(tag!("::"), expression),
+                        |expr| format!("::{}", expr)) |
+                   map!(delimited!(tag!("("), comma_expressions, tag!(")")),
+                        |expr| format!("({})", expr)) |
+                   map!(delimited!(tag!("["), comma_expressions, tag!("]")),
+                        |expr| format!("[{}]", expr)) |
+                   map!(delimited!(tag!("!("), comma_expressions, tag!(")")),
+                        |expr| format!("!({})", expr)) |
+                   map!(delimited!(tag!("!["), comma_expressions, tag!("]")),
+                        |expr| format!("![{}]", expr))),
                String::new(),
                |mut acc: String, item: String| {
                    acc.push_str(&item);
