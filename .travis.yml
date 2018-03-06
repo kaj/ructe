@@ -16,8 +16,7 @@ matrix:
    - rust: nightly
      env: TASK=rustfmt
      before_script:
-      - export PATH="$PATH:$HOME/.cargo/bin"
-      - CFG_RELEASE_CHANNEL=nightly cargo install -f rustfmt-nightly
+      - rustup component add rustfmt-preview
      script:
       - cargo fmt -- --write-mode=diff
       - cd examples/simple && cargo fmt -- --write-mode=diff
