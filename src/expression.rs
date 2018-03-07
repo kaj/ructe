@@ -8,18 +8,15 @@ named!(pub expression<&[u8], String>,
            name: return_error!(err_str!("Expected rust expression"),
                               alt!(rust_name |
                       map!(digit, |d| from_utf8(d).unwrap().to_string()) |
-                      do_parse!(char!('"') >>
-                                text: escaped!(is_not!("\"\\"),
-                                               '\\', one_of!("\"\\")) >>
-                                char!('"') >>
-                                (format!("\"{}\"",
-                                         from_utf8(text).unwrap()))) |
-                      do_parse!(tag!("(") >> args: comma_expressions >>
-                                tag!(")") >>
-                                (format!("({})", args))) |
-                      do_parse!(tag!("[") >> args: comma_expressions >>
-                                tag!("]") >>
-                                (format!("[{}]", args))))) >>
+                      map!(delimited!(char!('"'),
+                                      escaped!(is_not!("\"\\"),
+                                               '\\', one_of!("\"\\")),
+                                      char!('"')),
+                           |text| format!("\"{}\"", from_utf8(text).unwrap())) |
+                      map!(delimited!(tag!("("), comma_expressions, tag!(")")),
+                           |expr| format!("({})", expr)) |
+                      map!(delimited!(tag!("["), comma_expressions, tag!("]")),
+                           |expr| format!("[{}]", expr)))) >>
            post: fold_many0!(
                alt_complete!(
                    map!(preceded!(tag!("."), expression),
