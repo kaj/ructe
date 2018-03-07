@@ -193,10 +193,10 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                    spacelike >>
                    expr: cond_expression >> spacelike >>
                    body: template_block >>
-                   else_body: opt!(complete!(do_parse!(
-                       spacelike >> tag!("else") >> spacelike >>
-                       else_body: template_block >>
-                       (else_body)))) >>
+                   else_body: opt!(complete!(preceded!(
+                       delimited!(spacelike, tag!("else"), spacelike),
+                       template_block
+                   ))) >>
                    (TemplateExpression::IfBlock {
                        expr: expr,
                        body: body,
@@ -208,13 +208,11 @@ named!(pub template_expression<&[u8], TemplateExpression>,
                        err_str!("Expected loop variable name \
                                  or destructuring tuple"),
                        alt!(rust_name |
-                            do_parse!(pre: opt!(char!('&')) >>
-                                      tag!("(") >>
-                                      args: comma_expressions >>
-                                      tag!(")") >>
-                                      (format!("{}({})",
-                                               pre.unwrap_or(' '),
-                                               args)))
+                            do_parse!(
+                                pre: opt!(char!('&')) >>
+                                args: delimited!(tag!("("), comma_expressions,
+                                                 tag!(")")) >>
+                                (format!("{}({})", pre.unwrap_or(' '), args)))
                             )) >>
                    spacelike >>
                    return_error!(err_str!("Expected \"in\""), tag!("in")) >>
