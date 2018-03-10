@@ -165,78 +165,79 @@ impl TemplateExpression {
     }
 }
 
-named!(pub template_expression<&[u8], TemplateExpression>,
-       add_return_error!(
-           err_str!("In expression starting here"),
-           switch!(
-               opt!(preceded!(tag!("@"),
-                              alt!(tag!(":") | tag!("{") | tag!("}") |
-                                   terminated!(
-                                       alt!(tag!("if") |
-                                            tag!("for")),
-                                       tag!(" "))))),
-               Some(b":") => do_parse!(
-                   name: rust_name >>
-                   args: delimited!(tag!("("),
-                                    separated_list!(tag!(", "),
-                                                    template_argument),
-                                    tag!(")")) >>
-                   (TemplateExpression::CallTemplate {
-                       name: name,
-                       args: args,
+named!(
+    pub template_expression<&[u8], TemplateExpression>,
+    add_return_error!(
+        err_str!("In expression starting here"),
+        switch!(
+            opt!(preceded!(tag!("@"),
+                           alt!(tag!(":") | tag!("{") | tag!("}") |
+                                terminated!(
+                                    alt!(tag!("if") | tag!("for")),
+                                    tag!(" "))))),
+            Some(b":") => do_parse!(
+                name: rust_name >>
+                    args: delimited!(tag!("("),
+                                     separated_list!(tag!(", "),
+                                                     template_argument),
+                                     tag!(")")) >>
+                    (TemplateExpression::CallTemplate {
+                        name: name,
+                        args: args,
                    })) |
-               Some(b"{") => value!(TemplateExpression::text("{{")) |
-               Some(b"}") => value!(TemplateExpression::text("}}")) |
-               Some(b"if") => return_error!(
-                   err_str!("Error in conditional expression:"),
-                   do_parse!(
-                   spacelike >>
-                   expr: cond_expression >> spacelike >>
-                   body: template_block >>
-                   else_body: opt!(complete!(preceded!(
-                       delimited!(spacelike, tag!("else"), spacelike),
-                       template_block
-                   ))) >>
-                   (TemplateExpression::IfBlock {
-                       expr: expr,
-                       body: body,
-                       else_body: else_body,
-                   }))) |
-               Some(b"for") => do_parse!(
-                   spacelike >>
-                   name: return_error!(
-                       err_str!("Expected loop variable name \
-                                 or destructuring tuple"),
-                       alt!(rust_name |
-                            do_parse!(
-                                pre: opt!(char!('&')) >>
-                                args: delimited!(tag!("("), comma_expressions,
-                                                 tag!(")")) >>
-                                (format!("{}({})", pre.unwrap_or(' '), args)))
-                            )) >>
-                   spacelike >>
-                   return_error!(err_str!("Expected \"in\""), tag!("in")) >>
-                   spacelike >>
-                   expr: return_error!(err_str!("Expected iterable expression"),
-                                       expression) >>
-                   spacelike >>
-                   body: return_error!(err_str!("Error in loop block:"),
-                                       template_block) >> spacelike >>
-                   (TemplateExpression::ForLoop {
-                       name: name,
-                       expr: expr,
-                       body: body,
-                   })) |
-               None => alt!(
-                   map!(comment, |()| TemplateExpression::Comment) |
-                   map!(is_not!("@{}"),
-                        |text| TemplateExpression::Text {
-                            text: from_utf8(text).unwrap().to_string()
-                        }) |
-                   map!(preceded!(tag!("@"), expression),
-                        |expr| TemplateExpression::Expression{ expr: expr })
-                       )))
-       );
+            Some(b"{") => value!(TemplateExpression::text("{{")) |
+            Some(b"}") => value!(TemplateExpression::text("}}")) |
+            Some(b"if") => return_error!(
+                err_str!("Error in conditional expression:"),
+                do_parse!(
+                    spacelike >>
+                        expr: cond_expression >> spacelike >>
+                        body: template_block >>
+                    else_body: opt!(complete!(preceded!(
+                        delimited!(spacelike, tag!("else"), spacelike),
+                        template_block
+                            ))) >>
+                        (TemplateExpression::IfBlock {
+                            expr: expr,
+                            body: body,
+                            else_body: else_body,
+                        }))) |
+            Some(b"for") => do_parse!(
+                spacelike >>
+                    name: return_error!(
+                        err_str!("Expected loop variable name \
+                                  or destructuring tuple"),
+                        alt!(rust_name |
+                             do_parse!(
+                                 pre: opt!(char!('&')) >>
+                                     args: delimited!(tag!("("), comma_expressions,
+                                                      tag!(")")) >>
+                                     (format!("{}({})", pre.unwrap_or(' '), args)))
+                             )) >>
+                    spacelike >>
+                    return_error!(err_str!("Expected \"in\""), tag!("in")) >>
+                    spacelike >>
+                    expr: return_error!(err_str!("Expected iterable expression"),
+                                        expression) >>
+                    spacelike >>
+                    body: return_error!(err_str!("Error in loop block:"),
+                                        template_block) >> spacelike >>
+                    (TemplateExpression::ForLoop {
+                        name: name,
+                        expr: expr,
+                        body: body,
+                    })) |
+            None => alt!(
+                map!(comment, |()| TemplateExpression::Comment) |
+                map!(is_not!("@{}"),
+                     |text| TemplateExpression::Text {
+                         text: from_utf8(text).unwrap().to_string()
+                     }) |
+                map!(preceded!(tag!("@"), expression),
+                     |expr| TemplateExpression::Expression{ expr: expr })
+                    )
+    ))
+);
 
 named!(template_block<&[u8], Vec<TemplateExpression>>,
        do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
