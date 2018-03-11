@@ -175,58 +175,70 @@ named!(
                                 terminated!(
                                     alt!(tag!("if") | tag!("for")),
                                     tag!(" "))))),
-            Some(b":") => do_parse!(
-                name: rust_name >>
-                    args: delimited!(tag!("("),
-                                     separated_list!(tag!(", "),
-                                                     template_argument),
-                                     tag!(")")) >>
-                    (TemplateExpression::CallTemplate {
-                        name: name,
-                        args: args,
-                   })) |
+            Some(b":") => map!(
+                pair!(rust_name,
+                      delimited!(tag!("("),
+                                 separated_list!(tag!(", "), template_argument),
+                                 tag!(")"))),
+                |(name, args)| TemplateExpression::CallTemplate {
+                    name: name,
+                    args: args,
+                }) |
             Some(b"{") => value!(TemplateExpression::text("{{")) |
             Some(b"}") => value!(TemplateExpression::text("}}")) |
             Some(b"if") => return_error!(
                 err_str!("Error in conditional expression:"),
-                do_parse!(
-                    spacelike >>
-                        expr: cond_expression >> spacelike >>
-                        body: template_block >>
-                    else_body: opt!(complete!(preceded!(
-                        delimited!(spacelike, tag!("else"), spacelike),
-                        template_block
-                            ))) >>
-                        (TemplateExpression::IfBlock {
-                            expr: expr,
-                            body: body,
-                            else_body: else_body,
-                        }))) |
-            Some(b"for") => do_parse!(
-                spacelike >>
-                    name: return_error!(
-                        err_str!("Expected loop variable name \
-                                  or destructuring tuple"),
-                        alt!(rust_name |
-                             do_parse!(
-                                 pre: opt!(char!('&')) >>
-                                     args: delimited!(tag!("("), comma_expressions,
-                                                      tag!(")")) >>
-                                     (format!("{}({})", pre.unwrap_or(' '), args)))
-                             )) >>
-                    spacelike >>
-                    return_error!(err_str!("Expected \"in\""), tag!("in")) >>
-                    spacelike >>
-                    expr: return_error!(err_str!("Expected iterable expression"),
-                                        expression) >>
-                    spacelike >>
-                    body: return_error!(err_str!("Error in loop block:"),
-                                        template_block) >> spacelike >>
-                    (TemplateExpression::ForLoop {
-                        name: name,
+                map!(
+                    tuple!(
+                        delimited!(spacelike, cond_expression, spacelike),
+                        template_block,
+                        opt!(complete!(preceded!(
+                            delimited!(spacelike, tag!("else"), spacelike),
+                            template_block
+                        )))
+                    ),
+                    |(expr, body, else_body)| TemplateExpression::IfBlock {
                         expr: expr,
                         body: body,
+                        else_body: else_body,
                     })) |
+            Some(b"for") => map!(
+                tuple!(
+                    delimited!(
+                        spacelike,
+                        return_error!(
+                            err_str!("Expected loop variable name \
+                                      or destructuring tuple"),
+                            alt!(rust_name |
+                                 map!(
+                                     pair!(
+                                         opt!(char!('&')),
+                                         delimited!(tag!("("),
+                                                    comma_expressions,
+                                                    tag!(")"))
+                                     ),
+                                     |(pre, args)| match pre {
+                                         Some(_) => format!("&({})", args),
+                                         None => format!("({})", args)
+                                     }
+                                 ))),
+                        spacelike),
+                    delimited!(
+                        terminated!(return_error!(err_str!("Expected \"in\""),
+                                                  tag!("in")),
+                                    spacelike),
+                        return_error!(err_str!("Expected iterable expression"),
+                                      expression),
+                        spacelike),
+                    terminated!(
+                        return_error!(err_str!("Error in loop block:"),
+                                      template_block),
+                        spacelike)),
+                |(name, expr, body)| TemplateExpression::ForLoop {
+                    name: name,
+                    expr: expr,
+                    body: body,
+                }) |
             None => alt!(
                 map!(comment, |()| TemplateExpression::Comment) |
                 map!(is_not!("@{}"),
@@ -235,53 +247,68 @@ named!(
                      }) |
                 map!(preceded!(tag!("@"), expression),
                      |expr| TemplateExpression::Expression{ expr: expr })
-                    )
+            )
     ))
 );
 
 named!(template_block<&[u8], Vec<TemplateExpression>>,
-       do_parse!(return_error!(err_str!("Expected \"{\""), char!('{')) >>
-                 body: my_many_till!(
-                     return_error!(
-                         err_str!("Error in expression starting here:"),
-                         template_expression),
-                     char!('}')) >>
-                 (body.0)));
+       preceded!(
+           return_error!(err_str!("Expected \"{\""), char!('{')),
+           map!(
+               my_many_till!(
+                   return_error!(
+                       err_str!("Error in expression starting here:"),
+                       template_expression),
+                   char!('}')),
+               |(block, _end)| block
+)));
 
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
                  TemplateArgument::Body) |
             map!(expression, TemplateArgument::Rust)));
 
-named!(cond_expression<&[u8], String>,
-       switch!(opt!(tag!("let")),
-               Some(b"let") => do_parse!(
-                   spacelike >>
-                   lhs: return_error!(
-                       err_str!("Expected LHS expression in let binding"),
-                       expression) >>
-                   spacelike >>
-                   return_error!(err_str!("Expected \"=\""), char!('=')) >>
-                   spacelike >>
-                   rhs: return_error!(
-                       err_str!("Expected RHS expression in let binding"),
-                       expression) >>
-                   (format!("let {} = {}", lhs, rhs))) |
-               None => do_parse!(
-                   a: return_error!(err_str!("Expected expression"),
-                                    expression) >>
-                   b: opt!(do_parse!(spacelike >>
-                                     op: alt!(tag!("==") | tag!("!=") |
-                                              tag!(">=") | tag!(">") |
-                                              tag!("<=") | tag!("<")) >>
-                                     spacelike >>
-                                     rhs: expression >>
-                                     (from_utf8(op).unwrap(), rhs))) >>
-                   (if let Some((op, rhs)) = b {
-                       format!("{} {} {}", a, op, rhs)
-                   } else {
-                       a
-                   }))));
+named!(
+    cond_expression<&[u8], String>,
+    switch!(
+        opt!(tag!("let")),
+        Some(b"let") => map!(
+            pair!(
+                preceded!(spacelike,
+                          return_error!(
+                              err_str!("Expected LHS expression in let binding"),
+                              expression)),
+                preceded!(
+                    delimited!(
+                        spacelike,
+                        return_error!(err_str!("Expected \"=\""), char!('=')),
+                        spacelike),
+                    return_error!(
+                        err_str!("Expected RHS expression in let binding"),
+                        expression))),
+            |(lhs, rhs)| format!("let {} = {}", lhs, rhs)) |
+        None => map!(
+            pair!(
+                return_error!(err_str!("Expected expression"), expression),
+                opt!(pair!(rel_operator, expression))),
+            |(a, b)| if let Some((op, rhs)) = b {
+                format!("{} {} {}", a, op, rhs)
+            } else {
+                a
+            })
+    )
+);
+
+named!(rel_operator<&[u8], &str>,
+       map!(
+           delimited!(
+               spacelike,
+               alt!(tag_s!("==") | tag_s!("!=") | tag_s!(">=") |
+                    tag_s!(">") | tag_s!("<=") | tag_s!("<")),
+               spacelike),
+           |s| from_utf8(s).unwrap()
+       )
+);
 
 #[cfg(test)]
 mod test {
