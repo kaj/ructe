@@ -23,7 +23,10 @@ mod test {
 
     #[test]
     fn comment1() {
-        assert_eq!(comment(b"@* a simple comment *@"), Done(&b""[..], ()));
+        assert_eq!(
+            comment(b"@* a simple comment *@"),
+            Done(&b""[..], ())
+        );
     }
     #[test]
     fn comment2() {

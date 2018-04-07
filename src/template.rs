@@ -24,7 +24,9 @@ impl Template {
         for l in &self.preamble {
             write!(out, "{};\n", l)?;
         }
-        let type_args = if self.args.contains(&"content: Content".to_owned()) {
+        let type_args = if self.args
+            .contains(&"content: Content".to_owned())
+        {
             (
                 "<Content>",
                 "\nwhere Content: FnOnce(&mut Write) -> io::Result<()>",
@@ -47,7 +49,10 @@ impl Template {
                 .map(|a| format!(", {}", a))
                 .collect::<String>(),
             type_spec = type_args.1,
-            body = self.body.iter().map(|b| b.code()).collect::<String>(),
+            body = self.body
+                .iter()
+                .map(|b| b.code())
+                .collect::<String>(),
         )
     }
 }

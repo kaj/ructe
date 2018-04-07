@@ -8,9 +8,10 @@ use std::str::from_utf8;
 ///
 /// This should be removed when a fix for that is released from nom.
 macro_rules! my_many_till(
-  ($i:expr, $submac1:ident!( $($args1:tt)* ), $submac2:ident!( $($args2:tt)* ))
-        => (
-    {
+    ($i:expr,
+     $submac1:ident!( $($args1:tt)* ),
+     $submac2:ident!( $($args2:tt)* )
+    ) => ({
       use nom::InputLength;
       use nom::ErrorKind;
       use nom::IResult;
@@ -60,8 +61,7 @@ macro_rules! my_many_till(
       }
 
       ret
-    }
-  );
+  });
   ($i:expr, $f:expr, $g: expr) => (
     my_many_till!($i, call!($f), call!($g));
   );
@@ -134,7 +134,9 @@ impl TemplateExpression {
                 "for {} in {} {{\n{}}}\n",
                 name,
                 expr,
-                body.iter().map(|b| b.code()).collect::<String>(),
+                body.iter()
+                    .map(|b| b.code())
+                    .collect::<String>(),
             ),
             TemplateExpression::IfBlock {
                 ref expr,
@@ -143,7 +145,9 @@ impl TemplateExpression {
             } => format!(
                 "if {} {{\n{}}}{}\n",
                 expr,
-                body.iter().map(|b| b.code()).collect::<String>(),
+                body.iter()
+                    .map(|b| b.code())
+                    .collect::<String>(),
                 else_body
                     .iter()
                     .map(|b| format!(
@@ -152,15 +156,16 @@ impl TemplateExpression {
                     ))
                     .collect::<String>(),
             ),
-            TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!(
-                    "{}(out{})?;\n",
-                    name,
-                    args.iter()
-                        .map(|b| format!(", {}", b))
-                        .collect::<String>(),
-                )
-            }
+            TemplateExpression::CallTemplate {
+                ref name,
+                ref args,
+            } => format!(
+                "{}(out{})?;\n",
+                name,
+                args.iter()
+                    .map(|b| format!(", {}", b))
+                    .collect::<String>(),
+            ),
         }
     }
 }
@@ -315,8 +320,8 @@ named!(rel_operator<&[u8], &str>,
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use super::super::show_errors;
+    use super::*;
     use nom::IResult;
 
     #[test]
