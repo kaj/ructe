@@ -1,13 +1,13 @@
-extern crate nickel;
 extern crate hyper;
+extern crate nickel;
 extern crate time;
 #[macro_use]
 extern crate mime;
 
 use hyper::header::{ContentType, Expires, HttpDate};
-use nickel::{HttpRouter, MiddlewareResult, Nickel, Request, Response};
 use nickel::status::StatusCode;
-use time::{Duration, now};
+use nickel::{HttpRouter, MiddlewareResult, Nickel, Request, Response};
+use time::{now, Duration};
 
 fn main() {
     let mut server = Nickel::new();
@@ -16,11 +16,10 @@ fn main() {
     server.listen("127.0.0.1:6767").expect("listen");
 }
 
-
-fn static_file<'mw>(req: &mut Request,
-                    mut res: Response<'mw>)
-                    -> MiddlewareResult<'mw> {
-
+fn static_file<'mw>(
+    req: &mut Request,
+    mut res: Response<'mw>,
+) -> MiddlewareResult<'mw> {
     if let (Some(name), Some(ext)) = (req.param("name"), req.param("ext")) {
         use templates::statics::StaticFile;
         if let Some(s) = StaticFile::get(&format!("{}.{}", name, ext)) {
@@ -32,9 +31,10 @@ fn static_file<'mw>(req: &mut Request,
     res.error(StatusCode::NotFound, "Not found")
 }
 
-fn page<'mw>(_req: &mut Request,
-             mut res: Response<'mw>)
-             -> MiddlewareResult<'mw> {
+fn page<'mw>(
+    _req: &mut Request,
+    mut res: Response<'mw>,
+) -> MiddlewareResult<'mw> {
     use templates;
     let mut buf = Vec::new();
     templates::page(&mut buf).unwrap();

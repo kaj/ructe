@@ -25,7 +25,10 @@ fn test_hello() {
 
 #[test]
 fn test_hello_args() {
-    assert_eq!(r2s(|o| hello_args(o, "World")), "<h1>Hello World!</h1>\n");
+    assert_eq!(
+        r2s(|o| hello_args(o, "World")),
+        "<h1>Hello World!</h1>\n"
+    );
 }
 
 #[test]
@@ -53,7 +56,10 @@ fn test_if_let_some() {
 }
 #[test]
 fn test_if_let_none() {
-    assert_eq!(r2s(|o| if_let(o, None)), "<p> Got nothing </p>\n")
+    assert_eq!(
+        r2s(|o| if_let(o, None)),
+        "<p> Got nothing </p>\n"
+    )
 }
 
 #[test]
@@ -123,7 +129,10 @@ mod models {
     }
     impl<'a> User<'a> {
         pub fn mailto(&self) -> Html<String> {
-            Html(format!("<a href=\"mailto:{0}\">{0}</a>", self.email))
+            Html(format!(
+                "<a href=\"mailto:{0}\">{0}</a>",
+                self.email
+            ))
         }
     }
     impl<'a> fmt::Display for User<'a> {

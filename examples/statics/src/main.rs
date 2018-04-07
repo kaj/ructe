@@ -51,15 +51,25 @@ fn test_get_static_by_name() {
 #[test]
 fn test_get_static_unknown() {
     use templates::statics::StaticFile;
-    assert_eq!(StaticFile::get("foo-bar.css").map(|s| s.name), None)
+    assert_eq!(
+        StaticFile::get("foo-bar.css").map(|s| s.name),
+        None
+    )
 }
 
 #[test]
 fn test_all_statics_known() {
     use templates::statics::STATICS;
     assert_eq!(
-        STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-        ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-o2rFo1lI.css"]
+        STATICS
+            .iter()
+            .map(|s| s.name)
+            .collect::<Vec<_>>(),
+        [
+            "foo-JckCHvyv.css",
+            "foo-R-7hhHLr.js",
+            "style-o2rFo1lI.css",
+        ]
     );
 }
 
