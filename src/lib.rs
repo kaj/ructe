@@ -222,10 +222,7 @@ impl StaticFiles {
     /// a few url-friendly bytes from a hash of the file content.
     pub fn add_file(&mut self, path: &Path) -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
-            println!(
-                "cargo:rerun-if-changed={}",
-                path.to_string_lossy(),
-            );
+            println!("cargo:rerun-if-changed={}", path.display());
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
@@ -249,10 +246,7 @@ impl StaticFiles {
         to_name: &str,
     ) -> io::Result<()> {
         if let Some((_name, ext)) = name_and_ext(path) {
-            println!(
-                "cargo:rerun-if-changed={}",
-                path.to_string_lossy(),
-            );
+            println!("cargo:rerun-if-changed={}", path.display());
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
@@ -306,10 +300,7 @@ impl StaticFiles {
         let mut scope = GlobalScope::new();
 
         // TODO Find any referenced files!
-        println!(
-            "cargo:rerun-if-changed={}",
-            src.to_string_lossy(),
-        );
+        println!("cargo:rerun-if-changed={}", src.display());
 
         let existing_statics = Arc::new(self.get_names().clone());
         scope.define_function(
@@ -556,10 +547,7 @@ fn handle_entries(
     indir: &Path,
     outdir: &Path,
 ) -> io::Result<()> {
-    println!(
-        "cargo:rerun-if-changed={}",
-        indir.to_string_lossy(),
-    );
+    println!("cargo:rerun-if-changed={}", indir.display());
     let suffix = ".rs.html";
     for entry in read_dir(indir)? {
         let entry = entry?;
@@ -575,10 +563,7 @@ fn handle_entries(
             }
         } else if let Some(filename) = entry.file_name().to_str() {
             if filename.ends_with(suffix) {
-                println!(
-                    "cargo:rerun-if-changed={}",
-                    path.to_string_lossy(),
-                );
+                println!("cargo:rerun-if-changed={}", path.display());
                 let name = &filename[..filename.len() - suffix.len()];
                 if handle_template(name, &path, outdir)? {
                     write!(
