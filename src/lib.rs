@@ -42,6 +42,7 @@
 //!
 
 extern crate base64;
+extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 extern crate md5;
@@ -62,6 +63,7 @@ pub mod Using_static_files;
 mod template;
 
 use errors::get_error;
+use itertools::Itertools;
 use nom::IResult::*;
 use nom::{prepare_errors, ErrorKind};
 use std::collections::BTreeMap;
@@ -499,8 +501,7 @@ impl Drop for StaticFiles {
             self.names_r
                 .iter()
                 .map(|s| format!("&{}", s.1))
-                .collect::<Vec<_>>()
-                .join(", "),
+                .format(", "),
         );
     }
 }

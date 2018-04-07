@@ -1,4 +1,5 @@
 use expression::{comma_expressions, expression, rust_name};
+use itertools::Itertools;
 use spacelike::{comment, spacelike};
 use std::fmt::{self, Display};
 use std::str::from_utf8;
@@ -105,7 +106,7 @@ impl Display for TemplateArgument {
             TemplateArgument::Body(ref v) => write!(
                 out,
                 "|out| {{\n{}\nOk(())\n}}\n",
-                v.iter().map(|b| b.code()).collect::<String>(),
+                v.iter().map(|b| b.code()).format(""),
             ),
         }
     }
@@ -134,28 +135,25 @@ impl TemplateExpression {
                 "for {} in {} {{\n{}}}\n",
                 name,
                 expr,
-                body.iter()
-                    .map(|b| b.code())
-                    .collect::<String>(),
+                body.iter().map(|b| b.code()).format(""),
             ),
             TemplateExpression::IfBlock {
                 ref expr,
                 ref body,
                 ref else_body,
-            } => format!(
-                "if {} {{\n{}}}{}\n",
-                expr,
-                body.iter()
-                    .map(|b| b.code())
-                    .collect::<String>(),
-                else_body
-                    .iter()
-                    .map(|b| format!(
-                        " else {{\n{}}}",
-                        b.iter().map(|b| b.code()).collect::<String>(),
-                    ))
-                    .collect::<String>(),
-            ),
+            } => {
+                format!(
+                    "if {} {{\n{}}}{}\n",
+                    expr,
+                    body.iter().map(|b| b.code()).format(""),
+                    else_body.iter().format_with("", |body, f| f(
+                        &format_args!(
+                            " else {{\n{}}}",
+                            body.iter().map(|b| b.code()).format(""),
+                        )
+                    )),
+                )
+            }
             TemplateExpression::CallTemplate {
                 ref name,
                 ref args,
@@ -163,8 +161,7 @@ impl TemplateExpression {
                 "{}(out{})?;\n",
                 name,
                 args.iter()
-                    .map(|b| format!(", {}", b))
-                    .collect::<String>(),
+                    .format_with("", |arg, f| f(&format_args!(", {}", arg))),
             ),
         }
     }

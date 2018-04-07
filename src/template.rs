@@ -1,4 +1,5 @@
 use expression::rust_name;
+use itertools::Itertools;
 use spacelike::spacelike;
 use std::io::{self, Write};
 use std::str::from_utf8;
@@ -46,13 +47,9 @@ impl Template {
             type_args = type_args.0,
             args = self.args
                 .iter()
-                .map(|a| format!(", {}", a))
-                .collect::<String>(),
+                .format_with("", |arg, f| f(&format_args!(", {}", arg))),
             type_spec = type_args.1,
-            body = self.body
-                .iter()
-                .map(|b| b.code())
-                .collect::<String>(),
+            body = self.body.iter().map(|b| b.code()).format(""),
         )
     }
 }
