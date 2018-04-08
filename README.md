@@ -69,7 +69,7 @@ A template may look something like this:
 Ructe compiles your templates to rust code that should be compiled with
 your other rust code, so it needs to be called before compiling,
 as described [in "How to use ructe", in the
-documentation](https://docs.rs/ructe/~0.3/ructe/#how-to-use-ructe).
+documentation](https://docs.rs/ructe/~0.3/ructe/How_to_use_ructe/index.html).
 There are also [examples](examples).
 
 When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
