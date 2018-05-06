@@ -122,7 +122,7 @@ impl TemplateExpression {
         match *self {
             TemplateExpression::Comment => String::new(),
             TemplateExpression::Text { ref text } => {
-                format!("write!(out, {:?})?;\n", text)
+                format!("out.write_all({:?}.as_bytes())?;\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
                 format!("{}.to_html(out)?;\n", expr)
