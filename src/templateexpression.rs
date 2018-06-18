@@ -102,7 +102,7 @@ pub enum TemplateArgument {
 impl Display for TemplateArgument {
     fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
-            TemplateArgument::Rust(ref s) => write!(out, "{}", s),
+            TemplateArgument::Rust(ref s) => out.write_str(&s),
             TemplateArgument::Body(ref v) => write!(
                 out,
                 "|out| {{\n{}\nOk(())\n}}\n",
