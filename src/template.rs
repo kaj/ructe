@@ -24,8 +24,7 @@ impl Template {
         for l in &self.preamble {
             write!(out, "{};\n", l)?;
         }
-        let type_args = if self.args
-            .contains(&"content: Content".to_owned())
+        let type_args = if self.args.contains(&"content: Content".to_owned())
         {
             (
                 "<Content>",
@@ -44,7 +43,8 @@ impl Template {
              }}\n",
             name = name,
             type_args = type_args.0,
-            args = self.args
+            args = self
+                .args
                 .iter()
                 .format_with("", |arg, f| f(&format_args!(", {}", arg))),
             type_spec = type_args.1,

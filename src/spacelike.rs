@@ -16,17 +16,14 @@ named!(pub comment<&[u8], ()>,
 
 #[cfg(test)]
 mod test {
+    use nom::verbose_errors::Err;
     use nom::ErrorKind;
     use nom::IResult::{Done, Error};
-    use nom::verbose_errors::Err;
     use spacelike::{comment, spacelike};
 
     #[test]
     fn comment1() {
-        assert_eq!(
-            comment(b"@* a simple comment *@"),
-            Done(&b""[..], ())
-        );
+        assert_eq!(comment(b"@* a simple comment *@"), Done(&b""[..], ()));
     }
     #[test]
     fn comment2() {

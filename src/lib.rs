@@ -133,7 +133,8 @@ pub struct StaticFile {
         if cfg!(feature = "mime03") {
             src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
-        src.write_all("}
+        src.write_all(
+            "}
 #[allow(dead_code)]
 impl StaticFile {
     /// Get a single `StaticFile` by name, if it exists.
@@ -143,10 +144,12 @@ impl StaticFile {
         } else {None}
     }
 }
-".as_bytes())?;
+"
+                .as_bytes(),
+        )?;
         if cfg!(feature = "mime02") {
             src.write_all(
-"extern crate mime;
+                "extern crate mime;
 use self::mime::Mime;
 impl StaticFile {
     /// Get the mime type of this static file.
@@ -159,7 +162,9 @@ impl StaticFile {
         self._mime.parse().unwrap()
     }
 }
-".as_bytes())?;
+"
+                    .as_bytes(),
+            )?;
         }
         Ok(StaticFiles {
             src: src,
@@ -215,8 +220,7 @@ impl StaticFile {
             let to_name =
                 format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.write_static_file(path, name, &buf, ext)?;
-            self.names
-                .insert(from_name.clone(), to_name.clone());
+            self.names.insert(from_name.clone(), to_name.clone());
             self.names_r.insert(to_name, from_name.clone());
         }
         Ok(())
@@ -240,10 +244,8 @@ impl StaticFile {
                 .replace("-", "_")
                 .replace(".", "_");
             self.write_static_file2(path, &from_name, to_name, ext)?;
-            self.names
-                .insert(from_name.clone(), to_name.to_string());
-            self.names_r
-                .insert(to_name.to_string(), from_name.clone());
+            self.names.insert(from_name.clone(), to_name.to_string());
+            self.names_r.insert(to_name.to_string(), from_name.clone());
         }
         Ok(())
     }
@@ -262,8 +264,7 @@ impl StaticFile {
             let to_name =
                 format!("{}-{}.{}", name, checksum_slug(data), &ext);
             self.write_static_buf(path, name, data, ext)?;
-            self.names
-                .insert(from_name.clone(), to_name.clone());
+            self.names.insert(from_name.clone(), to_name.clone());
             self.names_r.insert(to_name, from_name.clone());
         }
         Ok(())
@@ -318,9 +319,7 @@ impl StaticFile {
         let (file_context, src) = file_context.file(src);
         let scss = parse_scss_file(&src).unwrap();
         let style = OutputStyle::Compressed;
-        let css = style
-            .write_root(&scss, &mut scope, &file_context)
-            .unwrap();
+        let css = style.write_root(&scss, &mut scope, &file_context).unwrap();
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
@@ -579,16 +578,8 @@ fn handle_template(
             Ok(true)
         }
         result => {
-            println!(
-                "cargo:warning=Template parse error in {:?}:",
-                path,
-            );
-            show_errors(
-                &mut io::stdout(),
-                &buf,
-                result,
-                "cargo:warning=",
-            );
+            println!("cargo:warning=Template parse error in {:?}:", path);
+            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
             Ok(false)
         }
     }
@@ -626,20 +617,16 @@ fn show_error(
 ) {
     let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
     let _ = line_start.next();
-    let line_start = line_start
-        .next()
-        .map(|bytes| bytes.len() + 1)
-        .unwrap_or(0);
+    let line_start =
+        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
     let line = buf[line_start..]
         .splitn(2, |c| *c == b'\n')
         .next()
         .and_then(|s| from_utf8(s).ok())
         .unwrap_or("(Failed to display line)");
     let line_no = what_line(buf, line_start);
-    let pos_in_line = from_utf8(&buf[line_start..pos])
-        .unwrap()
-        .chars()
-        .count() + 1;
+    let pos_in_line =
+        from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
     writeln!(
         out,
         "{prefix}{:>4}:{}\n\
@@ -654,10 +641,7 @@ fn show_error(
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {
-    1 + buf[0..pos]
-        .iter()
-        .filter(|c| **c == b'\n')
-        .count()
+    1 + buf[0..pos].iter().filter(|c| **c == b'\n').count()
 }
 
 /// The module containing your generated template code will also

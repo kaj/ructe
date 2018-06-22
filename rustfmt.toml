@@ -1,7 +1,4 @@
 max_width = 78
 
-reorder_imported_names = true
 reorder_imports = true
 report_fixme = "Always"
-
-write_mode = "Diff"

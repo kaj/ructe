@@ -117,9 +117,7 @@ mod test {
     }
 
     fn check_expr(expr: &str) {
-        for post in &[
-            " ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"
-        ] {
+        for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"] {
             assert_eq!(
                 expression(format!("{}{}", expr, post).as_bytes()),
                 Done(post.as_bytes(), expr.to_string())

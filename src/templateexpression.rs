@@ -141,28 +141,25 @@ impl TemplateExpression {
                 ref expr,
                 ref body,
                 ref else_body,
-            } => {
-                format!(
-                    "if {} {{\n{}}}{}\n",
-                    expr,
+            } => format!(
+                "if {} {{\n{}}}{}\n",
+                expr,
+                body.iter().map(|b| b.code()).format(""),
+                else_body.iter().format_with("", |body, f| f(&format_args!(
+                    " else {{\n{}}}",
                     body.iter().map(|b| b.code()).format(""),
-                    else_body.iter().format_with("", |body, f| f(
-                        &format_args!(
-                            " else {{\n{}}}",
-                            body.iter().map(|b| b.code()).format(""),
-                        )
-                    )),
+                ))),
+            ),
+            TemplateExpression::CallTemplate { ref name, ref args } => {
+                format!(
+                    "{}(out{})?;\n",
+                    name,
+                    args.iter()
+                        .format_with("", |arg, f| {
+                            f(&format_args!(", {}", arg))
+                        }),
                 )
             }
-            TemplateExpression::CallTemplate {
-                ref name,
-                ref args,
-            } => format!(
-                "{}(out{})?;\n",
-                name,
-                args.iter()
-                    .format_with("", |arg, f| f(&format_args!(", {}", arg))),
-            ),
         }
     }
 }
