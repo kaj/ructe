@@ -113,68 +113,53 @@ impl StaticFiles {
         create_dir_all(&outdir)?;
         let mut src = File::create(outdir.join("statics.rs"))?;
         if cfg!(feature = "mime03") {
-            write!(
-                src,
-                "extern crate mime;\nuse self::mime::Mime;\n\n",
-            )?;
+            src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
-        write!(
-            src,
-            "/// A static file has a name (so its url can be recognized) \
-             and the\n\
-             /// actual file contents.\n\
-             ///\n\
-             /// The name includes a short (48 bits as 8 base64 characters) \
-             hash of\n\
-             /// the content, to enable long-time caching of static \
-             resourses in\n\
-             /// the clients.\n\
-             #[allow(dead_code)]\n\
-             pub struct StaticFile {{\n    \
-             pub content: &'static [u8],\n    \
-             pub name: &'static str,\n"
-        )?;
+        src.write_all(
+"/// A static file has a name (so its url can be recognized) and the
+/// actual file contents.
+///
+/// The name includes a short (48 bits as 8 base64 characters) hash of
+/// the content, to enable long-time caching of static resourses in
+/// the clients.
+#[allow(dead_code)]
+pub struct StaticFile {
+    pub content: &'static [u8],
+    pub name: &'static str,
+".as_bytes())?;
         if cfg!(feature = "mime02") {
-            write!(src, "    _mime: &'static str,\n")?;
+            src.write_all(b"    _mime: &'static str,\n")?;
         }
         if cfg!(feature = "mime03") {
-            write!(src, "    pub mime: &'static Mime,\n")?;
+            src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
-        write!(
-            src,
-            "}}\n\n\
-             #[allow(dead_code)]\n\
-             impl StaticFile {{\n    \
-             /// Get a single `StaticFile` by name, if it exists.\n    \
-             pub fn get(name: &str) -> Option<&'static Self> {{\n        \
-             if let Ok(pos) = STATICS.\
-             binary_search_by_key(&name, |s| s.name) {{\n            \
-             return Some(STATICS[pos]);\n        \
-             }} else {{\n            \
-             None\n        \
-             }}\n    \
-             }}\n\
-             }}\n"
-        )?;
+        src.write_all("}
+#[allow(dead_code)]
+impl StaticFile {
+    /// Get a single `StaticFile` by name, if it exists.
+    pub fn get(name: &str) -> Option<&'static Self> {
+        if let Ok(pos) = STATICS.binary_search_by_key(&name, |s| s.name) {
+            return Some(STATICS[pos]);
+        } else {None}
+    }
+}
+".as_bytes())?;
         if cfg!(feature = "mime02") {
-            write!(
-                src,
-                "extern crate mime;\n\
-                 use self::mime::Mime;\n\n\
-                 impl StaticFile {{\n    \
-                 /// Get the mime type of this static file.\n    \
-                 ///\n    \
-                 /// Currently, this method parses a (static) string every \
-                 time.\n    \
-                 /// A future release of `mime` may support statically \
-                 created\n    \
-                 /// `Mime` structs, which will make this nicer.\n    \
-                 #[allow(unused)]\n    \
-                 pub fn mime(&self) -> Mime {{\n        \
-                 self._mime.parse().unwrap()\n    \
-                 }}\n\
-                 }}\n"
-            )?;
+            src.write_all(
+"extern crate mime;
+use self::mime::Mime;
+impl StaticFile {
+    /// Get the mime type of this static file.
+    ///
+    /// Currently, this method parses a (static) string every time.
+    /// A future release of `mime` may support statically created
+    /// `Mime` structs, which will make this nicer.
+    #[allow(unused)]
+    pub fn mime(&self) -> Mime {
+        self._mime.parse().unwrap()
+    }
+}
+".as_bytes())?;
         }
         Ok(StaticFiles {
             src: src,
