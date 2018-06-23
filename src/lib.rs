@@ -116,7 +116,7 @@ impl StaticFiles {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
         src.write_all(
-"/// A static file has a name (so its url can be recognized) and the
+b"/// A static file has a name (so its url can be recognized) and the
 /// actual file contents.
 ///
 /// The name includes a short (48 bits as 8 base64 characters) hash of
@@ -126,7 +126,7 @@ impl StaticFiles {
 pub struct StaticFile {
     pub content: &'static [u8],
     pub name: &'static str,
-".as_bytes())?;
+")?;
         if cfg!(feature = "mime02") {
             src.write_all(b"    _mime: &'static str,\n")?;
         }
@@ -134,7 +134,7 @@ pub struct StaticFile {
             src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
         src.write_all(
-            "}
+            b"}
 #[allow(dead_code)]
 impl StaticFile {
     /// Get a single `StaticFile` by name, if it exists.
@@ -144,12 +144,11 @@ impl StaticFile {
         } else {None}
     }
 }
-"
-                .as_bytes(),
+",
         )?;
         if cfg!(feature = "mime02") {
             src.write_all(
-                "extern crate mime;
+                b"extern crate mime;
 use self::mime::Mime;
 impl StaticFile {
     /// Get the mime type of this static file.
@@ -162,12 +161,11 @@ impl StaticFile {
         self._mime.parse().unwrap()
     }
 }
-"
-                    .as_bytes(),
+",
             )?;
         }
         Ok(StaticFiles {
-            src: src,
+            src,
             names: BTreeMap::new(),
             names_r: BTreeMap::new(),
         })
@@ -330,15 +328,15 @@ impl StaticFile {
         content: &[u8],
         suffix: &str,
     ) -> io::Result<()> {
-        write!(
+        writeln!(
             self.src,
-            "\n/// From {path:?}\n\
-             #[allow(non_upper_case_globals)]\n\
-             pub static {name}_{suf}: StaticFile = StaticFile {{\n  \
-             content: include_bytes!({path:?}),\n  \
-             name: \"{name}-{hash}.{suf}\",\n\
-             {mime}\
-             }};\n",
+            "\n/// From {path:?}\
+             \n#[allow(non_upper_case_globals)]\
+             \npub static {name}_{suf}: StaticFile = StaticFile {{\
+             \n  content: include_bytes!({path:?}),\
+             \n  name: \"{name}-{hash}.{suf}\",\
+             \n{mime}\
+             }};",
             path = path,
             name = name,
             hash = checksum_slug(content),
@@ -354,15 +352,15 @@ impl StaticFile {
         as_name: &str,
         suffix: &str,
     ) -> io::Result<()> {
-        write!(
+        writeln!(
             self.src,
-            "\n/// From {path:?}\n\
-             #[allow(non_upper_case_globals)]\n\
-             pub static {name}: StaticFile = StaticFile {{\n  \
-             content: include_bytes!({path:?}),\n  \
-             name: \"{as_name}\",\n\
-             {mime}\
-             }};\n",
+            "\n/// From {path:?}\
+             \n#[allow(non_upper_case_globals)]\
+             \npub static {name}: StaticFile = StaticFile {{\
+             \n  content: include_bytes!({path:?}),\
+             \n  name: \"{as_name}\",\
+             \n{mime}\
+             }};",
             path = path,
             name = name,
             as_name = as_name,
@@ -377,15 +375,15 @@ impl StaticFile {
         content: &[u8],
         suffix: &str,
     ) -> io::Result<()> {
-        write!(
+        writeln!(
             self.src,
-            "\n/// From {path:?}\n\
-             #[allow(non_upper_case_globals)]\n\
-             pub static {name}_{suf}: StaticFile = StaticFile {{\n  \
-             content: &{content:?},\n  \
-             name: \"{name}-{hash}.{suf}\",\n\
-             {mime}\
-             }};\n",
+            "\n/// From {path:?}\
+             \n#[allow(non_upper_case_globals)]\
+             \npub static {name}_{suf}: StaticFile = StaticFile {{\
+             \n  content: &{content:?},\
+             \n  name: \"{name}-{hash}.{suf}\",\
+             \n{mime}\
+             }};",
             path = path,
             name = name,
             content = content,
@@ -469,10 +467,10 @@ impl Drop for StaticFiles {
     /// `STATICS` variable.
     fn drop(&mut self) {
         // Ignore a possible write failure, rather than a panic in drop.
-        let _ = write!(
+        let _ = writeln!(
             self.src,
             "\npub static STATICS: &'static [&'static StaticFile] \
-             = &[{}];\n",
+             = &[{}];",
             self.names_r
                 .iter()
                 .map(|s| format!("&{}", s.1))
@@ -499,11 +497,10 @@ fn checksum_slug(data: &[u8]) -> String {
 /// all templates found in `indir`.
 pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
     File::create(outdir.join("templates.rs")).and_then(|mut f| {
-        write!(
-            f,
-            "pub mod templates {{\n\
-             use std::io::{{self, Write}};\n\
-             use std::fmt::Display;\n\n",
+        f.write_all(
+            b"pub mod templates {\n\
+              use std::io::{self, Write};\n\
+              use std::fmt::Display;\n\n",
         )?;
 
         let outdir = outdir.join("templates");
@@ -512,16 +509,17 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
         handle_entries(&mut f, indir, &outdir)?;
 
         if outdir.join("statics.rs").exists() {
-            write!(f, "pub mod statics;\n")?;
+            f.write_all(b"pub mod statics;")?;
         }
 
-        write!(
-            f,
-            "{}\n}}\n",
-            include_str!(concat!(
-                env!("CARGO_MANIFEST_DIR"),
-                "/src/template_utils.rs",
-            )),
+        f.write_all(
+            concat!(
+                include_str!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/template_utils.rs"
+                )),
+                "\n}\n"
+            ).as_bytes(),
         )
     })
 }
@@ -543,17 +541,17 @@ fn handle_entries(
                 File::create(outdir.join("mod.rs")).and_then(|mut f| {
                     handle_entries(&mut f, &path, &outdir)
                 })?;
-                write!(f, "pub mod {name};\n\n", name = filename)?;
+                writeln!(f, "pub mod {name};\n", name = filename)?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
             if filename.ends_with(suffix) {
                 println!("cargo:rerun-if-changed={}", path.display());
                 let name = &filename[..filename.len() - suffix.len()];
                 if handle_template(name, &path, outdir)? {
-                    write!(
+                    writeln!(
                         f,
                         "mod template_{name};\n\
-                         pub use self::template_{name}::{name};\n\n",
+                         pub use self::template_{name}::{name};\n",
                         name = name,
                     )?;
                 }

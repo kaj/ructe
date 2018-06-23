@@ -103,9 +103,9 @@ impl Display for TemplateArgument {
     fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             TemplateArgument::Rust(ref s) => out.write_str(&s),
-            TemplateArgument::Body(ref v) => write!(
+            TemplateArgument::Body(ref v) => writeln!(
                 out,
-                "|out| {{\n{}\nOk(())\n}}\n",
+                "|out| {{\n{}\nOk(())\n}}",
                 v.iter().map(|b| b.code()).format(""),
             ),
         }
@@ -121,6 +121,9 @@ impl TemplateExpression {
     pub fn code(&self) -> String {
         match *self {
             TemplateExpression::Comment => String::new(),
+            TemplateExpression::Text { ref text } if text.is_ascii() => {
+                format!("out.write_all(b{:?})?;\n", text)
+            }
             TemplateExpression::Text { ref text } => {
                 format!("out.write_all({:?}.as_bytes())?;\n", text)
             }
@@ -181,8 +184,8 @@ named!(
                                  separated_list!(tag!(", "), template_argument),
                                  tag!(")"))),
                 |(name, args)| TemplateExpression::CallTemplate {
-                    name: name,
-                    args: args,
+                    name,
+                    args,
                 }) |
             Some(b"{") => value!(TemplateExpression::text("{{")) |
             Some(b"}") => value!(TemplateExpression::text("}}")) |
@@ -198,9 +201,9 @@ named!(
                         )))
                     ),
                     |(expr, body, else_body)| TemplateExpression::IfBlock {
-                        expr: expr,
-                        body: body,
-                        else_body: else_body,
+                        expr,
+                        body,
+                        else_body,
                     })) |
             Some(b"for") => map!(
                 tuple!(
@@ -235,13 +238,13 @@ named!(
                                       template_block),
                         spacelike)),
                 |(name, expr, body)| TemplateExpression::ForLoop {
-                    name: name,
-                    expr: expr,
-                    body: body,
+                    name,
+                    expr,
+                    body,
                 }) |
             Some(b"") => map!(
                 expression,
-                |expr| TemplateExpression::Expression{ expr: expr }
+                |expr| TemplateExpression::Expression{ expr }
             ) |
             None => alt!(
                 map!(comment, |()| TemplateExpression::Comment) |

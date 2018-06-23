@@ -22,7 +22,7 @@ impl Template {
              use ::templates::{Html,ToHtml};\n",
         )?;
         for l in &self.preamble {
-            write!(out, "{};\n", l)?;
+            writeln!(out, "{};", l)?;
         }
         let type_args = if self.args.contains(&"content: Content".to_owned())
         {
@@ -33,14 +33,14 @@ impl Template {
         } else {
             ("", "")
         };
-        write!(
+        writeln!(
             out,
             "\n\
              pub fn {name}{type_args}(out: &mut Write{args})\n\
              -> io::Result<()> {type_spec}{{\n\
              {body}\
              Ok(())\n\
-             }}\n",
+             }}",
             name = name,
             type_args = type_args.0,
             args = self
@@ -71,7 +71,7 @@ named!(pub template<&[u8], Template>,
                    err_str!("Error in expression starting here:"),
                    template_expression),
                call!(end_of_file)) >>
-           (Template { preamble: preamble, args: args, body: body.0 })
+           (Template { preamble, args, body: body.0 })
            ));
 
 named!(end_of_file<&[u8], ()>,
