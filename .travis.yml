@@ -5,6 +5,8 @@ before_script:
 rust:
   - 1.23.0
   - 1.24.1
+  - 1.25.0
+  - 1.26.2
   - stable
   - beta
   - nightly
@@ -15,10 +17,13 @@ matrix:
      before_script:
       - rustup component add rustfmt-preview
      script:
-      - cargo fmt -- --write-mode=diff
-      - cd examples/simple && cargo fmt -- --write-mode=diff
-      - cd ../statics && cargo fmt -- --write-mode=diff
-      - cd ../static-sass && cargo fmt -- --write-mode=diff
+      - cargo fmt -- --check
+      - cd examples/simple && cargo fmt -- --check
+      - cd ../statics && cargo fmt -- --check
+      - cd ../static-sass && cargo fmt -- --check
+      - cd ../mime03 && cargo fmt -- --check
+      - cd ../iron && cargo fmt -- --check
+      - cd ../nickel && cargo fmt -- --check
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
@@ -27,6 +32,7 @@ matrix:
      script: cd examples/nickel && cargo test
   allow_failures:
     - rust: nightly
+      env:
 script:
 - |
   cargo build &&

@@ -62,20 +62,14 @@ mod test {
     #[test]
     fn get_static_unknown() {
         use templates::statics::StaticFile;
-        assert_eq!(
-            StaticFile::get("style-bar.css").map(|s| s.name),
-            None
-        )
+        assert_eq!(StaticFile::get("style-bar.css").map(|s| s.name), None)
     }
 
     #[test]
     fn all_statics_known() {
         use templates::statics::STATICS;
         assert_eq!(
-            STATICS
-                .iter()
-                .map(|s| s.name)
-                .collect::<Vec<_>>(),
+            STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
             ["burlap-oPfjAg2n.jpg", "style-dp91gNUn.css"]
         );
     }
