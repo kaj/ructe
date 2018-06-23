@@ -7,17 +7,10 @@ named!(pub expression<&[u8], String>,
                               tag!("")),
                         from_utf8) >>
            name: return_error!(err_str!("Expected rust expression"),
-                              alt!(map!(rust_name, String::from) |
+                              alt_complete!(map!(rust_name, String::from) |
                       map!(map_res!(digit, from_utf8), String::from) |
-                      map!(delimited!(char!('"'),
-                                      map_res!(
-                                          escaped!(is_not!("\"\\"),
-                                                   '\\', one_of!("\"\\")),
-                                          from_utf8),
-                                      char!('"')),
-                           |text| format!("\"{}\"", text)) |
-                      map!(delimited!(tag!("("), comma_expressions, tag!(")")),
-                           |expr| format!("({})", expr)) |
+                      map!(quoted_string, String::from) |
+                      map!(expr_in_parens, String::from) |
                       map!(delimited!(tag!("["), comma_expressions, tag!("]")),
                            |expr| format!("[{}]", expr)))) >>
            post: fold_many0!(
@@ -26,12 +19,11 @@ named!(pub expression<&[u8], String>,
                         |expr| format!(".{}", expr)) |
                    map!(preceded!(tag!("::"), expression),
                         |expr| format!("::{}", expr)) |
-                   map!(delimited!(tag!("("), comma_expressions, tag!(")")),
-                        |expr| format!("({})", expr)) |
+                   map!(expr_in_parens, String::from) |
                    map!(delimited!(tag!("["), comma_expressions, tag!("]")),
                         |expr| format!("[{}]", expr)) |
-                   map!(delimited!(tag!("!("), comma_expressions, tag!(")")),
-                        |expr| format!("!({})", expr)) |
+                   map!(preceded!(tag!("!"), expr_in_parens),
+                        |expr| format!("!{}", expr)) |
                    map!(delimited!(tag!("!["), comma_expressions, tag!("]")),
                         |expr| format!("![{}]", expr))),
                String::new(),
@@ -54,6 +46,47 @@ named!(
         ),
         from_utf8
 ));
+
+named!(
+    expr_in_parens<&[u8], &str>,
+    map_res!(recognize!(
+        delimited!(
+            tag!("("),
+            many0!(alt!(
+                value!((), is_not!("()\"/")) |
+                value!((), expr_in_parens) |
+                value!((), quoted_string) |
+                value!((), rust_comment) |
+                value!((), terminated!(tag!("/"), none_of!("*")))
+            )),
+            tag!(")")
+        )),
+        from_utf8
+    )
+);
+
+named!(
+    quoted_string<&[u8], String>,
+    map!(delimited!(char!('"'),
+               map_res!(
+                   escaped!(is_not!("\"\\"),
+                            '\\', one_of!("\"\\")),
+                   from_utf8),
+               char!('"')),
+    |text| format!("\"{}\"", text)
+    )
+);
+
+named!(
+    rust_comment,
+    delimited!(
+        tag!("/*"),
+        recognize!(many0!(alt_complete!(
+            is_not!("*") | preceded!(tag!("*"), not!(tag!("/")))
+        ))),
+        tag!("*/")
+    )
+);
 
 #[cfg(test)]
 mod test {
@@ -101,6 +134,10 @@ mod test {
         check_expr("\"foo\"");
     }
     #[test]
+    fn expression_str_paren() {
+        check_expr("(\")\")");
+    }
+    #[test]
     fn expression_enum_variant() {
         check_expr("MyEnum::Variant.method()");
     }
@@ -119,6 +156,22 @@ mod test {
     #[test]
     fn expression_number() {
         check_expr("42");
+    }
+    #[test]
+    fn expression_with_comment() {
+        check_expr("(42 /* truly important number */)");
+    }
+    #[test]
+    fn expression_with_comment_a() {
+        check_expr("(42 /* \" */)");
+    }
+    #[test]
+    fn expression_with_comment_b() {
+        check_expr("(42 /* ) */)");
+    }
+    #[test]
+    fn expression_arithemtic_in_parens() {
+        check_expr("(2 + 3*4 - 5/2)");
     }
 
     fn check_expr(expr: &str) {
@@ -153,10 +206,10 @@ mod test {
     #[test]
     fn non_expression_c() {
         assert_eq!(
-            expression_error_message(b"(+)"),
-            ":   1:(+)\n\
+            expression_error_message(b"(missing end"),
+            ":   1:(missing end\n\
              :     ^ Expected rust expression\n\
-             :   1:(+)\n\
+             :   1:(missing end\n\
              :     ^ Alt\n"
         );
     }

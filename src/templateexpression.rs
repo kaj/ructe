@@ -354,7 +354,7 @@ mod test {
     #[test]
     fn if_let_2() {
         assert_eq!(
-            template_expression(b"@if let Some((x,y)) = x { something }"),
+            template_expression(b"@if let Some((x, y)) = x { something }"),
             IResult::Done(
                 &b""[..],
                 TemplateExpression::IfBlock {
