@@ -184,7 +184,7 @@ named!(
                                  separated_list!(tag!(", "), template_argument),
                                  tag!(")"))),
                 |(name, args)| TemplateExpression::CallTemplate {
-                    name,
+                    name: name.to_string(),
                     args,
                 }) |
             Some(b"{") => value!(TemplateExpression::text("{{")) |
@@ -212,7 +212,7 @@ named!(
                         return_error!(
                             err_str!("Expected loop variable name \
                                       or destructuring tuple"),
-                            alt!(rust_name |
+                            alt!(map!(rust_name, String::from) |
                                  map!(
                                      pair!(
                                          opt!(char!('&')),
@@ -248,9 +248,9 @@ named!(
             ) |
             None => alt!(
                 map!(comment, |()| TemplateExpression::Comment) |
-                map!(is_not!("@{}"),
+                map!(map_res!(is_not!("@{}"), from_utf8),
                      |text| TemplateExpression::Text {
-                         text: from_utf8(text).unwrap().to_string()
+                         text: text.to_string()
                      })
             )
     ))
@@ -305,13 +305,13 @@ named!(
 );
 
 named!(rel_operator<&[u8], &str>,
-       map!(
+       map_res!(
            delimited!(
                spacelike,
                alt!(tag_s!("==") | tag_s!("!=") | tag_s!(">=") |
                     tag_s!(">") | tag_s!("<=") | tag_s!("<")),
                spacelike),
-           |s| from_utf8(s).unwrap()
+           from_utf8
        )
 );
 

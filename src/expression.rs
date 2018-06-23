@@ -3,16 +3,19 @@ use std::str::from_utf8;
 
 named!(pub expression<&[u8], String>,
        do_parse!(
-           pre: alt!(tag!("&") | tag!("!") | tag!("*") | tag!("ref ") |
-                     tag!("")) >>
+           pre: map_res!(alt!(tag!("&") | tag!("!") | tag!("*") | tag!("ref ") |
+                              tag!("")),
+                        from_utf8) >>
            name: return_error!(err_str!("Expected rust expression"),
-                              alt!(rust_name |
-                      map!(digit, |d| from_utf8(d).unwrap().to_string()) |
+                              alt!(map!(rust_name, String::from) |
+                      map!(map_res!(digit, from_utf8), String::from) |
                       map!(delimited!(char!('"'),
-                                      escaped!(is_not!("\"\\"),
-                                               '\\', one_of!("\"\\")),
+                                      map_res!(
+                                          escaped!(is_not!("\"\\"),
+                                                   '\\', one_of!("\"\\")),
+                                          from_utf8),
                                       char!('"')),
-                           |text| format!("\"{}\"", from_utf8(text).unwrap())) |
+                           |text| format!("\"{}\"", text)) |
                       map!(delimited!(tag!("("), comma_expressions, tag!(")")),
                            |expr| format!("({})", expr)) |
                       map!(delimited!(tag!("["), comma_expressions, tag!("]")),
@@ -36,19 +39,21 @@ named!(pub expression<&[u8], String>,
                    acc.push_str(&item);
                    acc
                }) >>
-           (format!("{}{}{}", from_utf8(pre).unwrap(), name, post))));
+           (format!("{}{}{}", pre, name, post))));
 
 named!(pub comma_expressions<&[u8], String>,
        map!(separated_list!(preceded!(tag!(","), many0!(tag!(" "))),
                             expression),
             |list: Vec<_>| list.join(", ")));
 
-named!(pub rust_name<&[u8], String>,
-       do_parse!(first: alpha >>
-                 rest: opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")) >>
-                 (format!("{}{}",
-                          from_utf8(first).unwrap(),
-                          from_utf8(rest.unwrap_or(b"")).unwrap()))));
+named!(
+    pub rust_name<&[u8], &str>,
+    map_res!(
+        recognize!(
+            pair!(alpha, opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")))
+        ),
+        from_utf8
+));
 
 #[cfg(test)]
 mod test {

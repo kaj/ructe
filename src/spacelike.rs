@@ -9,9 +9,9 @@ named!(pub spacelike<&[u8], ()>,
 named!(pub comment<&[u8], ()>,
        value!((), delimited!(tag!("@*"),
                              many0!(alt!(
-                                 map!(is_not!("*"), |_|()) |
-                                 do_parse!(tag!("*") >> none_of!("@") >> ())
-                                     )),
+                                 value!((), is_not!("*")) |
+                                 value!((), preceded!(tag!("*"), none_of!("@")))
+                             )),
                              tag!("*@"))));
 
 #[cfg(test)]

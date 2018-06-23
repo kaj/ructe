@@ -53,36 +53,43 @@ impl Template {
     }
 }
 
-named!(pub template<&[u8], Template>,
-       do_parse!(
-           spacelike >>
-           preamble: many0!(do_parse!(tag!("@") >>
-                                      code: is_not!(";()") >>
-                                      tag!(";") >>
-                                      spacelike >>
-                                      (from_utf8(code).unwrap().to_string())
-                                      )) >>
-           tag!("@(") >>
-           args: separated_list!(tag!(", "), formal_argument) >>
-           tag!(")") >>
-           spacelike >>
-           body: my_many_till!(
-               return_error!(
-                   err_str!("Error in expression starting here:"),
-                   template_expression),
-               call!(end_of_file)) >>
-           (Template { preamble, args, body: body.0 })
-           ));
+named!(
+    pub template<&[u8], Template>,
+    map!(
+        tuple!(
+            spacelike,
+            many0!(map!(
+                delimited!(
+                    tag!("@"),
+                    map_res!(is_not!(";()"), from_utf8),
+                    terminated!(tag!(";"), spacelike)
+                ),
+                String::from
+            )),
+            delimited!(
+                tag!("@("),
+                separated_list!(tag!(", "), map!(formal_argument, String::from)),
+                terminated!(tag!(")"), spacelike)
+            ),
+            my_many_till!(
+                return_error!(
+                    err_str!("Error in expression starting here:"),
+                    template_expression),
+                call!(end_of_file))
+            ),
+        |((), preamble, args, body)| Template { preamble, args, body: body.0 }
+    )
+);
 
 named!(end_of_file<&[u8], ()>,
        value!((), eof!()));
 
-named!(formal_argument<&[u8], String>,
-       map!(recognize!(do_parse!(rust_name >> spacelike >>
+named!(formal_argument<&[u8], &str>,
+       map_res!(recognize!(do_parse!(rust_name >> spacelike >>
                             char!(':') >> spacelike >>
                             type_expression >>
                                  ())),
-            |a| from_utf8(a).unwrap().to_string()));
+            from_utf8));
 
 named!(type_expression<&[u8], ()>,
        do_parse!(
