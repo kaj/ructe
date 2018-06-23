@@ -7,12 +7,11 @@ named!(pub expression<&[u8], String>,
                               tag!("")),
                         from_utf8) >>
            name: return_error!(err_str!("Expected rust expression"),
-                              alt_complete!(map!(rust_name, String::from) |
-                      map!(map_res!(digit, from_utf8), String::from) |
-                      map!(quoted_string, String::from) |
-                      map!(expr_in_parens, String::from) |
-                      map!(delimited!(tag!("["), comma_expressions, tag!("]")),
-                           |expr| format!("[{}]", expr)))) >>
+                               alt_complete!(rust_name |
+                                             map_res!(digit, from_utf8) |
+                                             quoted_string |
+                                             expr_in_parens |
+                                             expr_in_brackets)) >>
            post: fold_many0!(
                alt_complete!(
                    map!(preceded!(tag!("."), expression),
@@ -20,12 +19,11 @@ named!(pub expression<&[u8], String>,
                    map!(preceded!(tag!("::"), expression),
                         |expr| format!("::{}", expr)) |
                    map!(expr_in_parens, String::from) |
-                   map!(delimited!(tag!("["), comma_expressions, tag!("]")),
-                        |expr| format!("[{}]", expr)) |
+                   map!(expr_in_brackets, String::from) |
                    map!(preceded!(tag!("!"), expr_in_parens),
                         |expr| format!("!{}", expr)) |
-                   map!(delimited!(tag!("!["), comma_expressions, tag!("]")),
-                        |expr| format!("![{}]", expr))),
+                   map!(preceded!(tag!("!"), expr_in_brackets),
+                        |expr| format!("!{}", expr))),
                String::new(),
                |mut acc: String, item: String| {
                    acc.push_str(&item);
@@ -49,11 +47,12 @@ named!(
 
 named!(
     expr_in_parens<&[u8], &str>,
-    map_res!(recognize!(
-        delimited!(
+    map_res!(
+        recognize!(delimited!(
             tag!("("),
             many0!(alt!(
-                value!((), is_not!("()\"/")) |
+                value!((), is_not!("[]()\"/")) |
+                value!((), expr_in_brackets) |
                 value!((), expr_in_parens) |
                 value!((), quoted_string) |
                 value!((), rust_comment) |
@@ -66,14 +65,33 @@ named!(
 );
 
 named!(
-    quoted_string<&[u8], String>,
-    map!(delimited!(char!('"'),
-               map_res!(
-                   escaped!(is_not!("\"\\"),
-                            '\\', one_of!("\"\\")),
-                   from_utf8),
-               char!('"')),
-    |text| format!("\"{}\"", text)
+    expr_in_brackets<&[u8], &str>,
+    map_res!(
+        recognize!(delimited!(
+            tag!("["),
+            many0!(alt!(
+                value!((), is_not!("[]()\"/")) |
+                value!((), expr_in_brackets) |
+                value!((), expr_in_parens) |
+                value!((), quoted_string) |
+                value!((), rust_comment) |
+                value!((), terminated!(tag!("/"), none_of!("*")))
+            )),
+            tag!("]")
+        )),
+        from_utf8
+    )
+);
+
+named!(
+    quoted_string<&[u8], &str>,
+    map_res!(
+        recognize!(delimited!(
+            char!('"'),
+            escaped!(is_not!("\"\\"), '\\', one_of!("\"\\")),
+            char!('"')
+        )),
+        from_utf8
     )
 );
 
