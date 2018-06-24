@@ -239,12 +239,12 @@ named!(
                         spacelike)),
                 |(name, expr, body)| TemplateExpression::ForLoop {
                     name,
-                    expr,
+                    expr: expr.to_string(),
                     body,
                 }) |
             Some(b"") => map!(
                 expression,
-                |expr| TemplateExpression::Expression{ expr }
+                |expr| TemplateExpression::Expression{ expr: expr.to_string() }
             ) |
             None => alt!(
                 map!(comment, |()| TemplateExpression::Comment) |
@@ -271,7 +271,7 @@ named!(template_block<&[u8], Vec<TemplateExpression>>,
 named!(template_argument<&[u8], TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
                  TemplateArgument::Body) |
-            map!(expression, TemplateArgument::Rust)));
+            map!(map!(expression, String::from), TemplateArgument::Rust)));
 
 named!(
     cond_expression<&[u8], String>,
@@ -299,7 +299,7 @@ named!(
             |(a, b)| if let Some((op, rhs)) = b {
                 format!("{} {} {}", a, op, rhs)
             } else {
-                a
+                a.to_string()
             })
     )
 );

@@ -1,33 +1,32 @@
 use nom::{alpha, digit};
 use std::str::from_utf8;
 
-named!(pub expression<&[u8], String>,
-       do_parse!(
-           pre: map_res!(alt!(tag!("&") | tag!("*") | tag!("")), from_utf8) >>
-           name: return_error!(err_str!("Expected rust expression"),
-                               alt_complete!(rust_name |
-                                             map_res!(digit, from_utf8) |
-                                             quoted_string |
-                                             expr_in_parens |
-                                             expr_in_brackets)) >>
-           post: fold_many0!(
-               alt_complete!(
-                   map!(preceded!(tag!("."), expression),
-                        |expr| format!(".{}", expr)) |
-                   map!(preceded!(tag!("::"), expression),
-                        |expr| format!("::{}", expr)) |
-                   map!(expr_in_parens, String::from) |
-                   map!(expr_in_brackets, String::from) |
-                   map!(preceded!(tag!("!"), expr_in_parens),
-                        |expr| format!("!{}", expr)) |
-                   map!(preceded!(tag!("!"), expr_in_brackets),
-                        |expr| format!("!{}", expr))),
-               String::new(),
-               |mut acc: String, item: String| {
-                   acc.push_str(&item);
-                   acc
-               }) >>
-           (format!("{}{}{}", pre, name, post))));
+named!(
+    pub expression<&[u8], &str>,
+    map_res!(
+        recognize!(tuple!(
+            map_res!(alt!(tag!("&") | tag!("*") | tag!("")), from_utf8),
+            return_error!(err_str!("Expected rust expression"),
+                          alt_complete!(rust_name |
+                                        map_res!(digit, from_utf8) |
+                                        quoted_string |
+                                        expr_in_parens |
+                                        expr_in_brackets)),
+            fold_many0!(
+                alt_complete!(
+                    preceded!(tag!("."), expression) |
+                    preceded!(tag!("::"), expression) |
+                    expr_in_parens |
+                    expr_in_brackets |
+                    preceded!(tag!("!"), expr_in_parens) |
+                    preceded!(tag!("!"), expr_in_brackets)),
+                (),
+                |_, _| ()
+            )
+        )),
+        from_utf8
+    )
+);
 
 named!(pub comma_expressions<&[u8], String>,
        map!(separated_list!(preceded!(tag!(","), many0!(tag!(" "))),
@@ -194,7 +193,7 @@ mod test {
         for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"] {
             assert_eq!(
                 expression(format!("{}{}", expr, post).as_bytes()),
-                Done(post.as_bytes(), expr.to_string())
+                Done(post.as_bytes(), expr)
             );
         }
     }
