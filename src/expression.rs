@@ -3,9 +3,7 @@ use std::str::from_utf8;
 
 named!(pub expression<&[u8], String>,
        do_parse!(
-           pre: map_res!(alt!(tag!("&") | tag!("!") | tag!("*") | tag!("ref ") |
-                              tag!("")),
-                        from_utf8) >>
+           pre: map_res!(alt!(tag!("&") | tag!("*") | tag!("")), from_utf8) >>
            name: return_error!(err_str!("Expected rust expression"),
                                alt_complete!(rust_name |
                                              map_res!(digit, from_utf8) |
@@ -133,7 +131,7 @@ mod test {
     }
     #[test]
     fn expression_6() {
-        check_expr("!foo.is_empty()");
+        check_expr("(!foo.is_empty())");
     }
     #[test]
     fn expression_7() {
