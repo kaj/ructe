@@ -55,6 +55,24 @@ pub mod a_Value_expressions {
     //! ```text
     //! <p>The value is @format!("{:.1}", float_value).</p>
     //! ```
+    //!
+    //! If more complex expressions are needed, they can be put in
+    //! parenthesis.
+    //!
+    //! ```text
+    //! <p>The sum @a+3 is @(a+3).</p>
+    //! ```
+    //!
+    //! Anything is allowed in parenthesis, as long as parenthesis,
+    //! brackets and string quotes are balanced.
+    //! Note that this also applies to the parenthesis of a function
+    //! call or the brackets of an index, so complex things like the
+    //! following are allowed:
+    //!
+    //! ```text
+    //! <p>Index: @myvec[t.map(|s| s.length()).unwrap_or(0)].</p>
+    //! <p>Argument: @call(a + 3, |t| t.something()).</p>
+    //! ```
 }
 
 pub mod b_Loops {
