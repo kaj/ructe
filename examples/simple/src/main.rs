@@ -68,8 +68,13 @@ fn test_if_let_destructure() {
 fn test_list() {
     assert_eq!(
         r2s(|o| list(o, &["foo", "bar"])),
-        "<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n"
+        "\n<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n\n"
     );
+}
+
+#[test]
+fn test_list_empty() {
+    assert_eq!(r2s(|o| list(o, &[])), "\n<p>No items</p>\n\n");
 }
 
 #[test]
@@ -94,11 +99,11 @@ fn test_list_destructure_2() {
 fn test_uselist() {
     assert_eq!(
         r2s(|o| uselist(o)),
-        "<h1>Two items</h1>\n\
+        "<h1>Two items</h1>\n\n\
          <ul>\n  \n    <li>foo</li>\n  \
-         \n    <li>bar</li>\n  </ul>\n\n\
-         <h2>No items</h2>\n\
-         <ul>\n  </ul>\n\n"
+         \n    <li>bar</li>\n  </ul>\n\n\n\
+         <h2>No items</h2>\n\n\
+         <p>No items</p>\n\n\n"
     );
 }
 

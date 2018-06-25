@@ -293,14 +293,26 @@ named!(
                         expression))),
             |(lhs, rhs)| format!("let {} = {}", lhs, rhs)) |
         None => map!(
-            pair!(
-                return_error!(err_str!("Expected expression"), expression),
-                opt!(pair!(rel_operator, expression))),
-            |(a, b)| if let Some((op, rhs)) = b {
-                format!("{} {} {}", a, op, rhs)
-            } else {
-                a.to_string()
-            })
+            return_error!(err_str!("Expected expression"), logic_expression),
+            String::from
+        )
+    )
+);
+
+named!(
+    logic_expression<&[u8], &str>,
+    map_res!(
+        recognize!(tuple!(
+            opt!(terminated!(tag!("!"), spacelike)),
+            expression,
+            opt!(pair!(
+                rel_operator,
+                return_error!(
+                    err_str!("Expected expression"),
+                    logic_expression
+                )))
+        )),
+        from_utf8
     )
 );
 
