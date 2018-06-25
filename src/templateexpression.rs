@@ -321,7 +321,8 @@ named!(rel_operator<&[u8], &str>,
            delimited!(
                spacelike,
                alt!(tag_s!("==") | tag_s!("!=") | tag_s!(">=") |
-                    tag_s!(">") | tag_s!("<=") | tag_s!("<")),
+                    tag_s!(">") | tag_s!("<=") | tag_s!("<") |
+                    tag_s!("||") | tag_s!("&&")),
                spacelike),
            from_utf8
        )
@@ -393,6 +394,20 @@ mod test {
         )
     }
 
+    #[test]
+    fn if_complex_logig() {
+        assert_eq!(
+            template_expression(b"@if x == 17 || y && z() { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "x == 17 || y && z()".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
+    }
     #[test]
     fn if_missing_conditional() {
         assert_eq!(
