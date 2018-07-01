@@ -37,7 +37,8 @@ named!(
     pub rust_name<&[u8], &str>,
     map_res!(
         recognize!(
-            pair!(alpha, opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")))
+            pair!(alt!(tag!("_") | alpha),
+                  opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")))
         ),
         from_utf8
 ));
