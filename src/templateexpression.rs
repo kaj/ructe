@@ -231,7 +231,7 @@ named!(
                                                   tag!("in")),
                                     spacelike),
                         return_error!(err_str!("Expected iterable expression"),
-                                      expression),
+                                      loop_expression),
                         spacelike),
                     terminated!(
                         return_error!(err_str!("Error in loop block:"),
@@ -297,6 +297,21 @@ named!(
             String::from
         )
     )
+);
+
+named!(
+    loop_expression<&[u8], String>,
+    map!(
+        map_res!(
+            recognize!(
+                terminated!(
+                    expression,
+                    opt!(
+                        preceded!(
+                            terminated!(tag!(".."), opt!(tag!("="))),
+                            expression)))),
+            from_utf8),
+        String::from)
 );
 
 named!(
