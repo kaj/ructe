@@ -43,10 +43,13 @@ fn homepage(state: State) -> (State, Response) {
 }
 
 fn footer(out: &mut Write) -> io::Result<()> {
-    templates::footer(out, &[
-        ("ructe", "https://crates.io/crates/ructe"),
-        ("gotham", "https://gotham.rs/"),
-    ])
+    templates::footer(
+        out,
+        &[
+            ("ructe", "https://crates.io/crates/ructe"),
+            ("gotham", "https://gotham.rs/"),
+        ],
+    )
 }
 
 fn robots(state: State) -> (State, Response) {
