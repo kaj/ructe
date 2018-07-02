@@ -73,7 +73,4 @@ documentation](https://docs.rs/ructe/~0.3/ructe/How_to_use_ructe/index.html).
 There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
 frameworks [iron](examples/iron), [nickel](examples/nickel), and
-[gotham](examples/gotham)
-
-When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
-rendering function that looks like this:
+[gotham](examples/gotham).

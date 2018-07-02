@@ -1,3 +1,4 @@
+//! An example web service using ructe with the nickel framework.
 extern crate hyper;
 extern crate mime;
 extern crate nickel;
@@ -9,6 +10,9 @@ use nickel::{Halt, HttpRouter, MiddlewareResult, Nickel, Request, Response};
 use std::io::{self, Write};
 use time::{now, Duration};
 
+/// The main routine creates a Nickel server, adds a route for static
+/// files and one for the front page of the server, and then runs the
+/// server.
 fn main() {
     let mut server = Nickel::new();
     server.get("/static/:name.:ext", static_file);
@@ -16,6 +20,11 @@ fn main() {
     server.listen("127.0.0.1:6767").expect("listen");
 }
 
+/// A handler for static files.
+/// The request should have the parameters `name` and `ext` from the route.
+/// If those match an existing file, serve it, with its correct
+/// content type and a far expires header.
+/// Otherwise return a 404 result.
 fn static_file<'mw>(
     req: &mut Request,
     mut res: Response<'mw>,
@@ -31,6 +40,8 @@ fn static_file<'mw>(
     res.error(StatusCode::NotFound, "Not found")
 }
 
+/// A handler for the front page of the server.
+/// Simple render a template with some arguments.
 fn page<'mw>(
     _req: &mut Request,
     res: Response<'mw>,
@@ -50,6 +61,8 @@ where
     }
 }
 
+/// This method can be used as a "template tag", that is a method that
+/// can be called directly from a template.
 fn footer(out: &mut Write) -> io::Result<()> {
     templates::footer(
         out,
@@ -60,4 +73,5 @@ fn footer(out: &mut Write) -> io::Result<()> {
     )
 }
 
+// And finally, include the generated code for templates and static files.
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
