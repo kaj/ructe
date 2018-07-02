@@ -24,12 +24,16 @@ matrix:
       - cd ../mime03 && cargo fmt -- --check
       - cd ../iron && cargo fmt -- --check
       - cd ../nickel && cargo fmt -- --check
+      - cd ../gotham && cargo fmt -- --check
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
    - rust: stable
      env: TASK=nickel
      script: cd examples/nickel && cargo test
+   - rust: stable
+     env: TASK=gotham
+     script: cd examples/gotham && cargo test
   allow_failures:
     - rust: nightly
       env:
