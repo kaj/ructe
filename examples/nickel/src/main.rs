@@ -7,6 +7,7 @@ extern crate mime;
 use hyper::header::{ContentType, Expires, HttpDate};
 use nickel::status::StatusCode;
 use nickel::{HttpRouter, MiddlewareResult, Nickel, Request, Response};
+use std::io::{self, Write};
 use time::{now, Duration};
 
 fn main() {
@@ -37,9 +38,20 @@ fn page<'mw>(
 ) -> MiddlewareResult<'mw> {
     use templates;
     let mut buf = Vec::new();
-    templates::page(&mut buf).unwrap();
+    templates::page(&mut buf, &[("silly", 4), ("long", 7), ("final", 3)])
+        .unwrap();
     res.set(ContentType(mime!(Text/Html; Charset=Utf8)));
     res.send(buf)
+}
+
+fn footer(out: &mut Write) -> io::Result<()> {
+    templates::footer(
+        out,
+        &[
+            ("ructe", "https://crates.io/crates/ructe"),
+            ("nickel", "https://crates.io/crates/nickel"),
+        ],
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
