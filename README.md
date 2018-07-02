@@ -70,26 +70,10 @@ Ructe compiles your templates to rust code that should be compiled with
 your other rust code, so it needs to be called before compiling,
 as described [in "How to use ructe", in the
 documentation](https://docs.rs/ructe/~0.3/ructe/How_to_use_ructe/index.html).
-There are also [examples](examples).
+There are also [examples](examples),
+both for ructe itself and its futures and for using it with the web
+frameworks [iron](examples/iron), [nickel](examples/nickel), and
+[gotham](examples/gotham)
 
 When I use ructe with [nickel](https://crates.io/crates/nickel), I use a
 rendering function that looks like this:
-
-```rust
-fn render<'mw, F>(res: Response<'mw>, do_render: F)
-                  ->MiddlewareResult<'mw>
-    where F: FnOnce(&mut Write) -> io::Result<()>
-{
-    let mut stream = res.start()?;
-    match do_render(&mut stream) {
-        Ok(()) => Ok(Halt(stream)),
-        Err(e) => stream.bail(format!("Problem rendering template: {:?}", e))
-    }
-}
-```
-
-Which I call like this:
-
-```rust
-render(res, |o| templates::foo(o, other, arguments))
-```

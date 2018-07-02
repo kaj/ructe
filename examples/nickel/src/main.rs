@@ -1,12 +1,11 @@
 extern crate hyper;
+extern crate mime;
 extern crate nickel;
 extern crate time;
-#[macro_use]
-extern crate mime;
 
 use hyper::header::{ContentType, Expires, HttpDate};
 use nickel::status::StatusCode;
-use nickel::{HttpRouter, MiddlewareResult, Nickel, Request, Response};
+use nickel::{Halt, HttpRouter, MiddlewareResult, Nickel, Request, Response};
 use std::io::{self, Write};
 use time::{now, Duration};
 
@@ -34,14 +33,21 @@ fn static_file<'mw>(
 
 fn page<'mw>(
     _req: &mut Request,
-    mut res: Response<'mw>,
+    res: Response<'mw>,
 ) -> MiddlewareResult<'mw> {
-    use templates;
-    let mut buf = Vec::new();
-    templates::page(&mut buf, &[("silly", 4), ("long", 7), ("final", 3)])
-        .unwrap();
-    res.set(ContentType(mime!(Text/Html; Charset=Utf8)));
-    res.send(buf)
+    use templates::page;
+    render(res, |o| page(o, &[("silly", 4), ("long", 7), ("final", 3)]))
+}
+
+fn render<'mw, F>(res: Response<'mw>, do_render: F) -> MiddlewareResult<'mw>
+where
+    F: FnOnce(&mut Write) -> io::Result<()>,
+{
+    let mut stream = res.start()?;
+    match do_render(&mut stream) {
+        Ok(()) => Ok(Halt(stream)),
+        Err(e) => stream.bail(format!("Problem rendering template: {:?}", e)),
+    }
 }
 
 fn footer(out: &mut Write) -> io::Result<()> {
