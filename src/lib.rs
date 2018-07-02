@@ -435,6 +435,7 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
         "jpg" | "jpeg" => "image/jpeg",
         "js" => "application/javascript",
         "png" => "image/png",
+        "svg" => "image/svg+xml",
         "woff" => "application/font-woff",
         _ => "application/octet-stream",
     }
@@ -458,6 +459,7 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
         "js" => "TEXT_JAVASCRIPT",
         "json" => "APPLICATION_JSON",
         "png" => "IMAGE_PNG",
+        "svg" => "IMAGE_SVG",
         _ => "APPLICATION_OCTET_STREAM",
     }
 }
