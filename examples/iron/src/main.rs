@@ -6,6 +6,7 @@ extern crate router;
 use iron::prelude::*;
 use iron::status;
 use router::Router;
+use std::io::{self, Write};
 
 fn main() {
     let mut router = Router::new();
@@ -17,12 +18,23 @@ fn main() {
 
 fn page(_: &mut Request) -> IronResult<Response> {
     let mut buf = Vec::new();
-    templates::page(&mut buf).expect("render template");
+    templates::page(&mut buf, &[("serious", 3), ("hard", 7), ("final", 3)])
+        .expect("render template");
     Ok(Response::with((
         status::Ok,
         mime!(Text / Html; Charset=Utf8),
         buf,
     )))
+}
+
+fn footer(out: &mut Write) -> io::Result<()> {
+    templates::footer(
+        out,
+        &[
+            ("ructe", "https://crates.io/crates/ructe"),
+            ("iron", "https://crates.io/crates/iron"),
+        ],
+    )
 }
 
 fn static_file(req: &mut Request) -> IronResult<Response> {
