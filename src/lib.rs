@@ -573,8 +573,8 @@ fn handle_template(
     input.read_to_end(&mut buf)?;
     match template(&buf) {
         Done(_, t) => {
-            let fname = outdir.join(format!("template_{}.rs", name));
-            File::create(fname).and_then(|mut f| t.write_rust(&mut f, name))?;
+            File::create(outdir.join(format!("template_{}.rs", name)))
+                .and_then(|mut f| t.write_rust(&mut f, name))?;
             Ok(true)
         }
         result => {

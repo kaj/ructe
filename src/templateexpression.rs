@@ -157,10 +157,10 @@ impl TemplateExpression {
                 format!(
                     "{}(out{})?;\n",
                     name,
-                    args.iter()
-                        .format_with("", |arg, f| {
-                            f(&format_args!(", {}", arg))
-                        }),
+                    args.iter().format_with("", |arg, f| f(&format_args!(
+                        ", {}",
+                        arg
+                    ))),
                 )
             }
         }
@@ -397,11 +397,14 @@ mod test {
     #[test]
     fn if_let_3() {
         assert_eq!(
-            template_expression(b"@if let Some(p) = Uri::borrow_from(&state) { something }"),
+            template_expression(
+                b"@if let Some(p) = Uri::borrow_from(&state) { something }"
+            ),
             IResult::Done(
                 &b""[..],
                 TemplateExpression::IfBlock {
-                    expr: "let Some(p) = Uri::borrow_from(&state)".to_string(),
+                    expr: "let Some(p) = Uri::borrow_from(&state)"
+                        .to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
