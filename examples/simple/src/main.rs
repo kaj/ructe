@@ -118,6 +118,15 @@ fn test_hello_utf8() {
     );
 }
 
+#[test]
+fn test_comments() {
+    assert_eq!(
+        r2s(|o| comments(o)),
+        "<!-- this is a real HTML comment, which gets send to the client -->\n\
+         <p>This is visible</p>\n\n"
+    );
+}
+
 mod models {
     use std::fmt;
     use templates::Html;

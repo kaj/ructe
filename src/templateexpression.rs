@@ -1,6 +1,6 @@
 use expression::{comma_expressions, expression, rust_name};
 use itertools::Itertools;
-use spacelike::{comment, spacelike};
+use spacelike::{comment_tail, spacelike};
 use std::fmt::{self, Display};
 use std::str::from_utf8;
 
@@ -173,7 +173,7 @@ named!(
         err_str!("In expression starting here"),
         switch!(
             opt!(preceded!(tag!("@"),
-                           alt!(tag!(":") | tag!("{") | tag!("}") |
+                           alt!(tag!(":") | tag!("{") | tag!("}") | tag!("*") |
                                 terminated!(
                                     alt!(tag!("if") | tag!("for")),
                                     tag!(" ")) |
@@ -189,6 +189,7 @@ named!(
                 }) |
             Some(b"{") => value!(TemplateExpression::text("{{")) |
             Some(b"}") => value!(TemplateExpression::text("}}")) |
+            Some(b"*") => map!(comment_tail, |()| TemplateExpression::Comment) |
             Some(b"if") => return_error!(
                 err_str!("Error in conditional expression:"),
                 map!(
@@ -247,7 +248,6 @@ named!(
                 |expr| TemplateExpression::Expression{ expr: expr.to_string() }
             ) |
             None => alt!(
-                map!(comment, |()| TemplateExpression::Comment) |
                 map!(map_res!(is_not!("@{}"), from_utf8),
                      |text| TemplateExpression::Text {
                          text: text.to_string()

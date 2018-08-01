@@ -6,13 +6,21 @@ named!(pub spacelike<&[u8], ()>,
            map!(multispace, |_|()))),
             |_| ()));
 
-named!(pub comment<&[u8], ()>,
-       value!((), delimited!(tag!("@*"),
-                             many0!(alt!(
-                                 value!((), is_not!("*")) |
-                                 value!((), preceded!(tag!("*"), none_of!("@")))
-                             )),
-                             tag!("*@"))));
+named!(
+    pub comment<&[u8], ()>,
+    preceded!(tag!("@*"), comment_tail)
+);
+
+named!(
+    pub comment_tail<&[u8], ()>,
+    preceded!(
+        many0!(alt!(
+            value!((), is_not!("*")) |
+            value!((), preceded!(tag!("*"), none_of!("@")))
+        )),
+        value!((), tag!("*@"))
+    )
+);
 
 #[cfg(test)]
 mod test {
