@@ -395,6 +395,21 @@ mod test {
     }
 
     #[test]
+    fn if_let_3() {
+        assert_eq!(
+            template_expression(b"@if let Some(p) = Uri::borrow_from(&state) { something }"),
+            IResult::Done(
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "let Some(p) = Uri::borrow_from(&state)".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            )
+        )
+    }
+
+    #[test]
     fn if_compare() {
         assert_eq!(
             template_expression(b"@if x == 17 { something }"),
