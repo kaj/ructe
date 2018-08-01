@@ -60,7 +60,7 @@
 //!
 //! # Optional features
 //!
-//! Rust has some options that can be enabled from `Cargo.toml`.
+//! Ructe has some options that can be enabled from `Cargo.toml`.
 //!
 //! * `sass` -- Compile sass and include the compiled css as static assets.
 //! * `mime02` -- Static files know their mime types, compatible with
