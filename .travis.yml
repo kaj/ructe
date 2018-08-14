@@ -25,6 +25,7 @@ matrix:
       - cd ../iron && cargo fmt -- --check
       - cd ../nickel && cargo fmt -- --check
       - cd ../gotham && cargo fmt -- --check
+      - cd ../warp && cargo fmt -- --check
    - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
@@ -34,6 +35,9 @@ matrix:
    - rust: stable
      env: TASK=gotham
      script: cd examples/gotham && cargo test
+   - rust: stable
+     env: TASK=warp
+     script: cd examples/warp && cargo test
   allow_failures:
     - rust: nightly
       env:
