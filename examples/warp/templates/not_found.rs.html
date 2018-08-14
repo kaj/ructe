@@ -1,0 +1,21 @@
+@use templates::statics::*;
+@use footer;
+
+@()
+
+<!doctype html>
+<html lang="sv">
+  <head>
+    <title>Error 404: Not found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="/static/@style_css.name"/>
+  </head>
+  <body>
+    <main>
+      <h1>Not found</h1>
+
+      <p>Sorry.  The resource you requested could not be located.</p>
+    </main>
+    @:footer()
+  </body>
+</html>
