@@ -5,7 +5,7 @@
 @(code: StatusCode, message: &str)
 
 <!doctype html>
-<html lang="sv">
+<html lang="sv" class="error">
   <head>
     <title>Error @code.as_u16(): @code.canonical_reason().unwrap_or("error")</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
