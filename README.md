@@ -39,6 +39,8 @@ The full syntax is described [in the
 documentation](https://docs.rs/ructe/~0.3/ructe/Template_syntax/index.html).
 Some examples can be seen in
 [examples/simple/templates](examples/simple/templates).
+There is also [https://github.com/kaj/warp-diesel-ructe-sample](a
+separate example of using ructe with warp and diesel).
 A template may look something like this:
 
 ```

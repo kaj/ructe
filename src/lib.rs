@@ -40,6 +40,10 @@
 //! })
 //! ```
 //!
+//! There are [some examples in the
+//! repository](https://github.com/kaj/ructe/tree/master/examples).
+//! There is also [a separate example of using ructe with warp and
+//! diesel](https://github.com/kaj/warp-diesel-ructe-sample).
 
 extern crate base64;
 extern crate itertools;
