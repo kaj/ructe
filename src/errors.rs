@@ -3,7 +3,6 @@ use std::sync::Mutex;
 
 macro_rules! err_str(
     ($msg:expr) => {{
-        use nom::ErrorKind;
         use errors::def_error;
         lazy_static! {
             static ref ERR: ErrorKind = def_error($msg);

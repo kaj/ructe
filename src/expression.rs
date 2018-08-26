@@ -1,17 +1,22 @@
+use nom::types::CompleteByteSlice as Input;
 use nom::{alpha, digit};
-use std::str::from_utf8;
+use std::str::{from_utf8, Utf8Error};
 
 named!(
-    pub expression<&[u8], &str>,
+    pub expression<Input, &str>,
     map_res!(
         recognize!(tuple!(
-            map_res!(alt!(tag!("&") | tag!("*") | tag!("")), from_utf8),
-            return_error!(err_str!("Expected rust expression"),
-                          alt_complete!(rust_name |
-                                        map_res!(digit, from_utf8) |
-                                        quoted_string |
-                                        expr_in_parens |
-                                        expr_in_brackets)),
+            map_res!(alt!(tag!("&") | tag!("*") | tag!("")), input_to_str),
+            add_return_error!(
+                err_str!("Expected rust expression"),
+                alt_complete!(
+                    rust_name |
+                    map_res!(digit, input_to_str) |
+                    quoted_string |
+                    expr_in_parens |
+                    expr_in_brackets
+                )
+            ),
             fold_many0!(
                 alt_complete!(
                     preceded!(tag!("."), expression) |
@@ -24,27 +29,31 @@ named!(
                 |_, _| ()
             )
         )),
-        from_utf8
+        input_to_str
     )
 );
 
-named!(pub comma_expressions<&[u8], String>,
+pub fn input_to_str<'a>(s: Input<'a>) -> Result<&str, Utf8Error> {
+    from_utf8(&s)
+}
+
+named!(pub comma_expressions<Input, String>,
        map!(separated_list!(preceded!(tag!(","), many0!(tag!(" "))),
                             expression),
             |list: Vec<_>| list.join(", ")));
 
 named!(
-    pub rust_name<&[u8], &str>,
+    pub rust_name<Input, &str>,
     map_res!(
         recognize!(
             pair!(alt!(tag!("_") | alpha),
                   opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")))
         ),
-        from_utf8
+        input_to_str
 ));
 
 named!(
-    expr_in_parens<&[u8], &str>,
+    expr_in_parens<Input, &str>,
     map_res!(
         recognize!(delimited!(
             tag!("("),
@@ -58,12 +67,12 @@ named!(
             )),
             tag!(")")
         )),
-        from_utf8
+        input_to_str
     )
 );
 
 named!(
-    expr_in_brackets<&[u8], &str>,
+    expr_in_brackets<Input, &str>,
     map_res!(
         recognize!(delimited!(
             tag!("["),
@@ -77,28 +86,28 @@ named!(
             )),
             tag!("]")
         )),
-        from_utf8
+        input_to_str
     )
 );
 
 named!(
-    quoted_string<&[u8], &str>,
+    quoted_string<Input, &str>,
     map_res!(
         recognize!(delimited!(
             char!('"'),
             escaped!(is_not!("\"\\"), '\\', one_of!("\"\\")),
             char!('"')
         )),
-        from_utf8
+        input_to_str
     )
 );
 
 named!(
-    rust_comment,
+    rust_comment<Input, Input>,
     delimited!(
         tag!("/*"),
         recognize!(many0!(alt_complete!(
-            is_not!("*") | preceded!(tag!("*"), not!(tag!("/")))
+            is_not!("*") | terminated!(tag!("*"), not!(tag!("/")))
         ))),
         tag!("*/")
     )
@@ -107,7 +116,7 @@ named!(
 #[cfg(test)]
 mod test {
     use expression::expression;
-    use nom::IResult::Done;
+    use nom::types::CompleteByteSlice as Input;
 
     #[test]
     fn expression_1() {
@@ -191,12 +200,10 @@ mod test {
     }
 
     fn check_expr(expr: &str) {
-        for post in &[" ", ", ", "! ", "? ", "<a>", "##", ". ", "\"", "'"] {
-            assert_eq!(
-                expression(format!("{}{}", expr, post).as_bytes()),
-                Done(post.as_bytes(), expr)
-            );
-        }
+        assert_eq!(
+            expression(Input(expr.as_bytes())),
+            Ok((Input(&b""[..]), expr))
+        );
     }
 
     #[test]
@@ -232,7 +239,7 @@ mod test {
     fn expression_error_message(input: &[u8]) -> String {
         use super::super::show_errors;
         let mut buf = Vec::new();
-        show_errors(&mut buf, input, expression(input), ":");
+        show_errors(&mut buf, input, expression(Input(input)), ":");
         String::from_utf8(buf).unwrap()
     }
 }

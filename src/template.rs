@@ -1,8 +1,8 @@
-use expression::rust_name;
+use expression::{input_to_str, rust_name};
 use itertools::Itertools;
+use nom::types::CompleteByteSlice as Input;
 use spacelike::spacelike;
 use std::io::{self, Write};
-use std::str::from_utf8;
 use templateexpression::{template_expression, TemplateExpression};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -54,14 +54,14 @@ impl Template {
 }
 
 named!(
-    pub template<&[u8], Template>,
+    pub template<Input, Template>,
     map!(
         tuple!(
             spacelike,
             many0!(map!(
                 delimited!(
                     tag!("@"),
-                    map_res!(is_not!(";()"), from_utf8),
+                    map_res!(is_not!(";()"), input_to_str),
                     terminated!(tag!(";"), spacelike)
                 ),
                 String::from
@@ -81,17 +81,17 @@ named!(
     )
 );
 
-named!(end_of_file<&[u8], ()>,
+named!(end_of_file<Input, ()>,
        value!((), eof!()));
 
-named!(formal_argument<&[u8], &str>,
+named!(formal_argument<Input, &str>,
        map_res!(recognize!(do_parse!(rust_name >> spacelike >>
                             char!(':') >> spacelike >>
                             type_expression >>
                                  ())),
-            from_utf8));
+            input_to_str));
 
-named!(type_expression<&[u8], ()>,
+named!(type_expression<Input, ()>,
        do_parse!(
            alt!(tag!("&") | tag!("")) >>
            return_error!(err_str!("Expected rust type expression"),
@@ -106,5 +106,5 @@ named!(type_expression<&[u8], ()>,
                           ())) >>
            ()));
 
-named!(pub comma_type_expressions<&[u8], ()>,
+named!(pub comma_type_expressions<Input, ()>,
        map!(separated_list!(tag!(", "), type_expression), |_| ()));

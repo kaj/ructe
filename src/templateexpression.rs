@@ -1,8 +1,8 @@
-use expression::{comma_expressions, expression, rust_name};
+use expression::{comma_expressions, expression, input_to_str, rust_name};
 use itertools::Itertools;
+use nom::types::CompleteByteSlice as Input;
 use spacelike::{comment_tail, spacelike};
 use std::fmt::{self, Display};
-use std::str::from_utf8;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateExpression {
@@ -104,7 +104,7 @@ impl TemplateExpression {
 }
 
 named!(
-    pub template_expression<&[u8], TemplateExpression>,
+    pub template_expression<Input, TemplateExpression>,
     add_return_error!(
         err_str!("In expression starting here"),
         switch!(
@@ -113,8 +113,8 @@ named!(
                                 terminated!(
                                     alt!(tag!("if") | tag!("for")),
                                     tag!(" ")) |
-                                value!(&b""[..])))),
-            Some(b":") => map!(
+                                value!(Input(&b""[..]))))),
+            Some(Input(b":")) => map!(
                 pair!(rust_name,
                       delimited!(tag!("("),
                                  separated_list!(tag!(", "), template_argument),
@@ -123,10 +123,10 @@ named!(
                     name: name.to_string(),
                     args,
                 }) |
-            Some(b"{") => value!(TemplateExpression::text("{{")) |
-            Some(b"}") => value!(TemplateExpression::text("}}")) |
-            Some(b"*") => map!(comment_tail, |()| TemplateExpression::Comment) |
-            Some(b"if") => return_error!(
+            Some(Input(b"{")) => value!(TemplateExpression::text("{{")) |
+            Some(Input(b"}")) => value!(TemplateExpression::text("}}")) |
+            Some(Input(b"*")) => map!(comment_tail, |()| TemplateExpression::Comment) |
+            Some(Input(b"if")) => return_error!(
                 err_str!("Error in conditional expression:"),
                 map!(
                     tuple!(
@@ -142,7 +142,7 @@ named!(
                         body,
                         else_body,
                     })) |
-            Some(b"for") => map!(
+            Some(Input(b"for")) => map!(
                 tuple!(
                     delimited!(
                         spacelike,
@@ -179,12 +179,12 @@ named!(
                     expr: expr.to_string(),
                     body,
                 }) |
-            Some(b"") => map!(
+            Some(Input(b"")) => map!(
                 expression,
                 |expr| TemplateExpression::Expression{ expr: expr.to_string() }
             ) |
             None => alt!(
-                map!(map_res!(is_not!("@{}"), from_utf8),
+                map!(map_res!(is_not!("@{}"), input_to_str),
                      |text| TemplateExpression::Text {
                          text: text.to_string()
                      })
@@ -192,7 +192,7 @@ named!(
     ))
 );
 
-named!(template_block<&[u8], Vec<TemplateExpression>>,
+named!(template_block<Input, Vec<TemplateExpression>>,
        preceded!(
            return_error!(err_str!("Expected \"{\""), char!('{')),
            map!(
@@ -204,16 +204,16 @@ named!(template_block<&[u8], Vec<TemplateExpression>>,
                |(block, _end)| block
 )));
 
-named!(template_argument<&[u8], TemplateArgument>,
+named!(template_argument<Input, TemplateArgument>,
        alt!(map!(delimited!(tag!("{"), many0!(template_expression), tag!("}")),
                  TemplateArgument::Body) |
             map!(map!(expression, String::from), TemplateArgument::Rust)));
 
 named!(
-    cond_expression<&[u8], String>,
+    cond_expression<Input, String>,
     switch!(
         opt!(tag!("let")),
-        Some(b"let") => map!(
+        Some(Input(b"let")) => map!(
             pair!(
                 preceded!(spacelike,
                           return_error!(
@@ -236,7 +236,7 @@ named!(
 );
 
 named!(
-    loop_expression<&[u8], String>,
+    loop_expression<Input, String>,
     map!(
         map_res!(
             recognize!(
@@ -246,12 +246,12 @@ named!(
                         preceded!(
                             terminated!(tag!(".."), opt!(tag!("="))),
                             expression)))),
-            from_utf8),
+            input_to_str),
         String::from)
 );
 
 named!(
-    logic_expression<&[u8], &str>,
+    logic_expression<Input, &str>,
     map_res!(
         recognize!(tuple!(
             opt!(terminated!(tag!("!"), spacelike)),
@@ -263,11 +263,11 @@ named!(
                     logic_expression
                 )))
         )),
-        from_utf8
+        input_to_str
     )
 );
 
-named!(rel_operator<&[u8], &str>,
+named!(rel_operator<Input, &str>,
        map_res!(
            delimited!(
                spacelike,
@@ -275,7 +275,7 @@ named!(rel_operator<&[u8], &str>,
                     tag_s!(">") | tag_s!("<=") | tag_s!("<") |
                     tag_s!("||") | tag_s!("&&")),
                spacelike),
-           from_utf8
+           input_to_str
        )
 );
 
@@ -283,98 +283,102 @@ named!(rel_operator<&[u8], &str>,
 mod test {
     use super::super::show_errors;
     use super::*;
-    use nom::IResult;
+    use nom::types::CompleteByteSlice as Input;
 
     #[test]
     fn if_boolean_var() {
         assert_eq!(
-            template_expression(b"@if cond { something }"),
-            IResult::Done(
-                &b""[..],
+            template_expression(Input(b"@if cond { something }")),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "cond".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
 
     #[test]
     fn if_let() {
         assert_eq!(
-            template_expression(b"@if let Some(x) = x { something }"),
-            IResult::Done(
-                &b""[..],
+            template_expression(Input(b"@if let Some(x) = x { something }")),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "let Some(x) = x".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
 
     #[test]
     fn if_let_2() {
         assert_eq!(
-            template_expression(b"@if let Some((x, y)) = x { something }"),
-            IResult::Done(
-                &b""[..],
+            template_expression(Input(
+                b"@if let Some((x, y)) = x { something }"
+            )),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "let Some((x, y)) = x".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
 
     #[test]
     fn if_let_3() {
         assert_eq!(
-            template_expression(
+            template_expression(Input(
                 b"@if let Some(p) = Uri::borrow_from(&state) { something }"
-            ),
-            IResult::Done(
-                &b""[..],
+            )),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "let Some(p) = Uri::borrow_from(&state)"
                         .to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
 
     #[test]
     fn if_compare() {
         assert_eq!(
-            template_expression(b"@if x == 17 { something }"),
-            IResult::Done(
-                &b""[..],
+            template_expression(Input(b"@if x == 17 { something }")),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "x == 17".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
 
     #[test]
     fn if_complex_logig() {
         assert_eq!(
-            template_expression(b"@if x == 17 || y && z() { something }"),
-            IResult::Done(
-                &b""[..],
+            template_expression(Input(
+                b"@if x == 17 || y && z() { something }"
+            )),
+            Ok((
+                Input(&b""[..]),
                 TemplateExpression::IfBlock {
                     expr: "x == 17 || y && z()".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
-            )
+            ))
         )
     }
     #[test]
@@ -406,11 +410,13 @@ mod test {
     }
 
     #[test]
-    fn for_missig_in() {
+    fn for_missing_in() {
         // TODO The second part of this message isn't really helpful.
         assert_eq!(
             expression_error(b"@for what ever { hello }"),
             ":   1:@for what ever { hello }\n\
+             :     ^ In expression starting here\n\
+             :   1:@for what ever { hello }\n\
              :               ^ Expected \"in\"\n\
              :   1:@for what ever { hello }\n\
              :               ^ Tag\n"
@@ -419,7 +425,7 @@ mod test {
 
     fn expression_error(input: &[u8]) -> String {
         let mut buf = Vec::new();
-        show_errors(&mut buf, input, template_expression(input), ":");
+        show_errors(&mut buf, input, template_expression(Input(input)), ":");
         String::from_utf8(buf).unwrap()
     }
 }

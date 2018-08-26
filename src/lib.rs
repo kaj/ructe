@@ -68,9 +68,10 @@ mod template;
 
 use errors::get_error;
 use itertools::Itertools;
-use nom::IResult::*;
-use nom::{prepare_errors, ErrorKind};
+use nom::types::CompleteByteSlice as Input;
+use nom::{Context, Err, ErrorKind};
 use std::collections::BTreeMap;
+use std::fmt::Debug;
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -575,8 +576,8 @@ fn handle_template(
     let mut input = File::open(path)?;
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
-    match template(&buf) {
-        Done(_, t) => {
+    match template(Input(&buf)) {
+        Ok((_, t)) => {
             File::create(outdir.join(format!("template_{}.rs", name)))
                 .and_then(|mut f| t.write_rust(&mut f, name))?;
             Ok(true)
@@ -592,13 +593,34 @@ fn handle_template(
 fn show_errors<E>(
     out: &mut Write,
     buf: &[u8],
-    result: nom::IResult<&[u8], E>,
+    result: nom::IResult<Input, E>,
     prefix: &str,
-) {
-    if let Some(errors) = prepare_errors(buf, result) {
-        for &(ref kind, ref from, ref _to) in &errors {
-            show_error(out, buf, *from, &get_message(kind), prefix);
+) where
+    E: Debug,
+{
+    match result {
+        Ok(_) => (),
+        Err(Err::Error(Context::Code(_before, e))) => {
+            show_error(out, buf, 0, &format!("error {:?}", e), prefix);
         }
+        Err(Err::Error(Context::List(mut v))) => {
+            v.reverse();
+            for (i, e) in v {
+                let pos = buf.len() - i.len();
+                show_error(out, buf, pos, &get_message(&e), prefix);
+            }
+        }
+        Err(Err::Failure(Context::List(mut v))) => {
+            v.reverse();
+            for (i, e) in v {
+                let pos = buf.len() - i.len();
+                show_error(out, buf, pos, &get_message(&e), prefix);
+            }
+        }
+        Err(Err::Failure(e)) => {
+            show_error(out, buf, 0, &format!("failure {:?}", e), prefix);
+        }
+        Err(_) => show_error(out, buf, 0, "xyzzy", prefix),
     }
 }
 
