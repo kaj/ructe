@@ -4,70 +4,6 @@ use spacelike::{comment_tail, spacelike};
 use std::fmt::{self, Display};
 use std::str::from_utf8;
 
-/// Copied from nom, but fixed for
-/// <https://github.com/Geal/nom/issues/463>
-///
-/// This should be removed when a fix for that is released from nom.
-macro_rules! my_many_till(
-    ($i:expr,
-     $submac1:ident!( $($args1:tt)* ),
-     $submac2:ident!( $($args2:tt)* )
-    ) => ({
-      use nom::InputLength;
-      use nom::ErrorKind;
-      use nom::IResult;
-      use nom::Needed;
-
-      let ret;
-      let mut res   = ::std::vec::Vec::new();
-      let mut input = $i;
-
-      loop {
-        match $submac2!(input, $($args2)*) {
-          IResult::Done(i, o) => {
-            ret = IResult::Done(i, (res, o));
-            break;
-          },
-          _                           => {
-            match $submac1!(input, $($args1)*) {
-              IResult::Error(err)                            => {
-                ret = IResult::Error(error_node_position!(ErrorKind::ManyTill,
-                                                          input,
-                                                          err));
-                break;
-              },
-              IResult::Incomplete(Needed::Unknown) => {
-                ret = IResult::Incomplete(Needed::Unknown);
-                break;
-              },
-              IResult::Incomplete(Needed::Size(i)) => {
-                let size = i + ($i).input_len() - input.input_len();
-                ret = IResult::Incomplete(Needed::Size(size));
-                break;
-              },
-              IResult::Done(i, o)                          => {
-                // loop trip must always consume (otherwise infinite loops)
-                if i == input {
-                  ret = IResult::Error(error_position!(ErrorKind::ManyTill,
-                                                       input));
-                  break;
-                }
-
-                res.push(o);
-                input = i;
-              },
-            }
-          },
-        }
-      }
-
-      ret
-  });
-  ($i:expr, $f:expr, $g: expr) => (
-    my_many_till!($i, call!($f), call!($g));
-  );
-);
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateExpression {
     Comment,
@@ -260,7 +196,7 @@ named!(template_block<&[u8], Vec<TemplateExpression>>,
        preceded!(
            return_error!(err_str!("Expected \"{\""), char!('{')),
            map!(
-               my_many_till!(
+               many_till!(
                    return_error!(
                        err_str!("Error in expression starting here:"),
                        template_expression),

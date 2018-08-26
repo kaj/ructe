@@ -71,7 +71,7 @@ named!(
                 separated_list!(tag!(", "), map!(formal_argument, String::from)),
                 terminated!(tag!(")"), spacelike)
             ),
-            my_many_till!(
+            many_till!(
                 return_error!(
                     err_str!("Error in expression starting here:"),
                     template_expression),
