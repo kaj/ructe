@@ -39,8 +39,6 @@ The full syntax is described [in the
 documentation](https://docs.rs/ructe/~0.3/ructe/Template_syntax/index.html).
 Some examples can be seen in
 [examples/simple/templates](examples/simple/templates).
-There is also [https://github.com/kaj/warp-diesel-ructe-sample](a
-separate example of using ructe with warp and diesel).
 A template may look something like this:
 
 ```
@@ -74,5 +72,7 @@ as described [in "How to use ructe", in the
 documentation](https://docs.rs/ructe/~0.3/ructe/How_to_use_ructe/index.html).
 There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
-frameworks [iron](examples/iron), [nickel](examples/nickel), and
-[gotham](examples/gotham).
+frameworks [iron](examples/iron), [nickel](examples/nickel),
+[gotham](examples/gotham), and [warp](examples/warp).
+There is also [a separate example of using ructe with warp and
+diesel](https://github.com/kaj/warp-diesel-ructe-sample).
