@@ -432,16 +432,18 @@ fn mime_arg(suffix: &str) -> String {
 
 #[cfg(feature = "mime02")]
 fn mime_from_suffix(suffix: &str) -> &'static str {
-    // TODO This is just enough for some examples.  Need more types.
-    // Should probably look at content as well.
     match suffix.to_lowercase().as_ref() {
+        "bmp" => "image/bmp",
         "css" => "text/css",
         "eot" => "application/vnd.ms-fontobject",
+        "gif" => "image/gif",
         "jpg" | "jpeg" => "image/jpeg",
-        "js" => "application/javascript",
+        "js" | "jsonp" => "application/javascript",
+        "json" => "application/json",
         "png" => "image/png",
         "svg" => "image/svg+xml",
-        "woff" => "application/font-woff",
+        "woff" => "font/woff",
+        "woff2" => "font/woff2",
         _ => "application/octet-stream",
     }
 }
@@ -453,18 +455,18 @@ fn mime_arg(suffix: &str) -> String {
 
 #[cfg(feature = "mime03")]
 fn mime_from_suffix(suffix: &str) -> &'static str {
-    // TODO This is just enough for some examples.  Need more types.
-    // Should probably look at content as well.
     // This is limited to the constants that is defined in mime 0.3.
     match suffix.to_lowercase().as_ref() {
         "bmp" => "IMAGE_BMP",
         "css" => "TEXT_CSS",
         "gif" => "IMAGE_GIF",
         "jpg" | "jpeg" => "IMAGE_JPEG",
-        "js" => "TEXT_JAVASCRIPT",
+        "js" | "jsonp" => "TEXT_JAVASCRIPT",
         "json" => "APPLICATION_JSON",
         "png" => "IMAGE_PNG",
         "svg" => "IMAGE_SVG",
+        "woff" => "FONT_WOFF",
+        "woff2" => "FONT_WOFF",
         _ => "APPLICATION_OCTET_STREAM",
     }
 }
