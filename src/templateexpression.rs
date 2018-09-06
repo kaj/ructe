@@ -123,8 +123,8 @@ named!(
                     name: name.to_string(),
                     args,
                 }) |
-            Some(Input(b"{")) => value!(TemplateExpression::text("{{")) |
-            Some(Input(b"}")) => value!(TemplateExpression::text("}}")) |
+            Some(Input(b"{")) => value!(TemplateExpression::text("{")) |
+            Some(Input(b"}")) => value!(TemplateExpression::text("}")) |
             Some(Input(b"*")) => map!(comment_tail, |()| TemplateExpression::Comment) |
             Some(Input(b"if")) => return_error!(
                 err_str!("Error in conditional expression:"),

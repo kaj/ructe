@@ -20,7 +20,11 @@ where
 
 #[test]
 fn test_hello() {
-    assert_eq!(r2s(|o| hello(o)), "<h1>Hello World!</h1>\n");
+    assert_eq!(
+        r2s(|o| hello(o)),
+        "<h1>Hello World!</h1>\
+         \n<p>Note: Brackets and at signs needs to be escaped: { ... }</p>\n"
+    );
 }
 
 #[test]
@@ -204,8 +208,9 @@ fn test_explicit_formatting() {
 fn test_hello_use_templates() {
     assert_eq!(
         r2s(|o| hello_use_templates(o, &Html("<p>this is foo</p>"))),
-        "<h1>Hello World!</h1>\n\n\
-         <h2>foo</h2>\n<p>this is foo</p>\n\n"
+        "<h1>Hello World!</h1>\
+         \n<p>Note: Brackets and at signs needs to be escaped: { ... }</p>\n\
+         \n<h2>foo</h2>\n<p>this is foo</p>\n\n"
     );
 }
 
