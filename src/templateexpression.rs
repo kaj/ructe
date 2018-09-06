@@ -109,7 +109,8 @@ named!(
         err_str!("In expression starting here"),
         switch!(
             opt!(preceded!(tag!("@"),
-                           alt!(tag!(":") | tag!("{") | tag!("}") | tag!("*") |
+                           alt!(tag!("*") | tag!(":") | tag!("@") |
+                                tag!("{") | tag!("}") |
                                 terminated!(
                                     alt!(tag!("if") | tag!("for")),
                                     tag!(" ")) |
@@ -123,6 +124,7 @@ named!(
                     name: name.to_string(),
                     args,
                 }) |
+            Some(Input(b"@")) => value!(TemplateExpression::text("@")) |
             Some(Input(b"{")) => value!(TemplateExpression::text("{")) |
             Some(Input(b"}")) => value!(TemplateExpression::text("}")) |
             Some(Input(b"*")) => map!(comment_tail, |()| TemplateExpression::Comment) |
