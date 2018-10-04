@@ -528,7 +528,8 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
                     "/src/template_utils.rs"
                 )),
                 "\n}\n"
-            ).as_bytes(),
+            )
+            .as_bytes(),
         )
     })
 }
@@ -665,7 +666,8 @@ fn show_error(
         msg,
         pos = pos_in_line,
         prefix = prefix,
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {

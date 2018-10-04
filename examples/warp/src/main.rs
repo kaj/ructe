@@ -23,7 +23,8 @@ fn main() {
                 .and_then(home_page)
                 .or(path("static").and(path::param()).and_then(static_file))
                 .or(path("bad").and_then(bad_handler)),
-        ).recover(customize_error);
+        )
+        .recover(customize_error);
     warp::serve(routes).run(([127, 0, 0, 1], 3030));
 }
 

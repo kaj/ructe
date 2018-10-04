@@ -76,7 +76,8 @@ fn static_file(state: State) -> (State, Response) {
                 &state,
                 StatusCode::Ok,
                 Some((data.content.to_vec(), data.mime.clone())),
-            ).with_header(Expires((SystemTime::now() + FAR).into()))
+            )
+            .with_header(Expires((SystemTime::now() + FAR).into()))
         } else {
             println!("Static file {} not found", name);
             create_response(&state, StatusCode::NotFound, None)
