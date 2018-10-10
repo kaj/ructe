@@ -19,7 +19,7 @@ impl Template {
              #[cfg_attr(feature=\"cargo-clippy\", \
              allow(useless_attribute))]\n\
              #[allow(unused)]\n\
-             use ::templates::{Html,ToHtml};\n",
+             use super::{Html,ToHtml};\n",
         )?;
         for l in &self.preamble {
             writeln!(out, "{};", l)?;

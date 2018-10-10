@@ -39,6 +39,9 @@ matrix:
    - rust: stable
      env: TASK=warp
      script: cd examples/warp && cargo test
+   - rust: beta
+     env: TASK=ed2018
+     script: cd examples/ed2018 && cargo test
   allow_failures:
     - rust: nightly
       env:
