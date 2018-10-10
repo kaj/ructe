@@ -549,6 +549,12 @@ fn handle_entries(
                 let outdir = outdir.join(filename);
                 create_dir_all(&outdir)?;
                 File::create(outdir.join("mod.rs")).and_then(|mut f| {
+                    f.write_all(
+                        b"#[cfg_attr(feature=\"cargo-clippy\", \
+                          allow(useless_attribute))]\n\
+                          #[allow(unused)]\n\
+                          use super::{Html,ToHtml};\n",
+                    )?;
                     handle_entries(&mut f, &path, &outdir)
                 })?;
                 writeln!(f, "pub mod {name};\n", name = filename)?;
