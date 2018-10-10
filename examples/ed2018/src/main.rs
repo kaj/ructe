@@ -19,7 +19,7 @@ fn test_page_w_static() {
         "<html>\n  \
          <head>\n    \
          <title>Example with stylesheet</title>\n    \
-         <link rel=\"stylesheet\" href=\"/static/style-o2rFo1lI.css\" \
+         <link rel=\"stylesheet\" href=\"/static/style-BeQlLiwh.css\" \
          type=\"text/css\"/>\n  \
          </head>\n  \
          <body>\n    \
@@ -31,11 +31,11 @@ fn test_page_w_static() {
 
 #[test]
 fn test_static_css_data() {
-    use std::str::from_utf8;
     use self::templates::statics::style_css;
+    use std::str::from_utf8;
     assert_eq!(
         from_utf8(&style_css.content).unwrap(),
-        "body {\n    background: white;\n    color: black;\n}\n"
+        "body{background:white;color:#efefef}\n"
     );
 }
 
@@ -43,8 +43,8 @@ fn test_static_css_data() {
 fn test_get_static_by_name() {
     use self::templates::statics::StaticFile;
     assert_eq!(
-        StaticFile::get("style-o2rFo1lI.css").map(|s| s.name),
-        Some("style-o2rFo1lI.css")
+        StaticFile::get("style-BeQlLiwh.css").map(|s| s.name),
+        Some("style-BeQlLiwh.css")
     )
 }
 
@@ -59,7 +59,7 @@ fn test_all_statics_known() {
     use self::templates::statics::STATICS;
     assert_eq!(
         STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-        ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-o2rFo1lI.css"]
+        ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-BeQlLiwh.css"]
     );
 }
 
