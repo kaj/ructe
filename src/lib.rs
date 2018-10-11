@@ -46,6 +46,7 @@
 //! diesel](https://github.com/kaj/warp-diesel-ructe-sample).
 
 extern crate base64;
+extern crate bytecount;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
@@ -677,7 +678,7 @@ fn show_error(
 }
 
 fn what_line(buf: &[u8], pos: usize) -> usize {
-    1 + buf[0..pos].iter().filter(|c| **c == b'\n').count()
+    1 + bytecount::count(&buf[0..pos], b'\n')
 }
 
 /// The module containing your generated template code will also

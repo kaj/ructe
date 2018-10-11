@@ -33,7 +33,7 @@ named!(
     )
 );
 
-pub fn input_to_str<'a>(s: Input<'a>) -> Result<&str, Utf8Error> {
+pub fn input_to_str(s: Input) -> Result<&str, Utf8Error> {
     from_utf8(&s)
 }
 
