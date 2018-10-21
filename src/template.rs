@@ -24,30 +24,22 @@ impl Template {
         for l in &self.preamble {
             writeln!(out, "{};", l)?;
         }
-        let type_args = if self.args.contains(&"content: Content".to_owned())
-        {
-            (
-                "<Content>",
-                "\nwhere Content: FnOnce(&mut Write) -> io::Result<()>",
-            )
-        } else {
-            ("", "")
-        };
         writeln!(
             out,
             "\n\
-             pub fn {name}{type_args}(out: &mut Write{args})\n\
-             -> io::Result<()> {type_spec}{{\n\
+             pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
              {body}\
              Ok(())\n\
              }}",
             name = name,
-            type_args = type_args.0,
-            args = self
-                .args
-                .iter()
-                .format_with("", |arg, f| f(&format_args!(", {}", arg))),
-            type_spec = type_args.1,
+            args =
+                self.args.iter().format_with("", |arg, f| f(&format_args!(
+                    ", {}",
+                    arg.replace(
+                        " Content",
+                        " impl FnOnce(&mut Write) -> io::Result<()>"
+                    )
+                ))),
             body = self.body.iter().map(|b| b.code()).format(""),
         )
     }
