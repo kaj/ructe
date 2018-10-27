@@ -1,5 +1,4 @@
 //! An example web service using ructe with the warp framework.
-#![deny(warnings)]
 extern crate env_logger;
 extern crate mime;
 extern crate warp;
