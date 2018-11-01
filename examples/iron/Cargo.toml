@@ -9,6 +9,6 @@ build = "src/build.rs"
 ructe = { path = "../..", features = ["sass", "mime02"] }
 
 [dependencies]
-iron = "~0.5"
-router = "~0.5"
+iron = "0.6"
+router = "0.6"
 mime = "~0.2"
