@@ -50,7 +50,7 @@ fn page<'mw>(
     render(res, |o| page(o, &[("silly", 4), ("long", 7), ("final", 3)]))
 }
 
-fn render<'mw, F>(res: Response<'mw>, do_render: F) -> MiddlewareResult<'mw>
+fn render<F>(res: Response, do_render: F) -> MiddlewareResult
 where
     F: FnOnce(&mut Write) -> io::Result<()>,
 {

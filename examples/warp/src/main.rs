@@ -10,7 +10,7 @@ use std::io::{self, Write};
 use std::time::{Duration, SystemTime};
 use templates::statics::StaticFile;
 use warp::http::{Response, StatusCode};
-use warp::{path, reject, Filter, Rejection, Reply};
+use warp::{path, Filter, Rejection, Reply};
 
 /// Main program: Set up routes and start server.
 fn main() {
@@ -18,7 +18,7 @@ fn main() {
 
     let routes = warp::get2()
         .and(
-            warp::index()
+            path::end()
                 .and_then(home_page)
                 .or(path("static").and(path::param()).and_then(static_file))
                 .or(path("bad").and_then(bad_handler)),
@@ -36,7 +36,7 @@ fn home_page() -> Result<impl Reply, Rejection> {
 
 /// A handler that always gives a server error.
 fn bad_handler() -> Result<StatusCode, Rejection> {
-    Err(reject::server_error())
+    Err(warp::reject::custom("bad handler"))
 }
 
 /// This method can be used as a "template tag", i.e. a method that
@@ -54,6 +54,7 @@ fn footer(out: &mut Write) -> io::Result<()> {
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn static_file(name: String) -> Result<impl Reply, Rejection> {
     if let Some(data) = StaticFile::get(&name) {
         let _far_expires = SystemTime::now() + FAR;
@@ -64,7 +65,7 @@ fn static_file(name: String) -> Result<impl Reply, Rejection> {
             .body(data.content))
     } else {
         println!("Static file {} not found", name);
-        Err(reject::not_found())
+        Err(warp::reject::not_found())
     }
 }
 
@@ -72,6 +73,7 @@ fn static_file(name: String) -> Result<impl Reply, Rejection> {
 static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 
 /// Create custom error pages.
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     match err.status() {
         StatusCode::NOT_FOUND => {
