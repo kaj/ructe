@@ -1,7 +1,4 @@
 language: rust
-cache: cargo
-before_script:
-  - cargo update || true
 rust:
   - stable
   - 1.28.0
