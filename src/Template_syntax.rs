@@ -170,7 +170,7 @@ pub mod d_Calling_other_templates {
     //! It can be used like this:
     //!
     //! ```text
-    //! @use templates::header;
+    //! @use super::header;
     //!
     //! @()
     //!
@@ -205,7 +205,7 @@ pub mod d_Calling_other_templates {
     //! And use it like this:
     //!
     //! ```text
-    //! @use templates::base_page;
+    //! @use super::base_page;
     //!
     //! @()
     //!

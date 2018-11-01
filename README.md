@@ -43,7 +43,7 @@ A template may look something like this:
 
 ```
 @use any::rust::Type;
-@use templates::statics::style_css;
+@use super::statics::style_css;
 
 @(name: &str, items: &[Type])
 

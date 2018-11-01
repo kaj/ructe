@@ -21,7 +21,7 @@
 //!
 //! ```html
 //! @use ::Group;
-//! @use templates::page_base;
+//! @use super::page_base;
 //!
 //! @(title: &str, user: Option<String>, groups: &[Group])
 //!

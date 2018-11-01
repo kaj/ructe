@@ -46,7 +46,7 @@ pub mod a_Overview {
     //! a template.  That can be done like this:
     //!
     //! ```html
-    //! @use templates::statics::image_png;
+    //! @use super::statics::image_png;
     //! @()
     //! <img alt="Something" src="/static/@image_png.name">
     //! ```
@@ -54,7 +54,8 @@ pub mod a_Overview {
     //! So, what has happened here?
     //! First, assuming the `static` directory in your
     //! `$CARGO_MANIFEST_DIR` contained a file name `image.png`, your
-    //! `templates::statics` module will contain a
+    //! `templates::statics` module (which is reachable as `super::statics`
+    //! from inside a template) will contain a
     //! `pub static image_png: StaticFile` which can be imported and used
     //! in both templates and rust code.
     //! A `StaticFile` has a field named `name` which is a `&'static str`
