@@ -39,6 +39,9 @@ impl Display for TemplateArgument {
     fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
             TemplateArgument::Rust(ref s) => out.write_str(&s),
+            TemplateArgument::Body(ref v) if v.is_empty() => {
+                out.write_str("|_| Ok(())")
+            }
             TemplateArgument::Body(ref v) => writeln!(
                 out,
                 "|out| {{\n{}\nOk(())\n}}",
