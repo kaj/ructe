@@ -9,16 +9,15 @@ extern crate serde_derive;
 
 mod ructe_response;
 
-use gotham::http::response::create_response;
 use gotham::router::builder::{
     build_simple_router, DefineSingleRoute, DrawRoutes,
 };
 use gotham::state::{FromState, State};
-use hyper::header::Expires;
-use hyper::{Response, StatusCode};
+use hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
+use hyper::{Body, Response, StatusCode};
+use mime::TEXT_HTML;
 use ructe_response::RucteResponse;
 use std::io::{self, Write};
-use std::time::{Duration, SystemTime};
 use templates::*;
 
 /// The main routine starts a gotham server with a simple router
@@ -40,7 +39,7 @@ fn main() {
 
 /// A handler for the front page.
 /// Simply render the page tempate with some arguments.
-fn homepage(state: State) -> (State, Response) {
+fn homepage(state: State) -> (State, Response<Body>) {
     // See the trait RucteResponse in ructe_response.rs for the html method.
     state.html(|o| page(o, &[("first", 3), ("second", 7), ("third", 2)]))
 }
@@ -68,25 +67,27 @@ pub struct FilePath {
 /// The state will contain a FilePath.  The response from this view
 /// should be the file data with a correct content type and a far
 /// expires header (or a 404 if the file does not exist).
-fn static_file(state: State) -> (State, Response) {
+fn static_file(state: State) -> (State, Response<Body>) {
     let res = {
         let FilePath { ref name } = FilePath::borrow_from(&state);
         if let Some(data) = statics::StaticFile::get(&name) {
-            create_response(
-                &state,
-                StatusCode::Ok,
-                Some((data.content.to_vec(), data.mime.clone())),
-            )
-            .with_header(Expires((SystemTime::now() + FAR).into()))
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, data.mime.as_ref())
+                .header(CACHE_CONTROL, "max-age: 31536000") // 1 year as seconds
+                .body(data.content.into())
+                .unwrap()
         } else {
             println!("Static file {} not found", name);
-            create_response(&state, StatusCode::NotFound, None)
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .header(CONTENT_TYPE, TEXT_HTML.as_ref())
+                .body("not found".into())
+                .unwrap()
         }
     };
     (state, res)
 }
-
-static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 
 // And finally, include the generated code for templates and static files.
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));

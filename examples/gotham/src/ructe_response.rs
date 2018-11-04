@@ -1,30 +1,33 @@
-use gotham::http::response::create_response;
 use gotham::state::State;
-use hyper::{Response, StatusCode};
+use hyper::http::header::CONTENT_TYPE;
+use hyper::{Body, Response, StatusCode};
 use mime::TEXT_HTML_UTF_8;
 use std::io::{self, Write};
 
 pub trait RucteResponse: Sized {
-    fn html<F>(self, do_render: F) -> (Self, Response)
+    fn html<F>(self, do_render: F) -> (Self, Response<Body>)
     where
         F: FnOnce(&mut Write) -> io::Result<()>;
 }
 
 impl RucteResponse for State {
-    fn html<F>(self, do_render: F) -> (Self, Response)
+    fn html<F>(self, do_render: F) -> (Self, Response<Body>)
     where
         F: FnOnce(&mut Write) -> io::Result<()>,
     {
         let mut buf = Vec::new();
         let res = match do_render(&mut buf) {
-            Ok(()) => create_response(
-                &self,
-                StatusCode::Ok,
-                Some((buf, TEXT_HTML_UTF_8)),
-            ),
+            Ok(()) => Response::builder()
+                .header(CONTENT_TYPE, TEXT_HTML_UTF_8.as_ref())
+                .body(buf.into())
+                .unwrap(),
             Err(e) => {
                 println!("Rendering failed: {}", e);
-                create_response(&self, StatusCode::InternalServerError, None)
+                Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .header(CONTENT_TYPE, TEXT_HTML_UTF_8.as_ref())
+                    .body(buf.into())
+                    .unwrap()
             }
         };
         (self, res)
