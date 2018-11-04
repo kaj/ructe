@@ -7,7 +7,7 @@ fn main() {
     println!("### Page:");
     page(&mut io::stdout()).unwrap();
     for s in statics::STATICS {
-        println!("### /static/{} is {}:", s.name, s.mime());
+        println!("### /static/{} is {}:", s.name, s.mime);
         io::stdout().write_all(s.content).unwrap();
     }
 }
