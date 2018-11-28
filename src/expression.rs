@@ -22,6 +22,7 @@ named!(
                     preceded!(tag!("."), expression) |
                     preceded!(tag!("::"), expression) |
                     expr_in_parens |
+                    expr_in_braces |
                     expr_in_brackets |
                     preceded!(tag!("!"), expr_in_parens) |
                     preceded!(tag!("!"), expr_in_brackets)),
@@ -59,6 +60,7 @@ named!(
             tag!("("),
             many0!(alt!(
                 value!((), is_not!("[]()\"/")) |
+                value!((), expr_in_braces) |
                 value!((), expr_in_brackets) |
                 value!((), expr_in_parens) |
                 value!((), quoted_string) |
@@ -79,12 +81,32 @@ named!(
             many0!(alt!(
                 value!((), is_not!("[]()\"/")) |
                 value!((), expr_in_brackets) |
+                value!((), expr_in_braces) |
                 value!((), expr_in_parens) |
                 value!((), quoted_string) |
                 value!((), rust_comment) |
                 value!((), terminated!(tag!("/"), none_of!("*")))
             )),
             tag!("]")
+        )),
+        input_to_str
+    )
+);
+
+named!(
+    expr_in_braces<Input, &str>,
+    map_res!(
+        recognize!(delimited!(
+            tag!("{"),
+            many0!(alt!(
+                value!((), is_not!("{}[]()\"/")) |
+                value!((), expr_in_brackets) |
+                value!((), expr_in_parens) |
+                value!((), quoted_string) |
+                value!((), rust_comment) |
+                value!((), terminated!(tag!("/"), none_of!("*")))
+            )),
+            tag!("}")
         )),
         input_to_str
     )

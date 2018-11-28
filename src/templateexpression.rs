@@ -356,6 +356,23 @@ mod test {
     }
 
     #[test]
+    fn if_let_struct() {
+        assert_eq!(
+            template_expression(Input(
+                b"@if let Struct{x, y} = variable { something }"
+            )),
+            Ok((
+                Input(&b""[..]),
+                TemplateExpression::IfBlock {
+                    expr: "let Struct{x, y} = variable".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            ))
+        )
+    }
+
+    #[test]
     fn if_compare() {
         assert_eq!(
             template_expression(Input(b"@if x == 17 { something }")),
