@@ -1,4 +1,6 @@
-use expression::{comma_expressions, expression, input_to_str, rust_name};
+use expression::{
+    comma_expressions, expr_in_braces, expression, input_to_str, rust_name,
+};
 use itertools::Itertools;
 use nom::types::CompleteByteSlice as Input;
 use spacelike::{comment_tail, spacelike};
@@ -149,25 +151,7 @@ named!(
                     })) |
             Some(Input(b"for")) => map!(
                 tuple!(
-                    delimited!(
-                        spacelike,
-                        return_error!(
-                            err_str!("Expected loop variable name \
-                                      or destructuring tuple"),
-                            alt!(map!(rust_name, String::from) |
-                                 map!(
-                                     pair!(
-                                         opt!(char!('&')),
-                                         delimited!(tag!("("),
-                                                    comma_expressions,
-                                                    tag!(")"))
-                                     ),
-                                     |(pre, args)| match pre {
-                                         Some(_) => format!("&({})", args),
-                                         None => format!("({})", args)
-                                     }
-                                 ))),
-                        spacelike),
+                    for_variable,
                     delimited!(
                         terminated!(return_error!(err_str!("Expected \"in\""),
                                                   tag!("in")),
@@ -197,8 +181,33 @@ named!(
     ))
 );
 
+named!(
+    for_variable<Input, String>,
+    delimited!(
+        spacelike,
+        return_error!(
+            err_str!("Expected loop variable name or destructuring tuple"),
+            alt!(
+                map!(map_res!(
+                    recognize!(preceded!(rust_name, opt!(expr_in_braces))),
+                    input_to_str), String::from
+                ) |
+                map!(
+                    pair!(
+                        opt!(char!('&')),
+                        delimited!(tag!("("), comma_expressions, tag!(")"))
+                    ),
+                    |(pre, args)| match pre {
+                        Some(_) => format!("&({})", args),
+                        None => format!("({})", args)
+                    }
+                ))),
+        spacelike
+    )
+);
+
 named!(template_block<Input, Vec<TemplateExpression>>,
-       preceded!(
+              preceded!(
            return_error!(err_str!("Expected \"{\""), char!('{')),
            map!(
                many_till!(
@@ -289,6 +298,38 @@ mod test {
     use super::super::show_errors;
     use super::*;
     use nom::types::CompleteByteSlice as Input;
+
+    #[test]
+    fn for_variable_simple() {
+        assert_eq!(
+            for_variable(Input(b"foo")).unwrap(),
+            (Input(&b""[..]), "foo".to_string())
+        )
+    }
+
+    #[test]
+    fn for_variable_tuple() {
+        assert_eq!(
+            for_variable(Input(b"(foo, bar)")).unwrap(),
+            (Input(&b""[..]), "(foo, bar)".to_string())
+        )
+    }
+
+    #[test]
+    fn for_variable_tuple_ref() {
+        assert_eq!(
+            for_variable(Input(b"&(foo, bar)")).unwrap(),
+            (Input(&b""[..]), "&(foo, bar)".to_string())
+        )
+    }
+
+    #[test]
+    fn for_variable_struct() {
+        assert_eq!(
+            for_variable(Input(b"MyStruct{foo, bar}")).unwrap(),
+            (Input(&b""[..]), "MyStruct{foo, bar}".to_string())
+        )
+    }
 
     #[test]
     fn if_boolean_var() {
@@ -428,6 +469,23 @@ mod test {
              :                 ^ Expected \"=\"\n\
              :   1:@if let foo { oops }\n\
              :                 ^ Char\n"
+        )
+    }
+
+    #[test]
+    fn for_in_struct() {
+        assert_eq!(
+            template_expression(Input(
+                b"@for Struct{x, y} in structs { something }"
+            )),
+            Ok((
+                Input(&b""[..]),
+                TemplateExpression::ForLoop {
+                    name: "Struct{x, y}".to_string(),
+                    expr: "structs".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                }
+            ))
         )
     }
 

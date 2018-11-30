@@ -196,6 +196,24 @@ fn test_for_loop() {
 }
 
 #[test]
+fn test_for_destructure() {
+    let users = vec![
+        models::User {
+            name: "Tom Puss",
+            email: "tom@example.nl",
+        },
+        models::User {
+            name: "Heloise Walker",
+            email: "helwa@briarson.edu",
+        },
+    ];
+    assert_eq!(
+        r2s(|o| for_destructure(o, &users)),
+        "<ul><li>Tom Puss</li><li>Heloise Walker</li></ul>\n",
+    )
+}
+
+#[test]
 fn test_explicit_formatting() {
     assert_eq!(
         r2s(|o| explicit_formatting(o, 5.212432234, "one\ntwo")),

@@ -94,7 +94,7 @@ named!(
 );
 
 named!(
-    expr_in_braces<Input, &str>,
+    pub expr_in_braces<Input, &str>,
     map_res!(
         recognize!(delimited!(
             tag!("{"),
