@@ -551,9 +551,9 @@ fn handle_entries(
                 create_dir_all(&outdir)?;
                 File::create(outdir.join("mod.rs")).and_then(|mut f| {
                     f.write_all(
-                        b"#[cfg_attr(feature=\"cargo-clippy\", \
+                        b"#[allow(renamed_and_removed_lints)]\n\
+                          #[cfg_attr(feature=\"cargo-clippy\", \
                           allow(useless_attribute))]\n\
-                          #[allow(renamed_and_removed_lints)]\n\
                           #[allow(unused)]\n\
                           use super::{Html,ToHtml};\n",
                     )?;
