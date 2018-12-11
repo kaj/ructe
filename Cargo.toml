@@ -18,7 +18,7 @@ mime03 = []
 [dependencies]
 base64 = "^0.10.0"
 bytecount = "0.4"
-itertools = "^0.7.8"
+itertools = "^0.8.0"
 lazy_static = "1.0"
 md5 = "0.6"
 nom = { version = "4.1.1", features = ["verbose-errors"] }
