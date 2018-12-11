@@ -9,10 +9,10 @@ rust:
   - nightly
 matrix:
   include:
-   - rust: nightly
+   - rust: stable
      env: TASK=rustfmt
      before_script:
-      - rustup component add rustfmt-preview
+      - rustup component add rustfmt
      script:
       - cargo fmt -- --check
       - cd examples/simple && cargo fmt -- --check
