@@ -734,9 +734,46 @@ pub mod templates {
     #[test]
     fn encoded() {
         let mut buf = Vec::new();
-        "a < b".to_html(&mut buf).unwrap();
-        assert_eq!(b"a &lt; b", &buf[..]);
+        "a < b\0\n".to_html(&mut buf).unwrap();
+        assert_eq!(b"a &lt; b\0\n", &buf[..]);
+
+        let mut buf = Vec::new();
+        "'b".to_html(&mut buf).unwrap();
+        assert_eq!(b"&#39;b", &buf[..]);
+
+        let mut buf = Vec::new();
+        "xxxxx>&".to_html(&mut buf).unwrap();
+        assert_eq!(b"xxxxx&gt;&amp;", &buf[..]);
     }
+
+    #[test]
+    fn encoded_empty() {
+        let mut buf = Vec::new();
+        "".to_html(&mut buf).unwrap();
+        "".to_html(&mut buf).unwrap();
+        "".to_html(&mut buf).unwrap();
+        assert_eq!(b"", &buf[..]);
+    }
+
+    #[test]
+    fn double_encoded() {
+        let mut buf = Vec::new();
+        "&amp;".to_html(&mut buf).unwrap();
+        "&lt;".to_html(&mut buf).unwrap();
+        assert_eq!(b"&amp;amp;&amp;lt;", &buf[..]);
+    }
+
+    #[test]
+    fn encoded_only() {
+        let mut buf = Vec::new();
+        "&&&&&&&&&&&&&&&&".to_html(&mut buf).unwrap();
+        assert_eq!(b"&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;" as &[u8], &buf[..]);
+
+        let mut buf = Vec::new();
+        "''''''''''''''".to_html(&mut buf).unwrap();
+        assert_eq!(b"&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;" as &[u8], &buf[..]);
+    }
+
     #[test]
     fn raw_html() {
         let mut buf = Vec::new();
