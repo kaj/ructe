@@ -11,4 +11,4 @@ ructe = { path = "../..", features = ["sass", "mime03"] }
 [dependencies]
 warp = "0.1.9"
 mime = "0.3.0"
-env_logger = "0.5.0"
+env_logger = "0.6.0"
