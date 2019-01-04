@@ -218,7 +218,7 @@ fn test_explicit_formatting() {
     assert_eq!(
         r2s(|o| explicit_formatting(o, 5.212432234, "one\ntwo")),
         "<p>Value 1 is 5.2 (or really 5.212432234),\n\
-         while value 2 is \"one\\ntwo\".</p>\n"
+         while value 2 is &quot;one\\ntwo&quot;.</p>\n"
     );
 }
 
