@@ -29,7 +29,7 @@ mod test {
              <head>\n    \
              <title>Example with stylesheet</title>\n    \
              <link rel=\"stylesheet\" \
-             href=\"/static/style-dp91gNUn.css\" \
+             href=\"/static/style-uNrEkqKN.css\" \
              type=\"text/css\"/>\n  \
              </head>\n  \
              <body>\n    \
@@ -45,8 +45,8 @@ mod test {
         use templates::statics::style_css;
         assert_eq!(
             from_utf8(&style_css.content).unwrap(),
-            "body{background:\"burlap-oPfjAg2n.jpg\"}\
-             greeting{hello:world}\n"
+            "\u{feff}body{background:\"burlap-oPfjAg2n.jpg\"}\
+             greeting{hello:wörld}\n"
         );
     }
 
@@ -54,8 +54,8 @@ mod test {
     fn get_static_by_name() {
         use templates::statics::StaticFile;
         assert_eq!(
-            StaticFile::get("style-dp91gNUn.css").map(|s| s.name),
-            Some("style-dp91gNUn.css")
+            StaticFile::get("style-uNrEkqKN.css").map(|s| s.name),
+            Some("style-uNrEkqKN.css")
         )
     }
 
@@ -70,7 +70,7 @@ mod test {
         use templates::statics::STATICS;
         assert_eq!(
             STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-            ["burlap-oPfjAg2n.jpg", "style-dp91gNUn.css"]
+            ["burlap-oPfjAg2n.jpg", "style-uNrEkqKN.css"]
         );
     }
 
