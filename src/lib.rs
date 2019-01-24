@@ -72,7 +72,7 @@ use itertools::Itertools;
 use nom::types::CompleteByteSlice as Input;
 use nom::{Context, Err, ErrorKind};
 use std::collections::BTreeMap;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -386,13 +386,13 @@ impl StaticFile {
             "\n/// From {path:?}\
              \n#[allow(non_upper_case_globals)]\
              \npub static {name}_{suf}: StaticFile = StaticFile {{\
-             \n  content: &{content:?},\
+             \n  content: {content},\
              \n  name: \"{name}-{hash}.{suf}\",\
              \n{mime}\
              }};",
             path = path,
             name = name,
-            content = content,
+            content = ByteString(content),
             hash = checksum_slug(content),
             suf = suffix,
             mime = mime_arg(suffix),
@@ -418,6 +418,27 @@ impl StaticFile {
     /// ````
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
+    }
+}
+
+struct ByteString<'a>(&'a [u8]);
+
+impl<'a> fmt::Display for ByteString<'a> {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        use std::ascii::escape_default;
+        use std::str::from_utf8_unchecked;
+        let escaped = self
+            .0
+            .iter()
+            .flat_map(|c| escape_default(*c))
+            .collect::<Vec<u8>>();
+        write!(
+            out,
+            "b\"{}\"",
+            // The above escaping makes sure t contains only printable ascii,
+            // which is always valid utf8.
+            unsafe { from_utf8_unchecked(&escaped) },
+        )
     }
 }
 
