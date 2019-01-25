@@ -29,12 +29,33 @@ pub enum TemplateExpression {
         name: String,
         args: Vec<TemplateArgument>,
     },
+    /// The actual mode is allreay applied, this variant is just to ensure
+    /// that outer space mode changes don't descend into this group.
+    SpaceMode(Vec<TemplateExpression>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SpaceMode {
+    AsIs,
+    Compact,
+    Removed,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateArgument {
     Rust(String),
     Body(Vec<TemplateExpression>),
+}
+
+impl TemplateArgument {
+    pub fn apply_spacemode(self, mode: SpaceMode) -> Self {
+        match self {
+            TemplateArgument::Rust(s) => TemplateArgument::Rust(s),
+            TemplateArgument::Body(v) => {
+                TemplateArgument::Body(apply_spacemode(v, mode))
+            }
+        }
+    }
 }
 
 impl Display for TemplateArgument {
@@ -53,10 +74,62 @@ impl Display for TemplateArgument {
     }
 }
 
+pub fn apply_spacemode(
+    v: Vec<TemplateExpression>,
+    mode: SpaceMode,
+) -> Vec<TemplateExpression> {
+    v.into_iter().map(|b| b.apply_spacemode(mode)).collect()
+}
+
 impl TemplateExpression {
     pub fn text(text: &str) -> Self {
         TemplateExpression::Text {
             text: text.to_string(),
+        }
+    }
+    pub fn apply_spacemode(self, mode: SpaceMode) -> Self {
+        match self {
+            TemplateExpression::Comment => TemplateExpression::Comment,
+            TemplateExpression::Text { text } => TemplateExpression::Text {
+                text: match mode {
+                    SpaceMode::AsIs => text,
+                    SpaceMode::Compact => compactify(&text),
+                    SpaceMode::Removed => {
+                        compactify(&text).trim().to_string()
+                    }
+                },
+            },
+            TemplateExpression::Expression { expr } => {
+                TemplateExpression::Expression { expr }
+            }
+            TemplateExpression::ForLoop { name, expr, body } => {
+                TemplateExpression::ForLoop {
+                    name,
+                    expr,
+                    body: apply_spacemode(body, mode),
+                }
+            }
+            TemplateExpression::IfBlock {
+                expr,
+                body,
+                else_body,
+            } => TemplateExpression::IfBlock {
+                expr,
+                body: apply_spacemode(body, mode),
+                else_body: else_body.map(|eb| apply_spacemode(eb, mode)),
+            },
+            TemplateExpression::CallTemplate { name, args } => {
+                TemplateExpression::CallTemplate {
+                    name,
+                    args: args
+                        .into_iter()
+                        .map(|b| b.apply_spacemode(mode))
+                        .collect(),
+                }
+            }
+            TemplateExpression::SpaceMode(body) => {
+                TemplateExpression::SpaceMode(body)
+            }
         }
     }
     pub fn code(&self) -> String {
@@ -104,8 +177,47 @@ impl TemplateExpression {
                     ))),
                 )
             }
+            TemplateExpression::SpaceMode(ref body) => {
+                body.iter().map(|b| b.code()).format("").to_string()
+            }
         }
     }
+}
+
+fn compactify(s: &str) -> String {
+    let mut space = false;
+    let mut newline = false;
+    let mut result = String::new();
+    for c in s.chars() {
+        match c {
+            '\n' => newline = true,
+            ' ' => space = true,
+            c => {
+                if newline {
+                    result.push('\n');
+                } else if space {
+                    result.push(' ');
+                }
+                result.push(c);
+                newline = false;
+                space = false;
+            }
+        }
+    }
+    if newline {
+        result.push('\n');
+    } else if space {
+        result.push(' ');
+    }
+    result
+}
+
+#[test]
+fn t_compactify() {
+    assert_eq!(
+        compactify("  hello world \n  \n  This    is nice.\n\n\n"),
+        " hello world\nThis is nice.\n"
+    )
 }
 
 named!(
@@ -117,7 +229,7 @@ named!(
                            alt!(tag!("*") | tag!(":") | tag!("@") |
                                 tag!("{") | tag!("}") |
                                 terminated!(
-                                    alt!(tag!("if") | tag!("for")),
+                                    alt!(tag!("if") | tag!("for") | tag!("whitespace")),
                                     tag!(" ")) |
                                 value!(Input(&b""[..]))))),
             Some(Input(b":")) => map!(
@@ -168,6 +280,24 @@ named!(
                     expr: expr.to_string(),
                     body,
                 }) |
+            Some(Input(b"whitespace")) => map!(
+                tuple!(
+                    delimited!(tag!("("),
+                               alt!(
+                                   value!(SpaceMode::AsIs, tag!("as-is")) |
+                                   value!(SpaceMode::Compact, tag!("compact")) |
+                                   value!(SpaceMode::Removed, tag!("removed"))
+                               ),
+                               terminated!(tag!(")"), spacelike)),
+                    template_block
+                ),
+                |(mode, body)| {
+                    eprintln!("TODO: Apply {:?} to {:?}", mode, body);
+                    TemplateExpression::SpaceMode(
+                        body.into_iter().map(|b| b.apply_spacemode(mode)).collect()
+                    )
+                }
+            ) |
             Some(Input(b"")) => map!(
                 expression,
                 |expr| TemplateExpression::Expression{ expr: expr.to_string() }
@@ -485,6 +615,35 @@ mod test {
                     expr: "structs".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                 }
+            ))
+        )
+    }
+
+    #[test]
+    fn skip_ws() {
+        assert_eq!(
+            template_expression(Input(
+                b"@whitespace (removed) {\
+                  \n  @if something {\
+                  \n    construct with\
+                  \n    inner space\
+                  \n  }\
+                  \n}\
+                  ",
+            )),
+            Ok((
+                Input(&b""[..]),
+                TemplateExpression::SpaceMode(vec![
+                    TemplateExpression::text(""),
+                    TemplateExpression::IfBlock {
+                        expr: "something".to_string(),
+                        body: vec![TemplateExpression::text(
+                            "construct with\ninner space"
+                        )],
+                        else_body: None,
+                    },
+                    TemplateExpression::text(""),
+                ]),
             ))
         )
     }

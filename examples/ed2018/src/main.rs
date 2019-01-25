@@ -16,14 +16,14 @@ fn main() {
 fn test_page_w_static() {
     assert_eq!(
         r2s(|o| page(o)),
-        "<html>\n  \
-         <head>\n    \
-         <title>Example with stylesheet</title>\n    \
+        "<html>\n\
+         <head>\n\
+         <title>Example with stylesheet</title>\n\
          <link rel=\"stylesheet\" href=\"/static/style-BeQlLiwh.css\" \
-         type=\"text/css\"/>\n  \
-         </head>\n  \
-         <body>\n    \
-         Hello world!\n  \
+         type=\"text/css\"/>\n\
+         </head>\n\
+         <body>\n\
+         Hello world!\n\
          </body>\n\
          </html>\n"
     );

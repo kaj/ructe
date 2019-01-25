@@ -3,7 +3,9 @@ use itertools::Itertools;
 use nom::types::CompleteByteSlice as Input;
 use spacelike::spacelike;
 use std::io::{self, Write};
-use templateexpression::{template_expression, TemplateExpression};
+use templateexpression::{
+    apply_spacemode, template_expression, SpaceMode, TemplateExpression,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
@@ -70,7 +72,7 @@ named!(
                     template_expression),
                 call!(end_of_file))
             ),
-        |((), preamble, args, body)| Template { preamble, args, body: body.0 }
+        |((), preamble, args, body)| Template { preamble, args, body: apply_spacemode(body.0, SpaceMode::Compact) }
     )
 );
 
