@@ -6,7 +6,6 @@
 /// formats the value using Display and then html-encodes the result.
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
-    #[inline]
     fn to_html(&self, out: &mut Write) -> io::Result<()>;
 }
 
