@@ -37,7 +37,7 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
     // (it is a part of `write_all`'s loop or similar.)
     fn write(&mut self, data: &[u8]) -> io::Result<usize> {
         // quickly skip over data that doesn't need escaping
-        let n = data.into_iter().take_while(|&&c| c != b'"' && c != b'&' && c != b'\'' && c != b'<' && c != b'>').count();
+        let n = data.iter().take_while(|&&c| c != b'"' && c != b'&' && c != b'\'' && c != b'<' && c != b'>').count();
         if n > 0 {
             self.0.write(&data[0..n])
         } else {
