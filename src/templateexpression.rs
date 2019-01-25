@@ -236,7 +236,8 @@ named!(
                            alt!(tag!("*") | tag!(":") | tag!("@") |
                                 tag!("{") | tag!("}") |
                                 terminated!(
-                                    alt!(tag!("if") | tag!("for") | tag!("whitespace")),
+                                    alt!(tag!("if") | tag!("for") |
+                                         tag!("whitespace") | tag!("ws")),
                                     tag!(" ")) |
                                 value!(Input(&b""[..]))))),
             Some(Input(b":")) => map!(
@@ -287,15 +288,16 @@ named!(
                     expr: expr.to_string(),
                     body,
                 }) |
-            Some(Input(b"whitespace")) => map!(
+            Some(Input(b"whitespace"))
+                | Some(Input(b"ws")) => map!(
                 tuple!(
-                    delimited!(tag!("("),
+                    delimited!(delimited!(spacelike, tag!("("), spacelike),
                                alt!(
                                    value!(SpaceMode::AsIs, tag!("as-is")) |
                                    value!(SpaceMode::Compact, tag!("compact")) |
                                    value!(SpaceMode::Removed, tag!("removed"))
                                ),
-                               terminated!(tag!(")"), spacelike)),
+                               delimited!(spacelike, tag!(")"), spacelike)),
                     template_block
                 ),
                 |(mode, body)| {
