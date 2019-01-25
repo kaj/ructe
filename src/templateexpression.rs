@@ -190,8 +190,8 @@ fn compactify(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
         match c {
-            '\n' => newline = true,
-            ' ' => space = true,
+            '\n' | '\r' => newline = true,
+            ' ' | '\t' => space = true,
             c => {
                 if newline {
                     result.push('\n');
@@ -217,6 +217,13 @@ fn t_compactify() {
     assert_eq!(
         compactify("  hello world \n  \n  This    is nice.\n\n\n"),
         " hello world\nThis is nice.\n"
+    )
+}
+#[test]
+fn t_compactify_tabbed() {
+    assert_eq!(
+        compactify("\n\thello world\n\t\n\t  This  \t  is nice.\n\t\n \n"),
+        "\nhello world\nThis is nice.\n"
     )
 }
 
