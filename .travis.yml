@@ -1,6 +1,8 @@
 language: rust
 rust:
   - stable
+  - 1.31.1
+  - 1.30.1
   - 1.29.0
   - 1.28.0
   - 1.27.2
@@ -23,6 +25,9 @@ matrix:
       - cd ../gotham && cargo fmt -- --check
       - cd ../warp && cargo fmt -- --check
    - rust: stable
+     env TASK=static-sass
+     script: cd examples/static-sass && cargo test
+   - rust: stable
      env: TASK=iron
      script: cd examples/iron && cargo test
    - rust: stable
@@ -34,7 +39,7 @@ matrix:
    - rust: stable
      env: TASK=warp
      script: cd examples/warp && cargo test
-   - rust: beta
+   - rust: stable
      env: TASK=ed2018
      script: cd examples/ed2018 && cargo test
   allow_failures:
@@ -45,5 +50,4 @@ script:
   cargo build &&
   cargo test &&
   (cd examples/simple && cargo test) &&
-  (cd examples/statics && cargo test) &&
-  (cd examples/static-sass && cargo test)
+  (cd examples/statics && cargo test)
