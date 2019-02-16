@@ -54,7 +54,6 @@ fn footer(out: &mut Write) -> io::Result<()> {
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn static_file(name: String) -> Result<impl Reply, Rejection> {
     if let Some(data) = StaticFile::get(&name) {
         let _far_expires = SystemTime::now() + FAR;
@@ -73,7 +72,6 @@ fn static_file(name: String) -> Result<impl Reply, Rejection> {
 static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 
 /// Create custom error pages.
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     match err.status() {
         StatusCode::NOT_FOUND => {
