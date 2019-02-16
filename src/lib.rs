@@ -298,7 +298,7 @@ impl StaticFile {
             SassFunction::builtin(
                 vec![("name".into(), sass::Value::Null)],
                 false,
-                Arc::new(move |s| match s.get("name") {
+                Arc::new(move |s| match s.get("name")? {
                     css::Value::Literal(name, _) => {
                         let name = name.replace('-', "_").replace('.', "_");
                         for (n, v) in existing_statics.as_ref() {
