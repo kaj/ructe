@@ -17,7 +17,7 @@ mime03 = []
 
 [dependencies]
 base64 = "^0.10.0"
-bytecount = "0.4"
+bytecount = "0.5.1"
 itertools = "^0.8.0"
 lazy_static = "1.0"
 md5 = "0.6"
