@@ -25,18 +25,28 @@ matrix:
       - cd ../gotham && cargo fmt -- --check
       - cd ../warp && cargo fmt -- --check
    - rust: stable
-     env:
-      - EXAMPLE=ed2018
-      - EXAMPLE=static-sass
-      - EXAMPLE=warp
-      - EXAMPLE=gotham
-      - EXAMPLE=nickel
-      - EXAMPLE=iron
+     env: EXAMPLE=ed2018
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=static-sass
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=warp
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=gotham
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=nickel
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=iron
      script: cd examples/$EXAMPLE && cargo test
   allow_failures:
     - rust: nightly
       env:
 script:
- - cargo build && cargo test
+ - cargo build
+ - cargo test
  - cd examples/simple && cargo test
  - cd ../statics && cargo test
