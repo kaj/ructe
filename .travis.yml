@@ -25,7 +25,7 @@ matrix:
       - cd ../gotham && cargo fmt -- --check
       - cd ../warp && cargo fmt -- --check
    - rust: stable
-     env TASK=static-sass
+     env: TASK=static-sass
      script: cd examples/static-sass && cargo test
    - rust: stable
      env: TASK=iron
