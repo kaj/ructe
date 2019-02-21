@@ -179,6 +179,7 @@ impl StaticFile {
 
     /// Add all files from a specific directory, `indir`, as static files.
     pub fn add_files(&mut self, indir: &Path) -> io::Result<()> {
+        println!("cargo:rerun-if-changed={}", indir.display());
         for entry in read_dir(indir)? {
             let entry = entry?;
             if entry.file_type()?.is_file() {
