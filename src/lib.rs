@@ -72,7 +72,7 @@ use itertools::Itertools;
 use nom::types::CompleteByteSlice as Input;
 use nom::{Context, Err, ErrorKind};
 use std::collections::BTreeMap;
-use std::fmt::{self, Debug};
+use std::fmt::{self, Debug, Display};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -221,37 +221,35 @@ impl StaticFile {
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
-            let from_name = format!("{}_{}", name, ext);
-            let to_name =
+            let rust_name = format!("{}_{}", name, ext);
+            let url_name =
                 format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
-            self.write_static_file(path, name, &buf, ext)?;
-            self.names.insert(from_name.clone(), to_name.clone());
-            self.names_r.insert(to_name, from_name.clone());
+            self.add_static(
+                path,
+                &rust_name,
+                &url_name,
+                &FileContent(path),
+                ext,
+            )?;
         }
         Ok(())
     }
 
     /// Add one specific file as a static file.
     ///
-    /// Use `to_name` in the url without adding any hash characters.
+    /// Use `url_name` in the url without adding any hash characters.
     pub fn add_file_as(
         &mut self,
         path: &Path,
-        to_name: &str,
+        url_name: &str,
     ) -> io::Result<()> {
-        if let Some((_name, ext)) = name_and_ext(path) {
-            println!("cargo:rerun-if-changed={}", path.display());
-            let mut input = File::open(&path)?;
-            let mut buf = Vec::new();
-            input.read_to_end(&mut buf)?;
-            let from_name = to_name
-                .replace("/", "_")
-                .replace("-", "_")
-                .replace(".", "_");
-            self.write_static_file2(path, &from_name, to_name, ext)?;
-            self.names.insert(from_name.clone(), to_name.to_string());
-            self.names_r.insert(to_name.to_string(), from_name.clone());
-        }
+        let ext = name_and_ext(path).map(|(_, e)| e).unwrap_or("");
+        println!("cargo:rerun-if-changed={}", path.display());
+        let rust_name = url_name
+            .replace("/", "_")
+            .replace("-", "_")
+            .replace(".", "_");
+        self.add_static(path, &rust_name, url_name, &FileContent(path), ext)?;
         Ok(())
     }
 
@@ -265,12 +263,16 @@ impl StaticFile {
         data: &[u8],
     ) -> io::Result<()> {
         if let Some((name, ext)) = name_and_ext(path) {
-            let from_name = format!("{}_{}", name, ext);
-            let to_name =
+            let rust_name = format!("{}_{}", name, ext);
+            let url_name =
                 format!("{}-{}.{}", name, checksum_slug(data), &ext);
-            self.write_static_buf(path, name, data, ext)?;
-            self.names.insert(from_name.clone(), to_name.clone());
-            self.names_r.insert(to_name, from_name.clone());
+            self.add_static(
+                path,
+                &rust_name,
+                &url_name,
+                &ByteString(data),
+                ext,
+            )?;
         }
         Ok(())
     }
@@ -328,74 +330,29 @@ impl StaticFile {
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
-    fn write_static_file(
+    fn add_static(
         &mut self,
         path: &Path,
-        name: &str,
-        content: &[u8],
+        rust_name: &str,
+        url_name: &str,
+        content: &Display,
         suffix: &str,
     ) -> io::Result<()> {
+        self.names.insert(rust_name.into(), url_name.into());
+        self.names_r.insert(url_name.into(), rust_name.into());
         writeln!(
             self.src,
             "\n/// From {path:?}\
              \n#[allow(non_upper_case_globals)]\
-             \npub static {name}_{suf}: StaticFile = StaticFile {{\
-             \n  content: include_bytes!({path:?}),\
-             \n  name: \"{name}-{hash}.{suf}\",\
-             \n{mime}\
-             }};",
-            path = path,
-            name = name,
-            hash = checksum_slug(content),
-            suf = suffix,
-            mime = mime_arg(suffix),
-        )
-    }
-
-    fn write_static_file2(
-        &mut self,
-        path: &Path,
-        name: &str,
-        as_name: &str,
-        suffix: &str,
-    ) -> io::Result<()> {
-        writeln!(
-            self.src,
-            "\n/// From {path:?}\
-             \n#[allow(non_upper_case_globals)]\
-             \npub static {name}: StaticFile = StaticFile {{\
-             \n  content: include_bytes!({path:?}),\
-             \n  name: \"{as_name}\",\
-             \n{mime}\
-             }};",
-            path = path,
-            name = name,
-            as_name = as_name,
-            mime = mime_arg(suffix),
-        )
-    }
-
-    fn write_static_buf(
-        &mut self,
-        path: &Path,
-        name: &str,
-        content: &[u8],
-        suffix: &str,
-    ) -> io::Result<()> {
-        writeln!(
-            self.src,
-            "\n/// From {path:?}\
-             \n#[allow(non_upper_case_globals)]\
-             \npub static {name}_{suf}: StaticFile = StaticFile {{\
+             \npub static {rust_name}: StaticFile = StaticFile {{\
              \n  content: {content},\
-             \n  name: \"{name}-{hash}.{suf}\",\
+             \n  name: \"{url_name}\",\
              \n{mime}\
              }};",
             path = path,
-            name = name,
-            content = ByteString(content),
-            hash = checksum_slug(content),
-            suf = suffix,
+            rust_name = rust_name,
+            url_name = url_name,
+            content = content,
             mime = mime_arg(suffix),
         )
     }
@@ -422,9 +379,17 @@ impl StaticFile {
     }
 }
 
+struct FileContent<'a>(&'a Path);
+
+impl<'a> Display for FileContent<'a> {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        write!(out, "include_bytes!({:?})", self.0)
+    }
+}
+
 struct ByteString<'a>(&'a [u8]);
 
-impl<'a> fmt::Display for ByteString<'a> {
+impl<'a> Display for ByteString<'a> {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use std::ascii::escape_default;
         use std::str::from_utf8_unchecked;
