@@ -245,11 +245,7 @@ impl StaticFile {
     ) -> io::Result<()> {
         let ext = name_and_ext(path).map(|(_, e)| e).unwrap_or("");
         println!("cargo:rerun-if-changed={}", path.display());
-        let rust_name = url_name
-            .replace("/", "_")
-            .replace("-", "_")
-            .replace(".", "_");
-        self.add_static(path, &rust_name, url_name, &FileContent(path), ext)?;
+        self.add_static(path, url_name, url_name, &FileContent(path), ext)?;
         Ok(())
     }
 
@@ -338,8 +334,10 @@ impl StaticFile {
         content: &Display,
         suffix: &str,
     ) -> io::Result<()> {
-        self.names.insert(rust_name.into(), url_name.into());
-        self.names_r.insert(url_name.into(), rust_name.into());
+        let rust_name = rust_name
+            .replace("/", "_")
+            .replace("-", "_")
+            .replace(".", "_");
         writeln!(
             self.src,
             "\n/// From {path:?}\
@@ -354,7 +352,10 @@ impl StaticFile {
             url_name = url_name,
             content = content,
             mime = mime_arg(suffix),
-        )
+        )?;
+        self.names.insert(rust_name.clone(), url_name.into());
+        self.names_r.insert(url_name.into(), rust_name);
+        Ok(())
     }
 
     /// Get a mapping of names, from without hash to with.
