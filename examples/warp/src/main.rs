@@ -1,8 +1,4 @@
 //! An example web service using ructe with the warp framework.
-extern crate env_logger;
-extern crate mime;
-extern crate warp;
-
 mod render_ructe;
 
 use render_ructe::RenderRucte;

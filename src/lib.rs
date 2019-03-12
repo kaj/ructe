@@ -72,10 +72,11 @@ use itertools::Itertools;
 use nom::types::CompleteByteSlice as Input;
 use nom::{Context, Err, ErrorKind};
 use std::collections::BTreeMap;
+use std::env;
 use std::fmt::{self, Debug, Display};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::from_utf8;
 use template::template;
 
@@ -83,7 +84,12 @@ use template::template;
 /// for all files in `indir`.
 ///
 /// This must be called *before* `compile_templates`.
-pub fn compile_static_files(indir: &Path, outdir: &Path) -> io::Result<()> {
+#[deprecated(
+    since = "0.6",
+    note = "Use the statics() method of struct Ructe instead"
+)]
+pub fn compile_static_files(indir: &Path, outdir: &Path) -> Result<()> {
+    #[allow(deprecated)]
     let mut out = StaticFiles::new(outdir)?;
     out.add_files(indir)
 }
@@ -114,9 +120,21 @@ impl StaticFiles {
     ///
     /// There should only be one `StaticFiles` for a set of compiled templates.
     /// The `outdir` should be the same as in the call to `compile_templates`.
+    ///
+    /// From version 0.6 of ructe,
+    /// [the `statics()` method of `struct Ructe`](struct.Ructe.html#method.statics)
+    /// should be used instead of this method.
+    #[deprecated(
+        since = "0.6",
+        note = "Use the statics() method of struct Ructe instead"
+    )]
     pub fn new(outdir: &Path) -> io::Result<Self> {
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
+        StaticFiles::for_template_dir(&outdir)
+    }
+
+    fn for_template_dir(outdir: &Path) -> io::Result<Self> {
         let mut src = File::create(outdir.join("statics.rs"))?;
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
@@ -178,7 +196,13 @@ impl StaticFile {
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
-    pub fn add_files(&mut self, indir: &Path) -> io::Result<()> {
+    pub fn add_files<P: AsRef<Path>>(&mut self, indir: P) -> Result<()> {
+        let indir = indir.as_ref();
+        let indir = if indir.is_relative() {
+            PathBuf::from(env::var("CARGO_MANIFEST_DIR")?).join(indir)
+        } else {
+            indir.into()
+        };
         println!("cargo:rerun-if-changed={}", indir.display());
         for entry in read_dir(indir)? {
             let entry = entry?;
@@ -253,11 +277,11 @@ impl StaticFile {
     ///
     /// The `path` parameter is used only to create a file name, the actual
     /// content of the static file will be the `data` parameter.
-    pub fn add_file_data(
-        &mut self,
-        path: &Path,
-        data: &[u8],
-    ) -> io::Result<()> {
+    pub fn add_file_data<P>(&mut self, path: P, data: &[u8]) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
         if let Some((name, ext)) = name_and_ext(path) {
             let rust_name = format!("{}_{}", name, ext);
             let url_name =
@@ -283,7 +307,11 @@ impl StaticFile {
     /// This method is only available when ructe is built with the
     /// "sass" feature.
     #[cfg(feature = "sass")]
-    pub fn add_sass_file(&mut self, src: &Path) -> io::Result<()> {
+    pub fn add_sass_file<P>(&mut self, src: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let src = src.as_ref();
         use rsass::*;
         use std::sync::Arc;
         let mut scope = GlobalScope::new();
@@ -361,19 +389,26 @@ impl StaticFile {
     /// Get a mapping of names, from without hash to with.
     ///
     /// ````
-    /// # use ructe::StaticFiles;
+    /// # use ructe::{Result, Ructe, StaticFiles};
+    /// # use std::fs::create_dir_all;
     /// # use std::path::PathBuf;
     /// # use std::vec::Vec;
-    /// # let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-    /// #     .join("target").join("test-tmp");
-    /// let mut statics = StaticFiles::new(&p).unwrap();
-    /// statics.add_file_data("black.css".as_ref(), b"body{color:black}\n");
-    /// statics.add_file_data("blue.css".as_ref(), b"body{color:blue}\n");
-    /// assert_eq!(statics.get_names().iter()
-    ///                .map(|(a, b)| format!("{} -> {}", a, b))
-    ///                .collect::<Vec<_>>(),
-    ///            vec!["black_css -> black-r3rltVhW.css".to_string(),
-    ///                 "blue_css -> blue-GZGxfXag.css".to_string()])
+    /// # fn main() -> Result<()> {
+    /// # let p = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target").join("test-tmp");
+    /// # create_dir_all(&p);
+    /// # let mut ructe = Ructe::new(p)?;
+    /// let mut statics = ructe.statics()?;
+    /// statics.add_file_data("black.css", b"body{color:black}\n");
+    /// statics.add_file_data("blue.css", b"body{color:blue}\n");
+    /// assert_eq!(
+    ///     statics.get_names().iter()
+    ///         .map(|(a, b)| format!("{} -> {}", a, b))
+    ///         .collect::<Vec<_>>(),
+    ///     vec!["black_css -> black-r3rltVhW.css".to_string(),
+    ///          "blue_css -> blue-GZGxfXag.css".to_string()],
+    /// );
+    /// # Ok(())
+    /// # }
     /// ````
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
@@ -491,43 +526,95 @@ fn checksum_slug(data: &[u8]) -> String {
     base64::encode_config(&md5::compute(data)[..6], base64::URL_SAFE)
 }
 
-/// Create a `templates` module in `outdir` containing rust code for
-/// all templates found in `indir`.
-pub fn compile_templates(indir: &Path, outdir: &Path) -> io::Result<()> {
-    File::create(outdir.join("templates.rs")).and_then(|mut f| {
+/// The main build-time interface of ructe.
+///
+/// Your build script should create an instance of `Ructe` and use it
+/// to compile templates and possibly get access to the static files
+/// handler.
+///
+/// When creating a `Ructe` it will create a file called
+/// `templates.rs` in your `$OUT_DIR` (which is normally created and
+/// specified by `cargo`).
+/// The methods will and content, and when the `Ructe` goes of of
+/// scope, the file will be completed.
+pub struct Ructe {
+    f: File,
+    outdir: PathBuf,
+}
+
+impl Ructe {
+    /// Create  a ructe instance from the `OUT_DIR` environment variable.
+    ///
+    /// This should be correct when using ructe from a build script in
+    /// your project.
+    pub fn from_env() -> Result<Ructe> {
+        Ructe::new(PathBuf::from(env::var("OUT_DIR")?))
+    }
+
+    /// Create  a ructe instance from the `OUT_DIR` environment variable.
+    ///
+    /// This should be correct when using ructe from a build script in
+    /// your project.
+    pub fn new(out_dir: PathBuf) -> Result<Ructe> {
+        let mut f = File::create(out_dir.join("templates.rs"))?;
         f.write_all(
             b"pub mod templates {\n\
               use std::io::{self, Write};\n\
               use std::fmt::Display;\n\n",
         )?;
-
-        let outdir = outdir.join("templates");
+        let outdir = out_dir.join("templates");
         create_dir_all(&outdir)?;
+        Ok(Ructe { f, outdir })
+    }
 
-        handle_entries(&mut f, indir, &outdir)?;
+    pub fn statics(&mut self) -> Result<StaticFiles> {
+        self.f.write_all(b"pub mod statics;")?;
+        Ok(StaticFiles::for_template_dir(&self.outdir)?)
+    }
 
-        if outdir.join("statics.rs").exists() {
-            f.write_all(b"pub mod statics;")?;
-        }
-
-        f.write_all(
-            concat!(
-                include_str!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/src/template_utils.rs"
-                )),
-                "\n}\n"
-            )
-            .as_bytes(),
-        )
-    })
+    /// Create a `templates` module in `outdir` containing rust code for
+    /// all templates found in `indir`.
+    pub fn compile_templates<P>(&mut self, indir: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        handle_entries(&mut self.f, indir.as_ref(), &self.outdir)
+    }
 }
 
-fn handle_entries(
-    f: &mut Write,
-    indir: &Path,
-    outdir: &Path,
-) -> io::Result<()> {
+impl Drop for Ructe {
+    fn drop(&mut self) {
+        self.f
+            .write_all(
+                concat!(
+                    include_str!(concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        "/src/template_utils.rs"
+                    )),
+                    "\n}\n"
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+    }
+}
+
+/// Create a `templates` module in `outdir` containing rust code for
+/// all templates found in `indir`.
+#[deprecated(since = "0.6", note = "Use method of struct Ructe instead")]
+pub fn compile_templates(indir: &Path, outdir: &Path) -> Result<()> {
+    let mut ructe = Ructe::new(outdir.into())?;
+
+    ructe.compile_templates(indir)?;
+
+    if ructe.outdir.join("statics.rs").exists() {
+        ructe.f.write_all(b"pub mod statics;")?;
+    }
+
+    Ok(())
+}
+
+fn handle_entries(f: &mut Write, indir: &Path, outdir: &Path) -> Result<()> {
     println!("cargo:rerun-if-changed={}", indir.display());
     let suffix = ".rs.html";
     for entry in read_dir(indir)? {
@@ -537,16 +624,15 @@ fn handle_entries(
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
                 create_dir_all(&outdir)?;
-                File::create(outdir.join("mod.rs")).and_then(|mut f| {
-                    f.write_all(
-                        b"#[allow(renamed_and_removed_lints)]\n\
-                          #[cfg_attr(feature=\"cargo-clippy\", \
-                          allow(useless_attribute))]\n\
-                          #[allow(unused)]\n\
-                          use super::{Html,ToHtml};\n",
-                    )?;
-                    handle_entries(&mut f, &path, &outdir)
-                })?;
+                let mut modrs = File::create(outdir.join("mod.rs"))?;
+                modrs.write_all(
+                    b"#[allow(renamed_and_removed_lints)]\n\
+                      #[cfg_attr(feature=\"cargo-clippy\", \
+                      allow(useless_attribute))]\n\
+                      #[allow(unused)]\n\
+                      use super::{Html,ToHtml};\n",
+                )?;
+                handle_entries(&mut modrs, &path, &outdir)?;
                 writeln!(f, "pub mod {name};\n", name = filename)?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
@@ -769,3 +855,27 @@ pub mod templates {
         assert_eq!(b"a<b>c</b>", &buf[..]);
     }
 }
+
+/// The build-time error type for Ructe.
+#[derive(Debug)]
+pub enum RucteError {
+    Io(io::Error),
+    Var(env::VarError),
+}
+
+impl From<io::Error> for RucteError {
+    fn from(e: io::Error) -> RucteError {
+        RucteError::Io(e)
+    }
+}
+
+impl From<env::VarError> for RucteError {
+    fn from(e: env::VarError) -> RucteError {
+        RucteError::Var(e)
+    }
+}
+
+/// A result where the error type is a [`RucteError`].
+///
+/// [`RucteError`]: enum.RucteError.html
+pub type Result<T> = std::result::Result<T, RucteError>;
