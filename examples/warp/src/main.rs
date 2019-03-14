@@ -1,10 +1,7 @@
 //! An example web service using ructe with the warp framework.
-mod render_ructe;
-
-use render_ructe::RenderRucte;
 use std::io::{self, Write};
 use std::time::{Duration, SystemTime};
-use templates::statics::StaticFile;
+use templates::{statics::StaticFile, RenderRucte};
 use warp::http::{Response, StatusCode};
 use warp::{path, Filter, Rejection, Reply};
 

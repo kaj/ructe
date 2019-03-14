@@ -51,10 +51,14 @@ extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 extern crate md5;
+#[cfg(feature = "mime")]
+extern crate mime;
 #[macro_use]
 extern crate nom;
 #[cfg(feature = "sass")]
 extern crate rsass;
+#[cfg(feature = "warp")]
+extern crate warp;
 
 pub mod How_to_use_ructe;
 mod spacelike;
@@ -585,17 +589,20 @@ impl Ructe {
 impl Drop for Ructe {
     fn drop(&mut self) {
         self.f
-            .write_all(
-                concat!(
-                    include_str!(concat!(
-                        env!("CARGO_MANIFEST_DIR"),
-                        "/src/template_utils.rs"
-                    )),
-                    "\n}\n"
-                )
-                .as_bytes(),
-            )
+            .write_all(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/src/template_utils.rs"
+            )))
             .unwrap();
+        if cfg!(feature = "warp") {
+            self.f
+                .write_all(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/template_utils_warp.rs"
+                )))
+                .unwrap();
+        }
+        self.f.write_all(b"\n}\n").unwrap();
     }
 }
 
@@ -763,9 +770,12 @@ fn what_line(buf: &[u8], pos: usize) -> usize {
 /// should use the module templates created when compiling your
 /// templates.
 pub mod templates {
+    #[cfg(feature = "mime03")]
+    use mime::Mime;
     use std::fmt::Display;
     use std::io::{self, Write};
 
+    #[cfg(feature = "mime02")]
     /// Documentation mock.  The real Mime type comes from the `mime` crate.
     pub type Mime = u8; // mock
 
@@ -804,6 +814,9 @@ pub mod templates {
     }
 
     include!("template_utils.rs");
+
+    #[cfg(feature = "warp")]
+    include!("template_utils_warp.rs");
 
     #[test]
     fn encoded() {
