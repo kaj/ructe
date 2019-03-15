@@ -38,7 +38,7 @@ impl StaticFiles {
     /// [the `statics()` method of `struct Ructe`](struct.Ructe.html#method.statics)
     /// should be used instead of this method.
     #[deprecated(
-        since = "0.6",
+        since = "0.6.0",
         note = "Use the statics() method of struct Ructe instead"
     )]
     pub fn new(outdir: &Path) -> io::Result<Self> {

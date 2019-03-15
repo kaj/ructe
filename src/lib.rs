@@ -90,7 +90,7 @@ pub use staticfiles::StaticFiles;
 ///
 /// This must be called *before* `compile_templates`.
 #[deprecated(
-    since = "0.6",
+    since = "0.6.0",
     note = "Use the statics() method of struct Ructe instead"
 )]
 pub fn compile_static_files(indir: &Path, outdir: &Path) -> Result<()> {
@@ -177,7 +177,7 @@ impl Drop for Ructe {
 
 /// Create a `templates` module in `outdir` containing rust code for
 /// all templates found in `indir`.
-#[deprecated(since = "0.6", note = "Use method of struct Ructe instead")]
+#[deprecated(since = "0.6.0", note = "Use method of struct Ructe instead")]
 pub fn compile_templates(indir: &Path, outdir: &Path) -> Result<()> {
     let mut ructe = Ructe::new(outdir.into())?;
 
