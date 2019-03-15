@@ -142,7 +142,10 @@ impl Ructe {
 
     pub fn statics(&mut self) -> Result<StaticFiles> {
         self.f.write_all(b"pub mod statics;")?;
-        Ok(StaticFiles::for_template_dir(&self.outdir)?)
+        Ok(StaticFiles::for_template_dir(
+            &self.outdir,
+            &PathBuf::from(env::var("CARGO_MANIFEST_DIR")?),
+        )?)
     }
 
     /// Create a `templates` module in `outdir` containing rust code for

@@ -24,6 +24,8 @@ use std::path::{Path, PathBuf};
 pub struct StaticFiles {
     /// Rust source file `statics.rs` beeing written.
     src: File,
+    /// Base path for finding static files with relative paths
+    base_path: PathBuf,
     /// Maps rust names to public names (foo_jpg -> foo-abc123.jpg)
     names: BTreeMap<String, String>,
     /// Maps public names to rust names (foo-abc123.jpg -> foo_jpg)
@@ -43,13 +45,16 @@ impl StaticFiles {
         since = "0.6.0",
         note = "Use the statics() method of struct Ructe instead"
     )]
-    pub fn new(outdir: &Path) -> io::Result<Self> {
+    pub fn new(outdir: &Path) -> Result<Self> {
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
-        StaticFiles::for_template_dir(&outdir)
+        StaticFiles::for_template_dir(
+            &outdir,
+            &PathBuf::from(env::var("CARGO_MANIFEST_DIR")?),
+        )
     }
 
-    pub fn for_template_dir(outdir: &Path) -> io::Result<Self> {
+    pub fn for_template_dir(outdir: &Path, base_path: &Path) -> Result<Self> {
         let mut src = File::create(outdir.join("statics.rs"))?;
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
@@ -105,19 +110,25 @@ impl StaticFile {
         }
         Ok(StaticFiles {
             src,
+            base_path: base_path.into(),
             names: BTreeMap::new(),
             names_r: BTreeMap::new(),
         })
     }
 
-    /// Add all files from a specific directory, `indir`, as static files.
-    pub fn add_files<P: AsRef<Path>>(&mut self, indir: P) -> Result<()> {
-        let indir = indir.as_ref();
-        let indir = if indir.is_relative() {
-            PathBuf::from(env::var("CARGO_MANIFEST_DIR")?).join(indir)
+    // Should the return type be some kind of cow path?
+    fn path_for(&self, path: impl AsRef<Path>) -> PathBuf {
+        let path = path.as_ref();
+        if path.is_relative() {
+            self.base_path.join(path)
         } else {
-            indir.into()
-        };
+            path.into()
+        }
+    }
+
+    /// Add all files from a specific directory, `indir`, as static files.
+    pub fn add_files(&mut self, indir: impl AsRef<Path>) -> Result<()> {
+        let indir = self.path_for(indir);
         println!("cargo:rerun-if-changed={}", indir.display());
         for entry in read_dir(indir)? {
             let entry = entry?;
@@ -134,8 +145,8 @@ impl StaticFile {
     /// urls, the file names are taken as is, without adding any hash.
     /// This is usefull for resources used by preexisting javascript
     /// packages, where it might be hard to change the used urls.
-    pub fn add_files_as(&mut self, indir: &Path, to: &str) -> io::Result<()> {
-        for entry in read_dir(indir)? {
+    pub fn add_files_as(&mut self, indir: impl AsRef<Path>, to: &str) -> io::Result<()> {
+        for entry in read_dir(self.path_for(indir))? {
             let entry = entry?;
             let file_type = entry.file_type()?;
             let to =
@@ -154,8 +165,9 @@ impl StaticFile {
     /// Create a name to use in the url like `name-hash.ext` where
     /// name and ext are the name and extension from `path` and has is
     /// a few url-friendly bytes from a hash of the file content.
-    pub fn add_file(&mut self, path: &Path) -> io::Result<()> {
-        if let Some((name, ext)) = name_and_ext(path) {
+    pub fn add_file(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+        let path = self.path_for(path);
+        if let Some((name, ext)) = name_and_ext(&path) {
             println!("cargo:rerun-if-changed={}", path.display());
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
@@ -164,10 +176,10 @@ impl StaticFile {
             let url_name =
                 format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.add_static(
-                path,
+                &path,
                 &rust_name,
                 &url_name,
-                &FileContent(path),
+                &FileContent(&path),
                 ext,
             )?;
         }
@@ -179,9 +191,10 @@ impl StaticFile {
     /// Use `url_name` in the url without adding any hash characters.
     pub fn add_file_as(
         &mut self,
-        path: &Path,
+        path: impl AsRef<Path>,
         url_name: &str,
     ) -> io::Result<()> {
+        let path = &self.path_for(path);
         let ext = name_and_ext(path).map(|(_, e)| e).unwrap_or("");
         println!("cargo:rerun-if-changed={}", path.display());
         self.add_static(path, url_name, url_name, &FileContent(path), ext)?;
@@ -196,7 +209,7 @@ impl StaticFile {
     where
         P: AsRef<Path>,
     {
-        let path = path.as_ref();
+        let path = &self.path_for(path);
         if let Some((name, ext)) = name_and_ext(path) {
             let rust_name = format!("{}_{}", name, ext);
             let url_name =
@@ -226,7 +239,7 @@ impl StaticFile {
     where
         P: AsRef<Path>,
     {
-        let src = src.as_ref();
+        let src = self.path_for(src);
         use rsass::*;
         use std::sync::Arc;
         let mut scope = GlobalScope::new();
