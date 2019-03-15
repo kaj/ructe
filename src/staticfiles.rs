@@ -145,7 +145,11 @@ impl StaticFile {
     /// urls, the file names are taken as is, without adding any hash.
     /// This is usefull for resources used by preexisting javascript
     /// packages, where it might be hard to change the used urls.
-    pub fn add_files_as(&mut self, indir: impl AsRef<Path>, to: &str) -> io::Result<()> {
+    pub fn add_files_as(
+        &mut self,
+        indir: impl AsRef<Path>,
+        to: &str,
+    ) -> Result<()> {
         for entry in read_dir(self.path_for(indir))? {
             let entry = entry?;
             let file_type = entry.file_type()?;
@@ -275,7 +279,7 @@ impl StaticFile {
         );
 
         let file_context = FileContext::new();
-        let (file_context, src) = file_context.file(src);
+        let (file_context, src) = file_context.file(&src);
         let scss = parse_scss_file(&src).unwrap();
         let style = OutputStyle::Compressed;
         let css = style.write_root(&scss, &mut scope, &file_context).unwrap();
