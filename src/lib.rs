@@ -108,7 +108,7 @@
 //! [dependencies]
 //! mime = "0.3.13"
 //! ```
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 extern crate base64;
 extern crate bytecount;
 extern crate itertools;
@@ -593,7 +593,9 @@ fn get_env(name: &str) -> Result<String> {
 /// The build-time error type for Ructe.
 #[derive(Debug)]
 pub enum RucteError {
+    /// A build-time IO error in Ructe
     Io(io::Error),
+    /// Error resolving a given environment variable.
     Env(String, env::VarError),
 }
 

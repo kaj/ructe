@@ -220,7 +220,10 @@ impl StaticFiles {
         )
     }
 
-    pub fn for_template_dir(outdir: &Path, base_path: &Path) -> Result<Self> {
+    pub(crate) fn for_template_dir(
+        outdir: &Path,
+        base_path: &Path,
+    ) -> Result<Self> {
         let mut src = File::create(outdir.join("statics.rs"))?;
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
