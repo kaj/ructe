@@ -6,21 +6,19 @@
 //!
 //! 1. Many syntactical and logical errors in templates are caught
 //! compile-time, rather than in a running server.
-//! 2. No extra latency on the first request, since the template are
-//! compiled before starting the program.
+//! 2. No extra latency on the first request, since the templates are
+//! fully compiled before starting the program.
 //! 3. The template files does not have to be distributed / installed.
 //! Templates (and static assets) are included in the compiled
 //! program, which can be a single binary.
 //!
-//! The template syntax, which is inspired by
-//! [Twirl](https://github.com/playframework/twirl), the Scala-based
-//! template engine in
-//! [Play framework](https://www.playframework.com/),
-//! is documented in [the _Template syntax_ module](Template_syntax/index.html).
+//! The template syntax, which is inspired by [Twirl], the Scala-based
+//! template engine in [Play framework], is documented in
+//! [the _Template syntax_ module].
 //! A sample template may look like this:
 //!
 //! ```html
-//! @use ::Group;
+//! @use crate::Group;
 //! @use super::page_base;
 //!
 //! @(title: &str, user: Option<String>, groups: &[Group])
@@ -40,10 +38,46 @@
 //! })
 //! ```
 //!
-//! There are [some examples in the
-//! repository](https://github.com/kaj/ructe/tree/master/examples).
-//! There is also [a separate example of using ructe with warp and
-//! diesel](https://github.com/kaj/warp-diesel-ructe-sample).
+//! There are some [examples in the repository].
+//! There is also a separate example of
+//! [using ructe with warp and diesel].
+//!
+//! [Twirl]: https://github.com/playframework/twirl
+//! [Play framework]: https://www.playframework.com/
+//! [the _Template syntax_ module]: Template_syntax/index.html
+//! [examples in the repository]: https://github.com/kaj/ructe/tree/master/examples
+//! [using ructe with warp and diesel]: https://github.com/kaj/warp-diesel-ructe-sample
+//!
+//! To be able to use this template in your rust code, you need a
+//! `build.rs` that transpiles the template to rust code.
+//! A minimal such build script looks like the following.
+//! See the [`Ructe`] struct documentation for details.
+//!
+//! [`Ructe`]: struct.Ructe.html
+//!
+//! ```rust,no_run
+//! use ructe::{Result, Ructe};
+//!
+//! fn main() -> Result<()> {
+//!     Ructe::from_env()?.compile_templates("templates")
+//! }
+//! ```
+//!
+//! When calling a template, the arguments declared in the template will be
+//! prepended by a `Write` argument to write the output to.
+//! It can be a `Vec<u8>` as a buffer or for testing, or an actual output
+//! destination.
+//! The return value of a template is `std::io::Result<()>`, which should be
+//! `Ok(())` unless writing to the destination fails.
+//!
+//! ```
+//! #[test]
+//! fn test_hello() {
+//!     let mut buf = Vec::new();
+//!     templates::hello(&mut buf, "World").unwrap();
+//!     assert_eq!(buf, b"<h1>Hello World!</h1>\n");
+//! }
+//! ```
 //!
 //! # Optional features
 //!
@@ -54,6 +88,11 @@
 //! version 0.2.x of the `mime` crate.
 //! * `mime03` -- Static files know their mime types, compatible with
 //! version 0.3.x of the `mime` crate.
+//! * `warp` -- Provide an extension to [`Response::Builder`] to
+//! simplify template rendering in the [warp] framework.
+//!
+//! [`response::Builder`]: ../http/response/struct.Builder.html
+//! [warp]: https://crates.rs/crates/warp
 //!
 //! The `mime02` and `mime03` features are mutually exclusive and
 //! requires a dependency on a matching version of `mime`.
@@ -84,7 +123,6 @@ extern crate rsass;
 #[cfg(feature = "warp")]
 extern crate warp;
 
-pub mod How_to_use_ructe;
 mod spacelike;
 #[macro_use]
 mod errors;
@@ -129,29 +167,79 @@ pub fn compile_static_files(indir: &Path, outdir: &Path) -> Result<()> {
 /// to compile templates and possibly get access to the static files
 /// handler.
 ///
+/// Ructe compiles your templates to rust code that should be compiled
+/// with your other rust code, so it needs to be called before
+/// compiling.
+/// Assuming you use [cargo], it can be done like this:
+///
+/// First, specify a build script and ructe as a build dependency in
+/// `Cargo.toml`:
+///
+/// ```toml
+/// build = "src/build.rs"
+///
+/// [build-dependencies]
+/// ructe = "0.6.0"
+/// ```
+///
+/// Then, in `build.rs`, compile all templates found in the templates
+/// directory and put the output where cargo tells it to:
+///
+/// ```rust,no_run
+/// use ructe::{Result, Ructe};
+///
+/// fn main() -> Result<()> {
+///     Ructe::from_env()?.compile_templates("templates")
+/// }
+/// ```
+///
+/// And finally, include and use the generated code in your code.
+/// The file `templates.rs` will contain `mod templates { ... }`,
+/// so I just include it in my `main.rs`:
+///
+/// ```rust,ignore
+/// include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+/// ```
+///
+///
 /// When creating a `Ructe` it will create a file called
 /// `templates.rs` in your `$OUT_DIR` (which is normally created and
 /// specified by `cargo`).
-/// The methods will and content, and when the `Ructe` goes of of
+/// The methods will add content, and when the `Ructe` goes of of
 /// scope, the file will be completed.
+///
+/// [cargo]: https://doc.rust-lang.org/cargo/
 pub struct Ructe {
     f: File,
     outdir: PathBuf,
 }
 
 impl Ructe {
-    /// Create  a ructe instance from the `OUT_DIR` environment variable.
+    /// Create a Ructe instance suitable for a [cargo]-built project.
     ///
-    /// This should be correct when using ructe from a build script in
-    /// your project.
+    /// A file called `templates.rs` (and a directory called
+    /// `templates` containing sub-modules) will be created in the
+    /// directory that cargo specifies with the `OUT_DIR` environment
+    /// variable.
+    ///
+    /// [cargo]: https://doc.rust-lang.org/cargo/
     pub fn from_env() -> Result<Ructe> {
         Ructe::new(PathBuf::from(get_env("OUT_DIR")?))
     }
 
-    /// Create  a ructe instance from the `OUT_DIR` environment variable.
+    /// Create  a ructe instance writing to a given directory.
     ///
-    /// This should be correct when using ructe from a build script in
-    /// your project.
+    /// The `out_dir` path is assumed to be a directory that exists
+    /// and is writable.
+    /// A file called `templates.rs` (and a directory called
+    /// `templates` containing sub-modules) will be created in
+    /// `out_dir`.
+    ///
+    /// If you are using Ructe in a project that uses [cargo],
+    /// you should probably use [`from_env`] instead.
+    ///
+    /// [cargo]: https://doc.rust-lang.org/cargo/
+    /// [`from_env`]: #method.from_env
     pub fn new(out_dir: PathBuf) -> Result<Ructe> {
         let mut f = File::create(out_dir.join("templates.rs"))?;
         f.write_all(
@@ -174,6 +262,10 @@ impl Ructe {
 
     /// Create a `templates` module in `outdir` containing rust code for
     /// all templates found in `indir`.
+    ///
+    /// If indir is a relative path, it should be relative to the main
+    /// directory of your crate, i.e. the directory containing your
+    /// `Cargo.toml` file.
     pub fn compile_templates<P>(&mut self, indir: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -365,6 +457,9 @@ fn what_line(buf: &[u8], pos: usize) -> usize {
 /// The name `ructe::templates` should never be used.  Instead, you
 /// should use the module templates created when compiling your
 /// templates.
+/// If you include the generated `templates.rs` in your `main.rs` (or
+/// `lib.rs` in a library crate), this module will be
+/// `crate::templates`.
 pub mod templates {
     #[cfg(feature = "mime03")]
     use mime::Mime;
