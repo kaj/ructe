@@ -18,24 +18,24 @@
 //! A sample template may look like this:
 //!
 //! ```html
-//! @use crate::Group;
-//! @use super::page_base;
+//! @use any::rust::Type;
 //!
-//! @(title: &str, user: Option<String>, groups: &[Group])
+//! @(name: &str, items: &[Type])
 //!
-//! @:page_base(title, &user, {
-//!   <div class="group">
-//!     @if groups.is_empty() {
-//!       <p>No pictures.</p>
-//!     }
-//!     @for g in groups {
-//!       <div class="item"><h2>@g.title</h2>
-//!         <p><a href="@g.url"><img src="/img/@g.photo.id-s.jpg"></a></p>
-//!         <p>@g.count pictures</p>
-//!       </div>
-//!     }
-//!   </div>
-//! })
+//! <html>
+//!   <head><title>@name</title></head>
+//!   <body>
+//!     @if items.is_empty() {
+//!       <p>There are no items.</p>
+//!     } else {
+//!       <p>There are @items.len() items.</p>
+//!       <ul>
+//!       @for item in items {
+//!         <li>@item</li>
+//!       }
+//!       </ul>
+//!   <body>
+//! </html>
 //! ```
 //!
 //! There are some [examples in the repository].

@@ -12,13 +12,44 @@
 //! Secondly a declaration of the parameters the template takes.
 //! And third, the template body.
 //!
-//! ```text
+//! ```html
+//! @(name: &str, value: &u32)
+//!
+//! <html>
+//!   <head><title>@name</title></head>
+//!   <body>
+//!     <p>The value of @name is @value.</p>
+//!   <body>
+//! </html>
+//! ```
+//!
+//! As seen above, string slices and integers can easily be outputed
+//! in the template body, using `@name` where `name` is a parameter of
+//! the template.
+//! Actually, more complex expressions can be outputed in the same
+//! way, as long as the resulting value implements [`ToHtml`].
+//! Rust types that implements [`Display`] automatically implements
+//! [`ToHtml`] in such a way that contents are safely escaped for
+//! html.
+//!
+//! ```html
 //! @use any::rust::Type;
 //!
 //! @(name: &str, items: &[Type])
 //!
 //! <html>
-//!    ...
+//!   <head><title>@name</title></head>
+//!   <body>
+//!     @if items.is_empty() {
+//!       <p>There are no items.</p>
+//!     } else {
+//!       <p>There are @items.len() items.</p>
+//!       <ul>
+//!       @for item in items {
+//!         <li>@item</li>
+//!       }
+//!       </ul>
+//!   <body>
 //! </html>
 //! ```
 //!
@@ -26,6 +57,9 @@
 //! Conditionals, and Calling other templates below).
 //! To use them in the template body, they must be escaped as `@{` and
 //! `@}`.
+//!
+//! [`ToHtml`]: ../templates/trait.ToHtml.html
+//! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 #![allow(non_snake_case)]
 
 pub mod a_Value_expressions {
