@@ -52,8 +52,10 @@ fn footer(out: &mut Write) -> io::Result<()> {
 /// content type.
 /// Otherwise return a 404 result.
 fn static_file(req: &mut Request) -> IronResult<Response> {
+    // Extract the requested file name from the router
     let router = req.extensions.get::<Router>().expect("router");
     let name = router.find("name").expect("name");
+    // If the static files exists, serve it
     if let Some(data) = templates::statics::StaticFile::get(name) {
         Ok(Response::with((status::Ok, data.mime(), data.content)))
     } else {

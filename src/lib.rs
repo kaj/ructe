@@ -85,13 +85,14 @@
 //!
 //! * `sass` -- Compile sass and include the compiled css as static assets.
 //! * `mime02` -- Static files know their mime types, compatible with
-//! version 0.2.x of the `mime` crate.
+//! version 0.2.x of the [mime] crate.
 //! * `mime03` -- Static files know their mime types, compatible with
-//! version 0.3.x of the `mime` crate.
+//! version 0.3.x of the [mime] crate.
 //! * `warp` -- Provide an extension to [`Response::Builder`] to
 //! simplify template rendering in the [warp] framework.
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
+//! [mime]: https://crates.rs/crates/mime
 //! [warp]: https://crates.rs/crates/warp
 //!
 //! The `mime02` and `mime03` features are mutually exclusive and
@@ -102,10 +103,10 @@
 //! build = "src/build.rs"
 //!
 //! [build-dependencies]
-//! ructe = { version = "^0.3", features = ["sass", "mime02"]
+//! ructe = { version = "0.6.0", features = ["sass", "mime03"]
 //!
 //! [dependencies]
-//! mime = "0.2.6"
+//! mime = "0.3.13"
 //! ```
 #[warn(missing_docs)]
 extern crate base64;
@@ -130,7 +131,6 @@ mod expression;
 #[macro_use]
 mod templateexpression;
 pub mod Template_syntax;
-pub mod Using_static_files;
 mod staticfiles;
 mod template;
 
@@ -252,14 +252,6 @@ impl Ructe {
         Ok(Ructe { f, outdir })
     }
 
-    pub fn statics(&mut self) -> Result<StaticFiles> {
-        self.f.write_all(b"pub mod statics;")?;
-        Ok(StaticFiles::for_template_dir(
-            &self.outdir,
-            &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
-        )?)
-    }
-
     /// Create a `templates` module in `outdir` containing rust code for
     /// all templates found in `indir`.
     ///
@@ -271,6 +263,40 @@ impl Ructe {
         P: AsRef<Path>,
     {
         handle_entries(&mut self.f, indir.as_ref(), &self.outdir)
+    }
+
+    /// Create a [`StaticFiles`] handler for this Ructe instance.
+    ///
+    /// This will create a `statics` module inside the generated
+    /// `templates` module.
+    ///
+    /// # Examples
+    ///
+    /// This code goes into the `build.rs`:
+    ///
+    /// ```no_run
+    /// # extern crate ructe;
+    /// # use ructe::{Ructe, RucteError};
+    /// # fn main() -> Result<(), RucteError> {
+    /// let mut ructe = Ructe::from_env()?;
+    /// ructe.statics()?.add_files("static")
+    /// # }
+    /// ```
+    ///
+    /// Assuming your project have a directory named `static` that
+    /// contains e.g. a file called `logo.svg` and you have included
+    /// the generated `templates.rs`, you can now use
+    /// `templates::statics::logo_png` as a [`StaticFile`] in your
+    /// project.
+    ///
+    /// [`StaticFiles`]: struct.StaticFiles.html
+    /// [`StaticFile`]: templates/struct.StaticFile.html
+    pub fn statics(&mut self) -> Result<StaticFiles> {
+        self.f.write_all(b"pub mod statics;")?;
+        Ok(StaticFiles::for_template_dir(
+            &self.outdir,
+            &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
+        )?)
     }
 }
 
