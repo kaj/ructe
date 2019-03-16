@@ -50,28 +50,4 @@
 //!     assert_eq!(buf, b"<h1>Hello World!</h1>\n");
 //! }
 //! ```
-//!
-//! # Optional features
-//!
-//! Ructe has some options that can be enabled from `Cargo.toml`.
-//!
-//! * `sass` -- Compile sass and include the compiled css as static assets.
-//! * `mime02` -- Static files know their mime types, compatible with
-//! version 0.2.x of the `mime` crate.
-//! * `mime03` -- Static files know their mime types, compatible with
-//! version 0.3.x of the `mime` crate.
-//!
-//! The `mime02` and `mime03` features are mutually exclusive and
-//! requires a dependency on a matching version of `mime`.
-//! Any of them can be combined with the `sass` feature.
-//!
-//! ```toml
-//! build = "src/build.rs"
-//!
-//! [build-dependencies]
-//! ructe = { version = "^0.3", features = ["sass", "mime02"]
-//!
-//! [dependencies]
-//! mime = "0.2.6"
-//! ```
 #![allow(non_snake_case)]

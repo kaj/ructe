@@ -44,6 +44,30 @@
 //! repository](https://github.com/kaj/ructe/tree/master/examples).
 //! There is also [a separate example of using ructe with warp and
 //! diesel](https://github.com/kaj/warp-diesel-ructe-sample).
+//!
+//! # Optional features
+//!
+//! Ructe has some options that can be enabled from `Cargo.toml`.
+//!
+//! * `sass` -- Compile sass and include the compiled css as static assets.
+//! * `mime02` -- Static files know their mime types, compatible with
+//! version 0.2.x of the `mime` crate.
+//! * `mime03` -- Static files know their mime types, compatible with
+//! version 0.3.x of the `mime` crate.
+//!
+//! The `mime02` and `mime03` features are mutually exclusive and
+//! requires a dependency on a matching version of `mime`.
+//! Any of them can be combined with the `sass` feature.
+//!
+//! ```toml
+//! build = "src/build.rs"
+//!
+//! [build-dependencies]
+//! ructe = { version = "^0.3", features = ["sass", "mime02"]
+//!
+//! [dependencies]
+//! mime = "0.2.6"
+//! ```
 #[warn(missing_docs)]
 
 extern crate base64;
