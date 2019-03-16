@@ -10,8 +10,8 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() -> Result<()> {
-    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
-    let base_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let base_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let mut statics = StaticFiles::new(&out_dir)?;
     statics.add_files(&base_dir.join("statics"))?;
     statics.add_sass_file(&base_dir.join("style.scss"))?;

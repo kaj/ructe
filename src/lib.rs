@@ -69,7 +69,6 @@
 //! mime = "0.2.6"
 //! ```
 #[warn(missing_docs)]
-
 extern crate base64;
 extern crate bytecount;
 extern crate itertools;
@@ -146,7 +145,7 @@ impl Ructe {
     /// This should be correct when using ructe from a build script in
     /// your project.
     pub fn from_env() -> Result<Ructe> {
-        Ructe::new(PathBuf::from(env::var("OUT_DIR")?))
+        Ructe::new(PathBuf::from(get_env("OUT_DIR")?))
     }
 
     /// Create  a ructe instance from the `OUT_DIR` environment variable.
@@ -169,7 +168,7 @@ impl Ructe {
         self.f.write_all(b"pub mod statics;")?;
         Ok(StaticFiles::for_template_dir(
             &self.outdir,
-            &PathBuf::from(env::var("CARGO_MANIFEST_DIR")?),
+            &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
         )?)
     }
 
@@ -466,22 +465,20 @@ pub mod templates {
     }
 }
 
+fn get_env(name: &str) -> Result<String> {
+    env::var(name).map_err(|e| RucteError::Env(name.into(), e))
+}
+
 /// The build-time error type for Ructe.
 #[derive(Debug)]
 pub enum RucteError {
     Io(io::Error),
-    Var(env::VarError),
+    Env(String, env::VarError),
 }
 
 impl From<io::Error> for RucteError {
     fn from(e: io::Error) -> RucteError {
         RucteError::Io(e)
-    }
-}
-
-impl From<env::VarError> for RucteError {
-    fn from(e: env::VarError) -> RucteError {
-        RucteError::Var(e)
     }
 }
 

@@ -1,9 +1,8 @@
-use super::Result;
+use super::{get_env, Result};
 use base64;
 use itertools::Itertools;
 use md5;
 use std::collections::BTreeMap;
-use std::env;
 use std::fmt::{self, Display};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
@@ -50,7 +49,7 @@ impl StaticFiles {
         create_dir_all(&outdir)?;
         StaticFiles::for_template_dir(
             &outdir,
-            &PathBuf::from(env::var("CARGO_MANIFEST_DIR")?),
+            &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
         )
     }
 
