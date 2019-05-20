@@ -55,8 +55,11 @@
 //!
 //! The curly brackets, `{` and `}`, is used for blocks (see Loops,
 //! Conditionals, and Calling other templates below).
-//! To use them in the template body, they must be escaped as `@{` and
-//! `@}`.
+
+//! To use verbatim curly brackets in the template body, they must be
+//! escaped as `@{` and `@}`, the same goes for the `@` sign, that
+//! precedes expressions and special blocks; verbtim `@` signs must be
+//! escaped as `@@`.
 //!
 //! [`ToHtml`]: ../templates/trait.ToHtml.html
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
