@@ -48,13 +48,13 @@ pub trait RenderRucte {
     /// This is the main function of the trait.  Please see the trait documentation.
     fn html<F>(&mut self, f: F) -> Result<Response<Vec<u8>>, Rejection>
     where
-        F: FnOnce(&mut Write) -> io::Result<()>;
+        F: FnOnce(&mut Vec<u8>) -> io::Result<()>;
 }
 
 impl RenderRucte for Builder {
     fn html<F>(&mut self, f: F) -> Result<Response<Vec<u8>>, Rejection>
     where
-        F: FnOnce(&mut Write) -> io::Result<()>,
+        F: FnOnce(&mut Vec<u8>) -> io::Result<()>,
     {
         let mut buf = Vec::new();
         f(&mut buf).map_err(custom)?;
