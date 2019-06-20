@@ -495,7 +495,7 @@ impl StaticFile {
         path: &Path,
         rust_name: &str,
         url_name: &str,
-        content: &Display,
+        content: &impl Display,
         suffix: &str,
     ) -> io::Result<()> {
         let rust_name = rust_name

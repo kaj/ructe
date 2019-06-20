@@ -13,7 +13,11 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
+    pub fn write_rust(
+        &self,
+        out: &mut impl Write,
+        name: &str,
+    ) -> io::Result<()> {
         out.write_all(
             b"use std::io::{self, Write};\n\
              #[allow(renamed_and_removed_lints)]\n\
@@ -28,7 +32,7 @@ impl Template {
         writeln!(
             out,
             "\n\
-             pub fn {name}(out: &mut Write{args}) -> io::Result<()> {{\n\
+             pub fn {name}<W: Write>(mut out: W{args}) -> io::Result<()> {{\n\
              {body}\
              Ok(())\n\
              }}",
@@ -38,7 +42,7 @@ impl Template {
                     ", {}",
                     arg.replace(
                         " Content",
-                        " impl FnOnce(&mut Write) -> io::Result<()>"
+                        " impl FnOnce(&mut W) -> io::Result<()>"
                     )
                 ))),
             body = self.body.iter().map(|b| b.code()).format(""),

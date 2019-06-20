@@ -335,7 +335,11 @@ pub fn compile_templates(indir: &Path, outdir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn handle_entries(f: &mut Write, indir: &Path, outdir: &Path) -> Result<()> {
+fn handle_entries(
+    f: &mut impl Write,
+    indir: &Path,
+    outdir: &Path,
+) -> Result<()> {
     println!("cargo:rerun-if-changed={}", indir.display());
     let suffix = ".rs.html";
     for entry in read_dir(indir)? {
@@ -397,7 +401,7 @@ fn handle_template(
 }
 
 fn show_errors<E>(
-    out: &mut Write,
+    out: &mut impl Write,
     buf: &[u8],
     result: nom::IResult<Input, E>,
     prefix: &str,
@@ -441,7 +445,7 @@ fn get_message(err: &ErrorKind) -> String {
 }
 
 fn show_error(
-    out: &mut Write,
+    out: &mut impl Write,
     buf: &[u8],
     pos: usize,
     msg: &str,

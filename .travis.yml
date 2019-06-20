@@ -6,7 +6,6 @@ rust:
   - 1.29.0
   - 1.28.0
   - 1.27.2
-  - 1.26.2
   - beta
   - nightly
 matrix:

@@ -17,10 +17,10 @@ fn raw(b: &mut Bencher) {
     });
 }
 
-/// real template is a function that takes `dyn Write`, so non-inlineable
+/// real template is a function that takes a generic `Write` parameter, so non-inlineable
 /// function should simulate that instead of allowing optimizer to specialize for `Vec`
 #[inline(never)]
-fn raw_inner(buf: &mut dyn Write) {
+fn raw_inner(buf: &mut impl Write) {
     // inner loop to stress escaping more than buffer allocation
     for _ in 0..1000 {
         let h = Html("Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod");
@@ -38,7 +38,7 @@ fn escaped_no_op(b: &mut Bencher) {
 }
 
 #[inline(never)]
-fn escaped_no_op_inner(buf: &mut dyn Write) {
+fn escaped_no_op_inner(buf: &mut impl Write) {
     let h = "hello world";
     for _ in 0..1000 {
         h.to_html(buf).unwrap();
@@ -57,7 +57,7 @@ fn escaped_nums(b: &mut Bencher) {
 }
 
 #[inline(never)]
-fn escaped_nums_inner(buf: &mut dyn Write) {
+fn escaped_nums_inner(buf: &mut impl Write) {
     for i in 0..1000 {
         i.to_html(buf).unwrap();
         5.to_html(buf).unwrap();
@@ -75,7 +75,7 @@ fn escaped_short(b: &mut Bencher) {
 }
 
 #[inline(never)]
-fn escaped_short_inner(buf: &mut dyn Write) {
+fn escaped_short_inner(buf: &mut impl Write) {
     for _ in 0..1000 {
         "hello&world".to_html(buf).unwrap();
         "hi".to_html(buf).unwrap();
@@ -93,7 +93,7 @@ fn escaped_long(b: &mut Bencher) {
 }
 
 #[inline(never)]
-fn escaped_long_inner(buf: &mut dyn Write) {
+fn escaped_long_inner(buf: &mut impl Write) {
     for _ in 0..100 {
         let h = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
 tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
