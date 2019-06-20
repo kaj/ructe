@@ -6,7 +6,7 @@
 /// formats the value using Display and then html-encodes the result.
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
-    fn to_html(&self, out: &mut Write) -> io::Result<()>;
+    fn to_html(&self, out: &mut impl Write) -> io::Result<()>;
 }
 
 /// Wrapper object for data that should be outputted as raw html
@@ -16,21 +16,21 @@ pub struct Html<T>(pub T);
 
 impl<T: Display> ToHtml for Html<T> {
     #[inline]
-    fn to_html(&self, out: &mut Write) -> io::Result<()> {
+    fn to_html(&self, out: &mut impl Write) -> io::Result<()> {
         write!(out, "{}", self.0)
     }
 }
 
 impl<T: Display> ToHtml for T {
     #[inline]
-    fn to_html(&self, out: &mut Write) -> io::Result<()> {
+    fn to_html(&self, out: &mut impl Write) -> io::Result<()> {
         write!(ToHtmlEscapingWriter(out), "{}", self)
     }
 }
 
-struct ToHtmlEscapingWriter<'a>(&'a mut Write);
+struct ToHtmlEscapingWriter<'a, W: Write>(&'a mut W);
 
-impl<'a> Write for ToHtmlEscapingWriter<'a> {
+impl<'a, W: Write> Write for ToHtmlEscapingWriter<'a, W> {
     #[inline]
     // This takes advantage of the fact that `write` doesn't have to write everything,
     // and the call will be retried with the rest of the data
@@ -56,10 +56,10 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
     }
 }
 
-impl<'a> ToHtmlEscapingWriter<'a> {
+impl<'a, W: Write> ToHtmlEscapingWriter<'a, W> {
     #[inline(never)]
     fn write_one_byte_escaped(
-        out: &mut Write,
+        out: &mut impl Write,
         data: &[u8],
     ) -> io::Result<usize> {
         let next = data.get(0);
