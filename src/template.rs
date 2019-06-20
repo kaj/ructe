@@ -13,7 +13,7 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn write_rust(&self, out: &mut Write, name: &str) -> io::Result<()> {
+    pub fn write_rust(&self, out: &mut impl Write, name: &str) -> io::Result<()> {
         out.write_all(
             b"use std::io::{self, Write};\n\
              #[allow(renamed_and_removed_lints)]\n\
