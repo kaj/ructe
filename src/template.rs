@@ -28,7 +28,7 @@ impl Template {
         writeln!(
             out,
             "\n\
-             pub fn {name}<W: Write>(out: &mut W{args}) -> io::Result<()> {{\n\
+             pub fn {name}<W: Write>(mut out: W{args}) -> io::Result<()> {{\n\
              {body}\
              Ok(())\n\
              }}",

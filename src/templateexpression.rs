@@ -46,7 +46,7 @@ impl Display for TemplateArgument {
             }
             TemplateArgument::Body(ref v) => writeln!(
                 out,
-                "|out| {{\n{}\nOk(())\n}}",
+                "|mut out| {{\n{}\nOk(())\n}}",
                 v.iter().map(|b| b.code()).format(""),
             ),
         }
@@ -69,7 +69,7 @@ impl TemplateExpression {
                 format!("out.write_all({:?}.as_bytes())?;\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("{}.to_html(out)?;\n", expr)
+                format!("{}.to_html(&mut out)?;\n", expr)
             }
             TemplateExpression::ForLoop {
                 ref name,
@@ -96,7 +96,7 @@ impl TemplateExpression {
             ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
-                    "{}(out{})?;\n",
+                    "{}(&mut out{})?;\n",
                     name,
                     args.iter().format_with("", |arg, f| f(&format_args!(
                         ", {}",
