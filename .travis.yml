@@ -16,18 +16,22 @@ matrix:
       - rustup component add rustfmt
      script:
       - cargo fmt -- --check
-      - cd examples/simple && cargo fmt -- --check
-      - cd ../statics && cargo fmt -- --check
-      - cd ../static-sass && cargo fmt -- --check
+      - cd examples/actix && cargo fmt -- --check
+      - cd ../gotham && cargo fmt -- --check
       - cd ../iron && cargo fmt -- --check
       - cd ../nickel && cargo fmt -- --check
-      - cd ../gotham && cargo fmt -- --check
+      - cd ../simple && cargo fmt -- --check
+      - cd ../static-sass && cargo fmt -- --check
+      - cd ../statics && cargo fmt -- --check
       - cd ../warp && cargo fmt -- --check
    - rust: stable
      env: EXAMPLE=ed2018
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
      env: EXAMPLE=static-sass
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=actix
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
      env: EXAMPLE=warp

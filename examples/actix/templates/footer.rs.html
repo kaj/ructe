@@ -1,0 +1,14 @@
+@(frameworks: &[(&str, &str)])
+
+<footer>
+  @if let Some(((last_name, last_href), prev)) = frameworks.split_last() {
+  Made with
+  @if let Some(((last_name, last_href), prev)) = prev.split_last() {
+  @for (name, href) in prev {
+  <a href="@href">@name</a>,
+  }
+  <a href="@last_href">@last_name</a> and
+  }
+  <a href="@last_href">@last_name</a>.
+  }
+</footer>
