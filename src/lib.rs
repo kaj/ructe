@@ -112,37 +112,29 @@
 extern crate base64;
 extern crate bytecount;
 extern crate itertools;
-#[macro_use]
-extern crate lazy_static;
 extern crate md5;
 #[cfg(feature = "mime")]
 extern crate mime;
-#[macro_use]
 extern crate nom;
 #[cfg(feature = "sass")]
 extern crate rsass;
 #[cfg(feature = "warp")]
 extern crate warp;
 
-mod spacelike;
-#[macro_use]
-mod errors;
 mod expression;
+mod parseresult;
+mod spacelike;
 #[macro_use]
 mod templateexpression;
 pub mod Template_syntax;
 mod staticfiles;
 mod template;
 
-use errors::get_error;
-use nom::types::CompleteByteSlice as Input;
-use nom::{Context, Err, ErrorKind};
+use parseresult::show_errors;
 use std::env;
-use std::fmt::Debug;
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
-use std::str::from_utf8;
 use template::template;
 
 pub use staticfiles::StaticFiles;
@@ -386,7 +378,7 @@ fn handle_template(
     let mut input = File::open(path)?;
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
-    match template(Input(&buf)) {
+    match template(&buf) {
         Ok((_, t)) => {
             File::create(outdir.join(format!("template_{}.rs", name)))
                 .and_then(|mut f| t.write_rust(&mut f, name))?;
@@ -398,87 +390,6 @@ fn handle_template(
             Ok(false)
         }
     }
-}
-
-fn show_errors<E>(
-    out: &mut impl Write,
-    buf: &[u8],
-    result: nom::IResult<Input, E>,
-    prefix: &str,
-) where
-    E: Debug,
-{
-    match result {
-        Ok(_) => (),
-        Err(Err::Error(Context::Code(_before, e))) => {
-            show_error(out, buf, 0, &format!("error {:?}", e), prefix);
-        }
-        Err(Err::Error(Context::List(mut v))) => {
-            v.reverse();
-            for (i, e) in v {
-                let pos = buf.len() - i.len();
-                show_error(out, buf, pos, &get_message(&e), prefix);
-            }
-        }
-        Err(Err::Failure(Context::List(mut v))) => {
-            v.reverse();
-            for (i, e) in v {
-                let pos = buf.len() - i.len();
-                show_error(out, buf, pos, &get_message(&e), prefix);
-            }
-        }
-        Err(Err::Failure(e)) => {
-            show_error(out, buf, 0, &format!("failure {:?}", e), prefix);
-        }
-        Err(_) => show_error(out, buf, 0, "xyzzy", prefix),
-    }
-}
-
-fn get_message(err: &ErrorKind) -> String {
-    match err {
-        &ErrorKind::Custom(n) => match get_error(n) {
-            Some(msg) => msg,
-            None => format!("Unknown error #{}", n),
-        },
-        err => format!("{:?}", err),
-    }
-}
-
-fn show_error(
-    out: &mut impl Write,
-    buf: &[u8],
-    pos: usize,
-    msg: &str,
-    prefix: &str,
-) {
-    let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
-    let _ = line_start.next();
-    let line_start =
-        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
-    let line = buf[line_start..]
-        .splitn(2, |c| *c == b'\n')
-        .next()
-        .and_then(|s| from_utf8(s).ok())
-        .unwrap_or("(Failed to display line)");
-    let line_no = what_line(buf, line_start);
-    let pos_in_line =
-        from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
-    writeln!(
-        out,
-        "{prefix}{:>4}:{}\n\
-         {prefix}     {:>pos$} {}",
-        line_no,
-        line,
-        "^",
-        msg,
-        pos = pos_in_line,
-        prefix = prefix,
-    )
-    .unwrap();
-}
-
-fn what_line(buf: &[u8], pos: usize) -> usize {
-    1 + bytecount::count(&buf[0..pos], b'\n')
 }
 
 /// The module containing your generated template code will also

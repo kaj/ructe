@@ -19,11 +19,10 @@ mime03 = ["mime"]
 base64 = "^0.10.0"
 bytecount = "0.5.1"
 itertools = "^0.8.0"
-lazy_static = "1.0"
 md5 = "0.6"
-nom = { version = "4.1.1", features = ["verbose-errors"] }
+nom = "5.0.0"
 
-rsass = { version = "0.9.8", optional = true }
+rsass = { version = "0.10.2", optional = true }
 warp = { version = "0.1.9", optional = true }
 mime = { version = "0.3", optional = true }
 

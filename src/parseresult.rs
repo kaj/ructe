@@ -1,0 +1,94 @@
+use nom::error::{VerboseError, VerboseErrorKind};
+use nom::{Err, IResult};
+use std::fmt::Debug;
+use std::io::Write;
+use std::str::from_utf8;
+
+/// Parser result, with verbose error.
+pub type PResult<'a, O> = IResult<&'a [u8], O, VerboseError<&'a [u8]>>;
+
+pub fn show_errors<E>(
+    out: &mut impl Write,
+    buf: &[u8],
+    result: PResult<E>,
+    prefix: &str,
+) where
+    E: Debug,
+{
+    match result {
+        Ok(_) => (),
+        Err(Err::Error(VerboseError { mut errors })) => {
+            errors.reverse();
+            for (i, e) in errors {
+                let pos = buf.len() - i.len();
+                if let Some(message) = get_message(&e) {
+                    show_error(out, buf, pos, &message, prefix);
+                }
+            }
+            //show_error(out, buf, 0, &format!("error {:?}", e), prefix);
+        }
+        /*Err(Err::Error(mut v)) => {
+            v.reverse();
+            for (i, e) in v {
+                let pos = buf.len() - i.len();
+                show_error(out, buf, pos, &get_message(&e), prefix);
+            }
+        }*/
+        /*Err(Err::Failure(mut v)) => {
+            v.reverse();
+            for (i, e) in v {
+                let pos = buf.len() - i.len();
+                show_error(out, buf, pos, &get_message(&e), prefix);
+            }
+        }*/
+        Err(Err::Failure(e)) => {
+            show_error(out, buf, 0, &format!("failure {:?}", e), prefix);
+        }
+        Err(_) => show_error(out, buf, 0, "xyzzy", prefix),
+    }
+}
+
+fn get_message(err: &VerboseErrorKind) -> Option<String> {
+    match err {
+        VerboseErrorKind::Context(msg) => Some((*msg).into()),
+        VerboseErrorKind::Char(ch) => Some(format!("Expected {:?}", ch)),
+        VerboseErrorKind::Nom(_err) => None,
+    }
+}
+
+fn show_error(
+    out: &mut impl Write,
+    buf: &[u8],
+    pos: usize,
+    msg: &str,
+    prefix: &str,
+) {
+    let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
+    let _ = line_start.next();
+    let line_start =
+        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
+    let line = buf[line_start..]
+        .splitn(2, |c| *c == b'\n')
+        .next()
+        .and_then(|s| from_utf8(s).ok())
+        .unwrap_or("(Failed to display line)");
+    let line_no = what_line(buf, line_start);
+    let pos_in_line =
+        from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
+    writeln!(
+        out,
+        "{prefix}{:>4}:{}\n\
+         {prefix}     {:>pos$} {}",
+        line_no,
+        line,
+        "^",
+        msg,
+        pos = pos_in_line,
+        prefix = prefix,
+    )
+    .unwrap();
+}
+
+fn what_line(buf: &[u8], pos: usize) -> usize {
+    1 + bytecount::count(&buf[0..pos], b'\n')
+}
