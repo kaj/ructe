@@ -72,7 +72,7 @@ fn test_if_let_destructure() {
 fn test_list() {
     assert_eq!(
         r2s(|o| list(o, &["foo", "bar"])),
-        "\n<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n\n"
+        "\n<ul>\n\n<li>foo</li>\n\n<li>bar</li>\n</ul>\n\n"
     );
 }
 
@@ -85,8 +85,8 @@ fn test_list_empty() {
 fn test_list_destructure() {
     assert_eq!(
         r2s(|o| list_destructure(o, &["foo", "bar"])),
-        "<ul>\n  \n    <li>0: foo</li>\n  \n    \
-         <li>1: bar</li>\n  </ul>\n"
+        "<ul>\n\n<li>0: foo</li>\n\n\
+         <li>1: bar</li>\n</ul>\n"
     );
 }
 
@@ -94,7 +94,7 @@ fn test_list_destructure() {
 fn test_list_destructure_2() {
     assert_eq!(
         r2s(|o| list_destructure_2(o)),
-        "\n    <p>Rasmus is 44 years old.</p>\n\n    \
+        "\n<p>Rasmus is 44 years old.</p>\n\n\
          <p>Mike is 36 years old.</p>\n"
     );
 }
@@ -104,8 +104,8 @@ fn test_uselist() {
     assert_eq!(
         r2s(|o| uselist(o)),
         "<h1>Two items</h1>\n\n\
-         <ul>\n  \n    <li>foo</li>\n  \
-         \n    <li>bar</li>\n  </ul>\n\n\n\
+         <ul>\n\n<li>foo</li>\n\
+         \n<li>bar</li>\n</ul>\n\n\n\
          <h2>No items</h2>\n\n\
          <p>No items</p>\n\n\n"
     );
@@ -190,8 +190,7 @@ fn test_hello_code() {
 fn test_for_loop() {
     assert_eq!(
         r2s(|o| for_loop(o, &vec!["Hello", "World"])),
-        "<h1>Looped paragraphs</h1>\n\n  \
-         <p>Hello</p>\n\n  <p>World</p>\n"
+        "<h1>Looped paragraphs</h1>\n\n<p>Hello</p>\n\n<p>World</p>\n"
     );
 }
 
@@ -238,15 +237,15 @@ fn test_page_with_base() {
         r2s(|o| page::page(o, "World")),
         "<!doctype html>\
          \n<html>\
-         \n  <head><title>Hello World!</title>\
-         \n  <meta property=\"og:description\" content=\"A simple example\"/>\
+         \n<head><title>Hello World!</title>\
+         \n<meta property=\"og:description\" content=\"A simple example\"/>\
          \n</head>\
-         \n  <body>\
-         \n    <h1>Hello World!</h1>\
-         \n    \
-         \n  <p>This is page content for World</p>\
+         \n<body>\
+         \n<h1>Hello World!</h1>\
          \n\
-         \n  </body>\
+         \n<p>This is page content for World</p>\
+         \n\
+         \n</body>\
          \n</html>\n\n"
     );
 }
