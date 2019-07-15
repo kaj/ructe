@@ -1,4 +1,4 @@
-//! An example web service using ructe with the warp framework.
+//! An example web service using ructe with actix web.
 use actix_web::body::Body;
 use actix_web::dev::ServiceResponse;
 use actix_web::http::header::{ContentType, Expires};
