@@ -3,11 +3,12 @@ use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::bytes::complete::tag;
-use nom::character::complete::char;
+use nom::character::complete::{char, multispace0};
 use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list};
 use nom::sequence::{delimited, terminated, tuple};
+use nom_delimited_list::delimited_list;
 use parseresult::PResult;
 use spacelike::spacelike;
 use std::io::{self, Write};
@@ -70,10 +71,20 @@ pub fn template(input: &[u8]) -> PResult<Template> {
                 ),
                 String::from,
             )),
-            delimited(
-                tag("@("),
-                separated_list(tag(", "), map(formal_argument, String::from)),
-                terminated(tag(")"), spacelike),
+            delimited_list(
+                context(
+                    "expected '@('...')' template declaration.",
+                    terminated(tag("@("), multispace0),
+                ),
+                context(
+                    "expected formal argument",
+                    map(formal_argument, String::from),
+                ),
+                terminated(tag(","), multispace0),
+                context(
+                    "expected ',' or ')'.",
+                    delimited(multispace0, tag(")"), spacelike),
+                ),
             ),
             many_till(
                 context(

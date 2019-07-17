@@ -127,6 +127,8 @@ mod spacelike;
 #[macro_use]
 mod templateexpression;
 pub mod Template_syntax;
+#[doc(hidden)] // public for doctest to work, but hide from docs.
+pub mod nom_delimited_list;
 mod staticfiles;
 mod template;
 
