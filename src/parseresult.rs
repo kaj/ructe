@@ -1,50 +1,31 @@
 use nom::error::{VerboseError, VerboseErrorKind};
 use nom::{Err, IResult};
-use std::fmt::Debug;
 use std::io::Write;
 use std::str::from_utf8;
 
 /// Parser result, with verbose error.
 pub type PResult<'a, O> = IResult<&'a [u8], O, VerboseError<&'a [u8]>>;
 
-pub fn show_errors<E>(
+pub fn show_errors(
     out: &mut impl Write,
     buf: &[u8],
-    result: PResult<E>,
+    error: &Err<VerboseError<&[u8]>>,
     prefix: &str,
-) where
-    E: Debug,
-{
-    match result {
-        Ok(_) => (),
-        Err(Err::Error(VerboseError { mut errors })) => {
-            errors.reverse();
-            for (i, e) in errors {
-                let pos = buf.len() - i.len();
-                if let Some(message) = get_message(&e) {
+) {
+    match error {
+        Err::Failure(VerboseError { ref errors })
+        | Err::Error(VerboseError { ref errors }) => {
+            for (rest, err) in errors.iter().rev() {
+                if let Some(message) = get_message(&err) {
+                    let pos = buf.len() - rest.len();
                     show_error(out, buf, pos, &message, prefix);
                 }
             }
-            //show_error(out, buf, 0, &format!("error {:?}", e), prefix);
         }
-        /*Err(Err::Error(mut v)) => {
-            v.reverse();
-            for (i, e) in v {
-                let pos = buf.len() - i.len();
-                show_error(out, buf, pos, &get_message(&e), prefix);
-            }
-        }*/
-        /*Err(Err::Failure(mut v)) => {
-            v.reverse();
-            for (i, e) in v {
-                let pos = buf.len() - i.len();
-                show_error(out, buf, pos, &get_message(&e), prefix);
-            }
-        }*/
-        Err(Err::Failure(e)) => {
-            show_error(out, buf, 0, &format!("failure {:?}", e), prefix);
+        Err::Incomplete(needed) => {
+            let msg = format!("Incomplete: {:?}", needed);
+            show_error(out, buf, 0, &msg, prefix);
         }
-        Err(_) => show_error(out, buf, 0, "xyzzy", prefix),
     }
 }
 

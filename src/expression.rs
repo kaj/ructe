@@ -255,7 +255,9 @@ mod test {
     fn expression_error_message(input: &[u8]) -> String {
         use crate::parseresult::show_errors;
         let mut buf = Vec::new();
-        show_errors(&mut buf, input, expression(input), ":");
+        if let Err(error) = expression(input) {
+            show_errors(&mut buf, input, &error, ":");
+        }
         String::from_utf8(buf).unwrap()
     }
 }

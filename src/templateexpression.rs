@@ -540,7 +540,9 @@ mod test {
 
     fn expression_error(input: &[u8]) -> String {
         let mut buf = Vec::new();
-        show_errors(&mut buf, input, template_expression(input), ":");
+        if let Err(error) = template_expression(input) {
+            show_errors(&mut buf, input, &error, ":");
+        }
         String::from_utf8(buf).unwrap()
     }
 }

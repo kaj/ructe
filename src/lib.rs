@@ -386,9 +386,9 @@ fn handle_template(
                 .and_then(|mut f| t.write_rust(&mut f, name))?;
             Ok(true)
         }
-        result => {
+        Err(error) => {
             println!("cargo:warning=Template parse error in {:?}:", path);
-            show_errors(&mut io::stdout(), &buf, result, "cargo:warning=");
+            show_errors(&mut io::stdout(), &buf, &error, "cargo:warning=");
             Ok(false)
         }
     }
