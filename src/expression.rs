@@ -1,144 +1,147 @@
-use nom::types::CompleteByteSlice as Input;
-use nom::{alpha, digit};
+use nom::branch::alt;
+use nom::bytes::complete::{escaped, is_a, is_not, tag};
+use nom::character::complete::{alpha1, char, digit1, none_of, one_of};
+use nom::combinator::{map, map_res, not, opt, recognize, value};
+use nom::error::context; //, VerboseError};
+use nom::multi::{fold_many0, many0, separated_list};
+use nom::sequence::{delimited, pair, preceded, terminated, tuple};
+use parseresult::PResult;
 use std::str::{from_utf8, Utf8Error};
 
-named!(
-    pub expression<Input, &str>,
-    map_res!(
-        recognize!(tuple!(
-            map_res!(alt!(tag!("&") | tag!("*") | tag!("")), input_to_str),
-            add_return_error!(
-                err_str!("Expected rust expression"),
-                alt_complete!(
-                    rust_name |
-                    map_res!(digit, input_to_str) |
-                    quoted_string |
-                    expr_in_parens |
-                    expr_in_brackets
-                )
-            ),
-            fold_many0!(
-                alt_complete!(
-                    preceded!(tag!("."), expression) |
-                    preceded!(tag!("::"), expression) |
-                    expr_in_parens |
-                    expr_in_braces |
-                    expr_in_brackets |
-                    preceded!(tag!("!"), expr_in_parens) |
-                    preceded!(tag!("!"), expr_in_brackets)),
-                (),
-                |_, _| ()
-            )
+pub fn expression(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(context(
+            "Expected rust expression",
+            tuple((
+                map_res(alt((tag("&"), tag("*"), tag(""))), input_to_str),
+                alt((
+                    rust_name,
+                    map_res(digit1, input_to_str),
+                    quoted_string,
+                    expr_in_parens,
+                    expr_in_brackets,
+                )),
+                fold_many0(
+                    alt((
+                        preceded(context("separator", tag(".")), expression),
+                        preceded(tag("::"), expression),
+                        expr_in_parens,
+                        expr_in_braces,
+                        expr_in_brackets,
+                        preceded(tag("!"), expr_in_parens),
+                        preceded(tag("!"), expr_in_brackets),
+                    )),
+                    (),
+                    |_, _| (),
+                ),
+            )),
         )),
-        input_to_str
-    )
-);
+        input_to_str,
+    )(input)
+}
 
-pub fn input_to_str(s: Input) -> Result<&str, Utf8Error> {
+pub fn input_to_str(s: &[u8]) -> Result<&str, Utf8Error> {
     from_utf8(&s)
 }
 
-named!(pub comma_expressions<Input, String>,
-       map!(separated_list!(preceded!(tag!(","), many0!(tag!(" "))),
-                            expression),
-            |list: Vec<_>| list.join(", ")));
+pub fn comma_expressions(input: &[u8]) -> PResult<String> {
+    map(
+        separated_list(preceded(tag(","), many0(tag(" "))), expression),
+        |list: Vec<_>| list.join(", "),
+    )(input)
+}
 
-named!(
-    pub rust_name<Input, &str>,
-    map_res!(
-        recognize!(
-            pair!(alt!(tag!("_") | alpha),
-                  opt!(is_a!("_0123456789abcdefghijklmnopqrstuvwxyz")))
-        ),
-        input_to_str
-));
-
-named!(
-    expr_in_parens<Input, &str>,
-    map_res!(
-        recognize!(delimited!(
-            tag!("("),
-            many0!(alt!(
-                value!((), is_not!("[]()\"/")) |
-                value!((), expr_in_braces) |
-                value!((), expr_in_brackets) |
-                value!((), expr_in_parens) |
-                value!((), quoted_string) |
-                value!((), rust_comment) |
-                value!((), terminated!(tag!("/"), none_of!("*")))
-            )),
-            tag!(")")
+pub fn rust_name(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(pair(
+            alt((tag("_"), alpha1)),
+            opt(is_a("_0123456789abcdefghijklmnopqrstuvwxyz")),
         )),
-        input_to_str
-    )
-);
+        input_to_str,
+    )(input)
+}
 
-named!(
-    expr_in_brackets<Input, &str>,
-    map_res!(
-        recognize!(delimited!(
-            tag!("["),
-            many0!(alt!(
-                value!((), is_not!("[]()\"/")) |
-                value!((), expr_in_brackets) |
-                value!((), expr_in_braces) |
-                value!((), expr_in_parens) |
-                value!((), quoted_string) |
-                value!((), rust_comment) |
-                value!((), terminated!(tag!("/"), none_of!("*")))
-            )),
-            tag!("]")
+fn expr_in_parens(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(delimited(
+            tag("("),
+            many0(alt((
+                value((), is_not("[]()\"/")),
+                value((), expr_in_braces),
+                value((), expr_in_brackets),
+                value((), expr_in_parens),
+                value((), quoted_string),
+                value((), rust_comment),
+                value((), terminated(tag("/"), none_of("*"))),
+            ))),
+            tag(")"),
         )),
-        input_to_str
-    )
-);
+        input_to_str,
+    )(input)
+}
 
-named!(
-    pub expr_in_braces<Input, &str>,
-    map_res!(
-        recognize!(delimited!(
-            tag!("{"),
-            many0!(alt!(
-                value!((), is_not!("{}[]()\"/")) |
-                value!((), expr_in_brackets) |
-                value!((), expr_in_parens) |
-                value!((), quoted_string) |
-                value!((), rust_comment) |
-                value!((), terminated!(tag!("/"), none_of!("*")))
-            )),
-            tag!("}")
+fn expr_in_brackets(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(delimited(
+            tag("["),
+            many0(alt((
+                value((), is_not("[]()\"/")),
+                value((), expr_in_brackets),
+                value((), expr_in_braces),
+                value((), expr_in_parens),
+                value((), quoted_string),
+                value((), rust_comment),
+                value((), terminated(tag("/"), none_of("*"))),
+            ))),
+            tag("]"),
         )),
-        input_to_str
-    )
-);
+        input_to_str,
+    )(input)
+}
 
-named!(
-    quoted_string<Input, &str>,
-    map_res!(
-        recognize!(delimited!(
-            char!('"'),
-            escaped!(is_not!("\"\\"), '\\', one_of!("\"\\")),
-            char!('"')
+pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(delimited(
+            tag("{"),
+            many0(alt((
+                value((), is_not("{}[]()\"/")),
+                value((), expr_in_brackets),
+                value((), expr_in_parens),
+                value((), quoted_string),
+                value((), rust_comment),
+                value((), terminated(tag("/"), none_of("*"))),
+            ))),
+            tag("}"),
         )),
-        input_to_str
-    )
-);
+        input_to_str,
+    )(input)
+}
 
-named!(
-    rust_comment<Input, Input>,
-    delimited!(
-        tag!("/*"),
-        recognize!(many0!(alt_complete!(
-            is_not!("*") | terminated!(tag!("*"), not!(tag!("/")))
-        ))),
-        tag!("*/")
-    )
-);
+pub fn quoted_string(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(delimited(
+            char('"'),
+            escaped(is_not("\"\\"), '\\', one_of("\"\\")),
+            char('"'),
+        )),
+        input_to_str,
+    )(input)
+}
+
+pub fn rust_comment(input: &[u8]) -> PResult<&[u8]> {
+    delimited(
+        tag("/*"),
+        recognize(many0(alt((
+            is_not("*"),
+            terminated(tag("*"), not(tag("/"))),
+        )))),
+        tag("*/"),
+    )(input)
+}
 
 #[cfg(test)]
 mod test {
     use expression::expression;
-    use nom::types::CompleteByteSlice as Input;
 
     #[test]
     fn expression_1() {
@@ -222,10 +225,7 @@ mod test {
     }
 
     fn check_expr(expr: &str) {
-        assert_eq!(
-            expression(Input(expr.as_bytes())),
-            Ok((Input(&b""[..]), expr))
-        );
+        assert_eq!(expression(expr.as_bytes()), Ok((&b""[..], expr)));
     }
 
     #[test]
@@ -233,9 +233,7 @@ mod test {
         assert_eq!(
             expression_error_message(b".foo"),
             ":   1:.foo\n\
-             :     ^ Expected rust expression\n\
-             :   1:.foo\n\
-             :     ^ Alt\n"
+             :     ^ Expected rust expression\n"
         );
     }
     #[test]
@@ -243,9 +241,7 @@ mod test {
         assert_eq!(
             expression_error_message(b" foo"),
             ":   1: foo\n\
-             :     ^ Expected rust expression\n\
-             :   1: foo\n\
-             :     ^ Alt\n"
+             :     ^ Expected rust expression\n"
         );
     }
     #[test]
@@ -253,15 +249,15 @@ mod test {
         assert_eq!(
             expression_error_message(b"(missing end"),
             ":   1:(missing end\n\
-             :     ^ Expected rust expression\n\
-             :   1:(missing end\n\
-             :     ^ Alt\n"
+             :     ^ Expected rust expression\n"
         );
     }
     fn expression_error_message(input: &[u8]) -> String {
-        use super::super::show_errors;
+        use crate::parseresult::show_errors;
         let mut buf = Vec::new();
-        show_errors(&mut buf, input, expression(Input(input)), ":");
+        if let Err(error) = expression(input) {
+            show_errors(&mut buf, input, &error, ":");
+        }
         String::from_utf8(buf).unwrap()
     }
 }
