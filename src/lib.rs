@@ -140,20 +140,6 @@ use template::template;
 
 pub use staticfiles::StaticFiles;
 
-/// Create a `statics` module inside `outdir`, containing static file data
-/// for all files in `indir`.
-///
-/// This must be called *before* `compile_templates`.
-#[deprecated(
-    since = "0.6.0",
-    note = "Use the statics() method of struct Ructe instead"
-)]
-pub fn compile_static_files(indir: &Path, outdir: &Path) -> Result<()> {
-    #[allow(deprecated)]
-    let mut out = StaticFiles::new(outdir)?;
-    out.add_files(indir)
-}
-
 /// The main build-time interface of ructe.
 ///
 /// Your build script should create an instance of `Ructe` and use it
@@ -311,21 +297,6 @@ impl Drop for Ructe {
         }
         self.f.write_all(b"\n}\n").unwrap();
     }
-}
-
-/// Create a `templates` module in `outdir` containing rust code for
-/// all templates found in `indir`.
-#[deprecated(since = "0.6.0", note = "Use method of struct Ructe instead")]
-pub fn compile_templates(indir: &Path, outdir: &Path) -> Result<()> {
-    let mut ructe = Ructe::new(outdir.into())?;
-
-    ructe.compile_templates(indir)?;
-
-    if ructe.outdir.join("statics.rs").exists() {
-        ructe.f.write_all(b"pub mod statics;")?;
-    }
-
-    Ok(())
 }
 
 fn handle_entries(

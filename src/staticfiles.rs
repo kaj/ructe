@@ -199,27 +199,6 @@ pub struct StaticFiles {
 }
 
 impl StaticFiles {
-    /// Create a new set of static files.
-    ///
-    /// There should only be one `StaticFiles` for a set of compiled templates.
-    /// The `outdir` should be the same as in the call to `compile_templates`.
-    ///
-    /// From version 0.6 of ructe,
-    /// [the `statics()` method of `struct Ructe`](struct.Ructe.html#method.statics)
-    /// should be used instead of this method.
-    #[deprecated(
-        since = "0.6.0",
-        note = "Use the statics() method of struct Ructe instead"
-    )]
-    pub fn new(outdir: &Path) -> Result<Self> {
-        let outdir = outdir.join("templates");
-        create_dir_all(&outdir)?;
-        StaticFiles::for_template_dir(
-            &outdir,
-            &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
-        )
-    }
-
     pub(crate) fn for_template_dir(
         outdir: &Path,
         base_path: &Path,
