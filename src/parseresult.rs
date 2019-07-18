@@ -53,7 +53,7 @@ fn show_error(
         .next()
         .and_then(|s| from_utf8(s).ok())
         .unwrap_or("(Failed to display line)");
-    let line_no = what_line(buf, line_start);
+    let line_no = bytecount::count(&buf[..line_start], b'\n') + 1;
     let pos_in_line =
         from_utf8(&buf[line_start..pos]).unwrap().chars().count() + 1;
     writeln!(
@@ -68,8 +68,4 @@ fn show_error(
         prefix = prefix,
     )
     .unwrap();
-}
-
-fn what_line(buf: &[u8], pos: usize) -> usize {
-    1 + bytecount::count(&buf[0..pos], b'\n')
 }

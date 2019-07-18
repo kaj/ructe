@@ -121,16 +121,15 @@ extern crate rsass;
 #[cfg(feature = "warp")]
 extern crate warp;
 
-mod expression;
-mod parseresult;
-mod spacelike;
-#[macro_use]
-mod templateexpression;
 pub mod Template_syntax;
+mod expression;
 #[doc(hidden)] // public for doctest to work, but hide from docs.
 pub mod nom_delimited_list;
+mod parseresult;
+mod spacelike;
 mod staticfiles;
 mod template;
+mod templateexpression;
 
 use parseresult::show_errors;
 use std::env;
