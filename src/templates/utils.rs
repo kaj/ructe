@@ -9,7 +9,7 @@ use std::io::{self, Write};
 /// formats the value using Display and then html-encodes the result.
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
-    fn to_html(&self, out: &mut dyn Write) -> io::Result<()>;
+    fn to_html<W>(&self, out: &mut W) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write;
 
     /// Write the HTML represention of this value to a buffer.
     ///
@@ -49,7 +49,7 @@ impl std::fmt::Debug for HtmlBuffer {
 }
 
 impl ToHtml for HtmlBuffer {
-    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+    fn to_html<W>(&self, mut out: &mut W) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write {
         out.write_all(&self.buf)
     }
 }
@@ -79,21 +79,21 @@ pub struct Html<T>(pub T);
 
 impl<T: Display> ToHtml for Html<T> {
     #[inline]
-    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+    fn to_html<W>(&self, mut out: &mut W) -> io::Result<()>  where W: ?Sized, for<'a> &'a mut W: Write {
         write!(out, "{}", self.0)
     }
 }
 
 impl<T: Display> ToHtml for T {
     #[inline]
-    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+    fn to_html<W>(&self, out: &mut W) -> io::Result<()>  where W: ?Sized, for<'a> &'a mut W: Write {
         write!(ToHtmlEscapingWriter(out), "{}", self)
     }
 }
 
-struct ToHtmlEscapingWriter<'a>(&'a mut dyn Write);
+struct ToHtmlEscapingWriter<'w, W: ?Sized>(&'w mut W);
 
-impl<'a> Write for ToHtmlEscapingWriter<'a> {
+impl<'w, W> Write for ToHtmlEscapingWriter<'w, W> where W: ?Sized, for<'a> &'a mut W: Write {
     #[inline]
     // This takes advantage of the fact that `write` doesn't have to write everything,
     // and the call will be retried with the rest of the data
@@ -119,10 +119,10 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
     }
 }
 
-impl<'a> ToHtmlEscapingWriter<'a> {
+impl<'w, W> ToHtmlEscapingWriter<'w, W> where W: ?Sized, for<'a> &'a mut W: Write {
     #[inline(never)]
     fn write_one_byte_escaped(
-        out: &mut impl Write,
+        mut out: &mut W,
         data: &[u8],
     ) -> io::Result<usize> {
         let next = data.get(0);
