@@ -78,6 +78,17 @@ fn escaped_short_impl(b: &mut Bencher) {
     });
 }
 
+#[bench]
+fn escaped_short_dyn(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
+    b.iter(|| {
+        buf.clear();
+        let mut dynwrite: &mut dyn Write = &mut buf;
+        escaped_short_inner(&mut dynwrite);
+        buf.len()
+    });
+}
+
 #[inline(never)]
 fn escaped_short_inner(buf: &mut impl Write) {
     for _ in 0..1000 {
