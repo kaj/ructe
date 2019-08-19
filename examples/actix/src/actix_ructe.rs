@@ -12,9 +12,9 @@ macro_rules! render {
     }};
 }
 
-pub struct Render<T: FnOnce(&mut Write) -> std::io::Result<()>>(pub T);
+pub struct Render<T: FnOnce(&mut dyn Write) -> std::io::Result<()>>(pub T);
 
-impl<T: FnOnce(&mut Write) -> std::io::Result<()>> From<Render<T>>
+impl<T: FnOnce(&mut dyn Write) -> std::io::Result<()>> From<Render<T>>
     for actix_web::body::Body
 {
     fn from(t: Render<T>) -> Self {

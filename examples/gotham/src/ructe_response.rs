@@ -7,13 +7,13 @@ use std::io::{self, Write};
 pub trait RucteResponse: Sized {
     fn html<F>(self, do_render: F) -> (Self, Response<Body>)
     where
-        F: FnOnce(&mut Write) -> io::Result<()>;
+        F: FnOnce(&mut dyn Write) -> io::Result<()>;
 }
 
 impl RucteResponse for State {
     fn html<F>(self, do_render: F) -> (Self, Response<Body>)
     where
-        F: FnOnce(&mut Write) -> io::Result<()>,
+        F: FnOnce(&mut dyn Write) -> io::Result<()>,
     {
         let mut buf = Vec::new();
         let res = match do_render(&mut buf) {
