@@ -52,7 +52,7 @@ fn page<'mw>(
 
 fn render<F>(res: Response, do_render: F) -> MiddlewareResult
 where
-    F: FnOnce(&mut Write) -> io::Result<()>,
+    F: FnOnce(&mut dyn Write) -> io::Result<()>,
 {
     let mut stream = res.start()?;
     match do_render(&mut stream) {
@@ -63,7 +63,7 @@ where
 
 /// This method can be used as a "template tag", that is a method that
 /// can be called directly from a template.
-fn footer(out: &mut Write) -> io::Result<()> {
+fn footer(out: &mut dyn Write) -> io::Result<()> {
     templates::footer(
         out,
         &[

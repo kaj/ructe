@@ -66,7 +66,7 @@ fn test_all_statics_known() {
 #[cfg(test)]
 fn r2s<Call>(call: Call) -> String
 where
-    Call: FnOnce(&mut Write) -> io::Result<()>,
+    Call: FnOnce(&mut dyn Write) -> io::Result<()>,
 {
     let mut buf = Vec::new();
     call(&mut buf).unwrap();
