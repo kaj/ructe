@@ -386,6 +386,33 @@ mod test {
     }
 
     #[test]
+    fn call_simple() {
+        assert_eq!(
+            template_expression(b"@foo()"),
+            Ok((
+                &b""[..],
+                TemplateExpression::Expression {
+                    expr: "foo()".to_string(),
+                },
+            ))
+        )
+    }
+
+    /// Check that issue #53 stays fixed.
+    #[test]
+    fn call_empty_str() {
+        assert_eq!(
+            template_expression(b"@foo(\"\")"),
+            Ok((
+                &b""[..],
+                TemplateExpression::Expression {
+                    expr: "foo(\"\")".to_string(),
+                },
+            ))
+        )
+    }
+
+    #[test]
     fn if_boolean_var() {
         assert_eq!(
             template_expression(b"@if cond { something }"),
@@ -473,6 +500,24 @@ mod test {
                 &b""[..],
                 TemplateExpression::IfBlock {
                     expr: "x == 17".to_string(),
+                    body: vec![TemplateExpression::text(" something ")],
+                    else_body: None,
+                }
+            ))
+        )
+    }
+
+    /// Check that issue #53 stays fixed.
+    #[test]
+    fn if_compare_empty_string() {
+        // Note that x.is_empty() would be better in real code, but this and
+        // other uses of empty strings in conditionals should be ok.
+        assert_eq!(
+            template_expression(b"@if x == \"\" { something }"),
+            Ok((
+                &b""[..],
+                TemplateExpression::IfBlock {
+                    expr: "x == \"\"".to_string(),
                     body: vec![TemplateExpression::text(" something ")],
                     else_body: None,
                 }
