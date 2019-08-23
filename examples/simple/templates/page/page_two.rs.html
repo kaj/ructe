@@ -1,0 +1,10 @@
+@use super::base_two;
+
+@(year: u16)
+@:base_two(&format!("Year {}", year), {
+  <p>Welcome to this page about the year @year.</p>
+},
+{
+  <p>This is the main page content.</p>
+}
+)

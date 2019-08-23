@@ -1,0 +1,20 @@
+@(title: &str, inhead: Content, content: Content)
+
+<!doctype html>
+<html lang="sv">
+  <head>
+    <title>@title - Example page</title>
+  </head>
+  <body>
+    <header>
+      <h1>@title</h1>
+      @:inhead()
+    </header>
+
+    <main>@:content()</main>
+
+    <footer>
+      <p>A simple example page.</p>
+    </footer>
+  </body>
+</html>

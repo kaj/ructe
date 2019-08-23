@@ -135,7 +135,10 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 rust_name,
                 delimited(
                     char('('),
-                    separated_list(tag(", "), template_argument),
+                    separated_list(
+                        terminated(tag(","), spacelike),
+                        template_argument,
+                    ),
                     char(')'),
                 ),
             ),
@@ -252,7 +255,11 @@ fn template_block(input: &[u8]) -> PResult<Vec<TemplateExpression>> {
 fn template_argument(input: &[u8]) -> PResult<TemplateArgument> {
     alt((
         map(
-            delimited(char('{'), many0(template_expression), char('}')),
+            delimited(
+                char('{'),
+                many0(template_expression),
+                terminated(char('}'), spacelike),
+            ),
             TemplateArgument::Body,
         ),
         map(map(expression, String::from), TemplateArgument::Rust),

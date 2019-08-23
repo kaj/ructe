@@ -250,3 +250,28 @@ fn test_page_with_base() {
          \n</html>\n\n"
     );
 }
+
+#[test]
+fn test_page_two() {
+    assert_eq!(
+        r2s(|o| page::page_two(o, 2019)),
+        "<!doctype html>\
+         \n<html lang=\"sv\">\
+         \n  <head>\
+         \n    <title>Year 2019 - Example page</title>\
+         \n  </head>\
+         \n  <body>\
+         \n    <header>\
+         \n      <h1>Year 2019</h1>\
+         \n      \n  <p>Welcome to this page about the year 2019.</p>\n\
+         \n    </header>\n\
+         \n    <main>\
+         \n  <p>This is the main page content.</p>\
+         \n</main>\n\
+         \n    <footer>\
+         \n      <p>A simple example page.</p>\
+         \n    </footer>\
+         \n  </body>\
+         \n</html>\n\n",
+    )
+}
