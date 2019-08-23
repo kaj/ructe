@@ -49,6 +49,14 @@ fn test_hello_args_two() {
 }
 
 #[test]
+fn test_hello_args_three() {
+    assert_eq!(
+        r2s(|o| hello_args_three(o, 56, &56, &56)),
+        "<p>56 56 56</p>\n"
+    );
+}
+
+#[test]
 fn test_if_let_some() {
     assert_eq!(
         r2s(|o| if_let(o, Some("thing"))),

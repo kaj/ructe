@@ -130,6 +130,11 @@ fn type_expression(input: &[u8]) -> PResult<()> {
     map(
         tuple((
             alt((tag("&"), tag(""))),
+            delimited(
+                spacelike,
+                alt((tag("impl"), tag("dyn"), tag(""))),
+                spacelike,
+            ),
             context(
                 "Expected rust type expression",
                 alt((
