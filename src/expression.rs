@@ -121,7 +121,7 @@ pub fn quoted_string(input: &[u8]) -> PResult<&str> {
     map_res(
         recognize(delimited(
             char('"'),
-            escaped(is_not("\"\\"), '\\', one_of("\"\\")),
+            opt(escaped(is_not("\"\\"), '\\', one_of("\"\\"))),
             char('"'),
         )),
         input_to_str,
