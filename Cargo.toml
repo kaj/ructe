@@ -17,7 +17,7 @@ mime03 = ["mime"]
 
 [dependencies]
 base64 = "^0.10.0"
-bytecount = "0.5.1"
+bytecount = "0.6.0"
 itertools = "^0.8.0"
 md5 = "0.6"
 nom = "5.0.0"
