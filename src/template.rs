@@ -157,9 +157,12 @@ fn type_expression(input: &[u8]) -> PResult<()> {
 
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     map(
-        separated_list(
-            recognize(preceded(tag(","), many0(tag(" ")))),
-            type_expression,
+        terminated(
+            separated_list(
+                recognize(preceded(tag(","), multispace0)),
+                type_expression,
+            ),
+            opt(preceded(tag(","), multispace0)),
         ),
         |_| (),
     )(input)
@@ -180,6 +183,11 @@ mod test {
     }
 
     #[test]
+    fn tuple_with_trailing() {
+        check_type_expr("(Foo,Bar,)");
+    }
+
+    #[test]
     fn generic() {
         check_type_expr("HashMap<Foo, Bar>");
     }
@@ -187,6 +195,11 @@ mod test {
     #[test]
     fn unspaced_generic() {
         check_type_expr("HashMap<Foo,Bar>");
+    }
+
+    #[test]
+    fn generic_with_trailing() {
+        check_type_expr("Vec<Foo,>");
     }
 
     fn check_type_expr(expr: &str) {
