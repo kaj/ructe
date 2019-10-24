@@ -159,7 +159,7 @@ pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     map(
         terminated(
             separated_list(
-                recognize(preceded(tag(","), multispace0)),
+                preceded(tag(","), multispace0),
                 type_expression,
             ),
             opt(preceded(tag(","), multispace0)),
