@@ -158,10 +158,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     map(
         terminated(
-            separated_list(
-                preceded(tag(","), multispace0),
-                type_expression,
-            ),
+            separated_list(preceded(tag(","), multispace0), type_expression),
             opt(preceded(tag(","), multispace0)),
         ),
         |_| (),
