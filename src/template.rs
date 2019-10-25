@@ -7,7 +7,7 @@ use nom::character::complete::{char, multispace0};
 use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list};
-use nom::sequence::{delimited, terminated, tuple};
+use nom::sequence::{delimited, preceded, terminated, tuple};
 use nom_delimited_list::delimited_list;
 use parseresult::PResult;
 use spacelike::spacelike;
@@ -156,5 +156,50 @@ fn type_expression(input: &[u8]) -> PResult<()> {
 }
 
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
-    map(separated_list(tag(", "), type_expression), |_| ())(input)
+    map(
+        terminated(
+            separated_list(preceded(tag(","), multispace0), type_expression),
+            opt(preceded(tag(","), multispace0)),
+        ),
+        |_| (),
+    )(input)
+}
+
+#[cfg(test)]
+mod test {
+    use template::type_expression;
+
+    #[test]
+    fn tuple() {
+        check_type_expr("(Foo, Bar)");
+    }
+
+    #[test]
+    fn unspaced_tuple() {
+        check_type_expr("(Foo,Bar)");
+    }
+
+    #[test]
+    fn tuple_with_trailing() {
+        check_type_expr("(Foo,Bar,)");
+    }
+
+    #[test]
+    fn generic() {
+        check_type_expr("HashMap<Foo, Bar>");
+    }
+
+    #[test]
+    fn unspaced_generic() {
+        check_type_expr("HashMap<Foo,Bar>");
+    }
+
+    #[test]
+    fn generic_with_trailing() {
+        check_type_expr("Vec<Foo,>");
+    }
+
+    fn check_type_expr(expr: &str) {
+        assert_eq!(type_expression(expr.as_bytes()), Ok((&b""[..], ())));
+    }
 }
