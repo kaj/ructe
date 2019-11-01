@@ -74,7 +74,7 @@
 //! #[test]
 //! fn test_hello() {
 //!     let mut buf = Vec::new();
-//!     templates::hello(&mut buf, "World").unwrap();
+//!     templates::hello_html(&mut buf, "World").unwrap();
 //!     assert_eq!(buf, b"<h1>Hello World!</h1>\n");
 //! }
 //! ```
@@ -103,7 +103,7 @@
 //! build = "src/build.rs"
 //!
 //! [build-dependencies]
-//! ructe = { version = "0.6.0", features = ["sass", "mime03"]
+//! ructe = { version = "0.6.0", features = ["sass", "mime03"] }
 //!
 //! [dependencies]
 //! mime = "0.3.13"
@@ -237,6 +237,15 @@ impl Ructe {
     /// If indir is a relative path, it should be relative to the main
     /// directory of your crate, i.e. the directory containing your
     /// `Cargo.toml` file.
+    ///
+    /// Files with suffix `.rs.html`, `.rs.svg`, or `.rs.xml` are
+    /// considered templates.
+    /// A templete file called `template.rs.html`, `template.rs.svg`,
+    /// etc, will result in a callable function named `template_html`,
+    /// `template_svg`, etc.
+    /// The `template_html` function will get a `template` alias for
+    /// backwards compatibility, but that will be removed in a future
+    /// release.
     pub fn compile_templates<P>(&mut self, indir: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -305,7 +314,6 @@ fn handle_entries(
     outdir: &Path,
 ) -> Result<()> {
     println!("cargo:rerun-if-changed={}", indir.display());
-    let suffix = ".rs.html";
     for entry in read_dir(indir)? {
         let entry = entry?;
         let path = entry.path();
@@ -325,16 +333,31 @@ fn handle_entries(
                 writeln!(f, "pub mod {name};\n", name = filename)?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
-            if filename.ends_with(suffix) {
-                println!("cargo:rerun-if-changed={}", path.display());
-                let name = &filename[..filename.len() - suffix.len()];
-                if handle_template(name, &path, outdir)? {
-                    writeln!(
-                        f,
-                        "mod template_{name};\n\
-                         pub use self::template_{name}::{name};\n",
-                        name = name,
-                    )?;
+            for suffix in &[".rs.html", ".rs.svg", ".rs.xml"] {
+                if filename.ends_with(suffix) {
+                    println!("cargo:rerun-if-changed={}", path.display());
+                    let prename = &filename[..filename.len() - suffix.len()];
+                    let name =
+                        format!("{}_{}", prename, &suffix[".rs.".len()..]);
+                    if handle_template(&name, &path, outdir)? {
+                        writeln!(
+                            f,
+                            "mod template_{name};\n\
+                             pub use self::template_{name}::{name};\n",
+                            name = name,
+                        )?;
+                        // Backwards compatibility to 0.7.2 and earlier.
+                        if suffix == &".rs.html" {
+                            writeln!(
+                                f,
+                                "#[deprecated(since=\"0.7.4\", \
+                                 note=\"please use `{name}` instead\")]\n\
+                                 pub use self::{name} as {alias};\n",
+                                alias = prename,
+                                name = name,
+                            )?;
+                        }
+                    }
                 }
             }
         }

@@ -6,7 +6,7 @@ include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 use templates::*;
 
 fn main() {
-    page::page(&mut io::stdout(), "sample page").unwrap();
+    page::page_html(&mut io::stdout(), "sample page").unwrap();
 }
 
 fn r2s<Call>(call: Call) -> String
@@ -21,7 +21,7 @@ where
 #[test]
 fn test_hello() {
     assert_eq!(
-        r2s(|o| hello(o)),
+        r2s(|o| hello_html(o)),
         "<h1>Hello World!</h1>\
          \n<p>Note: Brackets and @ signs needs to be escaped: { ... }</p>\n"
     );
@@ -29,13 +29,16 @@ fn test_hello() {
 
 #[test]
 fn test_hello_args() {
-    assert_eq!(r2s(|o| hello_args(o, "World")), "<h1>Hello World!</h1>\n");
+    assert_eq!(
+        r2s(|o| hello_args_html(o, "World")),
+        "<h1>Hello World!</h1>\n",
+    );
 }
 
 #[test]
 fn test_hello_encodes_args() {
     assert_eq!(
-        r2s(|o| hello_args(o, "encoded < & >")),
+        r2s(|o| hello_args_html(o, "encoded < & >")),
         "<h1>Hello encoded &lt; &amp; &gt;!</h1>\n"
     );
 }
@@ -43,7 +46,7 @@ fn test_hello_encodes_args() {
 #[test]
 fn test_hello_args_two() {
     assert_eq!(
-        r2s(|o| hello_args_two(o, 56, "prime", false)),
+        r2s(|o| hello_args_two_html(o, 56, "prime", false)),
         "<p class=\"foo\" data-n=\"56\">Is 56 a prime? false!</p>\n"
     );
 }
@@ -51,7 +54,7 @@ fn test_hello_args_two() {
 #[test]
 fn test_hello_args_three() {
     assert_eq!(
-        r2s(|o| hello_args_three(o, 56, &56, &56)),
+        r2s(|o| hello_args_three_html(o, 56, &56, &56)),
         "<p>56 56 56</p>\n"
     );
 }
@@ -59,19 +62,19 @@ fn test_hello_args_three() {
 #[test]
 fn test_if_let_some() {
     assert_eq!(
-        r2s(|o| if_let(o, Some("thing"))),
+        r2s(|o| if_let_html(o, Some("thing"))),
         "<p> The item is thing </p>\n"
     )
 }
 #[test]
 fn test_if_let_none() {
-    assert_eq!(r2s(|o| if_let(o, None)), "<p> Got nothing </p>\n")
+    assert_eq!(r2s(|o| if_let_html(o, None)), "<p> Got nothing </p>\n")
 }
 
 #[test]
 fn test_if_let_destructure() {
     assert_eq!(
-        r2s(|o| if_let_destructure(o, &Some((47, 11)))),
+        r2s(|o| if_let_destructure_html(o, &Some((47, 11)))),
         "<p> We have 47 and 11 </p>\n"
     )
 }
@@ -79,20 +82,20 @@ fn test_if_let_destructure() {
 #[test]
 fn test_list() {
     assert_eq!(
-        r2s(|o| list(o, &["foo", "bar"])),
+        r2s(|o| list_html(o, &["foo", "bar"])),
         "\n<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n\n"
     );
 }
 
 #[test]
 fn test_list_empty() {
-    assert_eq!(r2s(|o| list(o, &[])), "\n<p>No items</p>\n\n");
+    assert_eq!(r2s(|o| list_html(o, &[])), "\n<p>No items</p>\n\n");
 }
 
 #[test]
 fn test_list_destructure() {
     assert_eq!(
-        r2s(|o| list_destructure(o, &["foo", "bar"])),
+        r2s(|o| list_destructure_html(o, &["foo", "bar"])),
         "<ul>\n  \n    <li>0: foo</li>\n  \n    \
          <li>1: bar</li>\n  </ul>\n"
     );
@@ -101,7 +104,7 @@ fn test_list_destructure() {
 #[test]
 fn test_list_destructure_2() {
     assert_eq!(
-        r2s(|o| list_destructure_2(o)),
+        r2s(|o| list_destructure_2_html(o)),
         "\n    <p>Rasmus is 44 years old.</p>\n\n    \
          <p>Mike is 36 years old.</p>\n"
     );
@@ -110,7 +113,7 @@ fn test_list_destructure_2() {
 #[test]
 fn test_uselist() {
     assert_eq!(
-        r2s(|o| uselist(o)),
+        r2s(|o| uselist_html(o)),
         "<h1>Two items</h1>\n\n\
          <ul>\n  \n    <li>foo</li>\n  \
          \n    <li>bar</li>\n  </ul>\n\n\n\
@@ -122,7 +125,7 @@ fn test_uselist() {
 #[test]
 fn test_hello_utf8() {
     assert_eq!(
-        r2s(|o| hello_utf8(o, "δ", "ε", "δ < ε", "δ &lt; ε")),
+        r2s(|o| hello_utf8_html(o, "δ", "ε", "δ < ε", "δ &lt; ε")),
         "<p>δ &lt; ε</p>\n\
          <p>δ &lt; ε</p>\n\
          <p>δ &lt; ε</p>\n\
@@ -133,7 +136,7 @@ fn test_hello_utf8() {
 #[test]
 fn test_comments() {
     assert_eq!(
-        r2s(|o| comments(o)),
+        r2s(|o| comments_html(o)),
         "<!-- this is a real HTML comment, which gets send to the client -->\n\
          <p>This is visible</p>\n\n"
     );
@@ -166,7 +169,7 @@ fn test_hello_fields() {
         email: "tom@example.nl",
     };
     assert_eq!(
-        r2s(|o| hello_fields(o, &user)),
+        r2s(|o| hello_fields_html(o, &user)),
         "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
          tom@example.nl</p>\n"
     );
@@ -179,7 +182,7 @@ fn test_hello_method() {
         email: "tom@example.nl",
     };
     assert_eq!(
-        r2s(|o| hello_method(o, &user)),
+        r2s(|o| hello_method_html(o, &user)),
         "<h1>Hello Tom Puss!</h1>\n<p>Your email is \
          <a href=\"mailto:tom@example.nl\">tom@example.nl</a></p>\n"
     );
@@ -189,7 +192,7 @@ fn test_hello_method() {
 fn test_hello_code() {
     use templates::Html;
     assert_eq!(
-        r2s(|o| hello_code(o, &"Paragraph:", &Html("<p>Hello.</p>"))),
+        r2s(|o| hello_code_html(o, &"Paragraph:", &Html("<p>Hello.</p>"))),
         "<h2>Paragraph:</h2>\n<p>Hello.</p>\n"
     );
 }
@@ -197,7 +200,7 @@ fn test_hello_code() {
 #[test]
 fn test_for_loop() {
     assert_eq!(
-        r2s(|o| for_loop(o, &vec!["Hello", "World"])),
+        r2s(|o| for_loop_html(o, &vec!["Hello", "World"])),
         "<h1>Looped paragraphs</h1>\n\n  \
          <p>Hello</p>\n\n  <p>World</p>\n"
     );
@@ -216,7 +219,7 @@ fn test_for_destructure() {
         },
     ];
     assert_eq!(
-        r2s(|o| for_destructure(o, &users)),
+        r2s(|o| for_destructure_html(o, &users)),
         "<ul><li>Tom Puss</li><li>Heloise Walker</li></ul>\n",
     )
 }
@@ -224,7 +227,7 @@ fn test_for_destructure() {
 #[test]
 fn test_explicit_formatting() {
     assert_eq!(
-        r2s(|o| explicit_formatting(o, 5.212432234, "one\ntwo")),
+        r2s(|o| explicit_formatting_html(o, 5.212432234, "one\ntwo")),
         "<p>Value 1 is 5.2 (or really 5.212432234),\n\
          while value 2 is &quot;one\\ntwo&quot;.</p>\n"
     );
@@ -233,7 +236,7 @@ fn test_explicit_formatting() {
 #[test]
 fn test_hello_use_templates() {
     assert_eq!(
-        r2s(|o| hello_use_templates(o, &Html("<p>this is foo</p>"))),
+        r2s(|o| hello_use_templates_html(o, &Html("<p>this is foo</p>"))),
         "<h1>Hello World!</h1>\
          \n<p>Note: Brackets and @ signs needs to be escaped: { ... }</p>\n\
          \n<h2>foo</h2>\n<p>this is foo</p>\n\n"
@@ -243,7 +246,7 @@ fn test_hello_use_templates() {
 #[test]
 fn test_page_with_base() {
     assert_eq!(
-        r2s(|o| page::page(o, "World")),
+        r2s(|o| page::page_html(o, "World")),
         "<!doctype html>\
          \n<html>\
          \n  <head><title>Hello World!</title>\
@@ -262,7 +265,7 @@ fn test_page_with_base() {
 #[test]
 fn test_page_two() {
     assert_eq!(
-        r2s(|o| page::page_two(o, 2019)),
+        r2s(|o| page::page_two_html(o, 2019)),
         "<!doctype html>\
          \n<html lang=\"sv\">\
          \n  <head>\

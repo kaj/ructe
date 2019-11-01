@@ -207,12 +207,12 @@ pub mod d_Calling_other_templates {
     //! It can be used like this:
     //!
     //! ```text
-    //! @use super::header;
+    //! @use super::header_html;
     //!
     //! @()
     //!
     //! <html>
-    //!   @:header("Example")
+    //!   @:header_html("Example")
     //!   <body>
     //!     <h1>Example</h1>
     //!     <p>page content ...</p>
@@ -242,11 +242,11 @@ pub mod d_Calling_other_templates {
     //! And use it like this:
     //!
     //! ```text
-    //! @use super::base_page;
+    //! @use super::base_page_html;
     //!
     //! @()
     //!
-    //! @:base_page("Example", {
+    //! @:base_page_html("Example", {
     //!     <p>page content ...</p>
     //! })
     //! ```

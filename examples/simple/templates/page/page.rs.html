@@ -1,8 +1,8 @@
-@use super::base;
+@use super::base_html;
 
 @(who: &str)
 
-@:base(&format!("Hello {}!", who), {
+@:base_html(&format!("Hello {}!", who), {
   <p>This is page content for @who</p>
 }, {
   <meta property="og:description" content="A simple example"/>
