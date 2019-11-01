@@ -68,8 +68,7 @@ A template may look something like this:
 
 Ructe compiles your templates to rust code that should be compiled with
 your other rust code, so it needs to be called before compiling,
-as described [in "How to use ructe", in the
-documentation](https://docs.rs/ructe/~0.3/ructe/How_to_use_ructe/index.html).
+as described [in the documentation](https://docs.rs/ructe/).
 There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
 frameworks [actix-web](examples/actix),
