@@ -14,7 +14,7 @@ fn raw(b: &mut Bencher) {
     b.iter(|| {
         buf.clear();
         raw_inner(&mut buf);
-        buf.len()  // prevents optimizing writes out
+        buf.len() // prevents optimizing writes out
     });
 }
 
