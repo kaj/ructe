@@ -10,10 +10,11 @@ include!("../src/template_utils.rs");
 
 #[bench]
 fn raw(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
     b.iter(|| {
-        let mut buf = Vec::with_capacity(10000);
+        buf.clear();
         raw_inner(&mut buf);
-        buf
+        buf.len()  // prevents optimizing writes out
     });
 }
 
@@ -30,10 +31,11 @@ fn raw_inner(buf: &mut impl Write) {
 
 #[bench]
 fn escaped_no_op(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
     b.iter(|| {
-        let mut buf = Vec::with_capacity(10000);
+        buf.clear();
         escaped_no_op_inner(&mut buf);
-        buf
+        buf.len()
     });
 }
 
@@ -49,10 +51,11 @@ fn escaped_no_op_inner(buf: &mut impl Write) {
 
 #[bench]
 fn escaped_nums(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
     b.iter(|| {
-        let mut buf = Vec::with_capacity(10000);
+        buf.clear();
         escaped_nums_inner(&mut buf);
-        buf
+        buf.len()
     });
 }
 
@@ -66,11 +69,23 @@ fn escaped_nums_inner(buf: &mut impl Write) {
 }
 
 #[bench]
-fn escaped_short(b: &mut Bencher) {
+fn escaped_short_impl(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
     b.iter(|| {
-        let mut buf = Vec::with_capacity(10000);
+        buf.clear();
         escaped_short_inner(&mut buf);
-        buf
+        buf.len()
+    });
+}
+
+#[bench]
+fn escaped_short_dyn(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
+    b.iter(|| {
+        buf.clear();
+        let mut dynwrite: &mut dyn Write = &mut buf;
+        escaped_short_inner(&mut dynwrite);
+        buf.len()
     });
 }
 
@@ -85,10 +100,11 @@ fn escaped_short_inner(buf: &mut impl Write) {
 
 #[bench]
 fn escaped_long(b: &mut Bencher) {
+    let mut buf = Vec::with_capacity(10000);
     b.iter(|| {
-        let mut buf = Vec::with_capacity(10000);
+        buf.clear();
         escaped_long_inner(&mut buf);
-        buf
+        buf.len()
     });
 }
 
