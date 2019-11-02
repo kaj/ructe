@@ -1,10 +1,8 @@
 //! An example web service using ructe with the nickel framework.
-extern crate hyper;
-extern crate mime;
 extern crate nickel;
 extern crate time;
 
-use hyper::header::{ContentType, Expires, HttpDate};
+use nickel::hyper::header::{ContentType, Expires, HttpDate};
 use nickel::status::StatusCode;
 use nickel::{Halt, HttpRouter, MiddlewareResult, Nickel, Request, Response};
 use std::io::{self, Write};
