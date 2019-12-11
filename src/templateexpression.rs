@@ -125,6 +125,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             tag("@"),
             tag("{"),
             tag("}"),
+            tag("("),
             terminated(alt((tag("if"), tag("for"))), tag(" ")),
             value(&b""[..], tag("")),
         )),
@@ -193,6 +194,11 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 body,
             },
         )(i),
+        (i, Some(b"(")) => map(terminated(expression, tag(")")), |expr| {
+            TemplateExpression::Expression {
+                expr: expr.to_string(),
+            }
+        })(i),
         (i, Some(b"")) => {
             map(expression, |expr| TemplateExpression::Expression {
                 expr: expr.to_string(),
