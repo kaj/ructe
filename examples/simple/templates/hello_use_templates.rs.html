@@ -1,7 +1,7 @@
 @use super::hello_html;
 @use super::hello_code_html;
 
-@(body: &ToHtml)
+@(body: &impl ToHtml)
 
 @:hello_html()
 @:hello_code_html(&"foo", body)
