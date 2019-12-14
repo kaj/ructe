@@ -295,6 +295,7 @@ fn test_some_expressions() {
          \n<p>name.name</p>\
          \n<p>4</p>\
          \n<p>name.len()</p>\
+         \n<p>-1</p>\
          \n<p>1</p>\n"
     )
 }

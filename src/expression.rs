@@ -63,19 +63,7 @@ pub fn rust_name(input: &[u8]) -> PResult<&str> {
 
 fn expr_in_parens(input: &[u8]) -> PResult<&str> {
     map_res(
-        recognize(delimited(
-            tag("("),
-            many0(alt((
-                value((), is_not("[]()\"/")),
-                value((), expr_in_braces),
-                value((), expr_in_brackets),
-                value((), expr_in_parens),
-                value((), quoted_string),
-                value((), rust_comment),
-                value((), terminated(tag("/"), none_of("*"))),
-            ))),
-            tag(")"),
-        )),
+        recognize(delimited(tag("("), expr_inside_parens, tag(")"))),
         input_to_str,
     )(input)
 }
@@ -113,6 +101,21 @@ pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
             ))),
             tag("}"),
         )),
+        input_to_str,
+    )(input)
+}
+
+pub fn expr_inside_parens(input: &[u8]) -> PResult<&str> {
+    map_res(
+        recognize(many0(alt((
+            value((), is_not("{}[]()\"/")),
+            value((), expr_in_braces),
+            value((), expr_in_brackets),
+            value((), expr_in_parens),
+            value((), quoted_string),
+            value((), rust_comment),
+            value((), terminated(tag("/"), none_of("*"))),
+        )))),
         input_to_str,
     )(input)
 }
