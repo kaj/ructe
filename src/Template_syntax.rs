@@ -99,6 +99,10 @@ pub mod a_Value_expressions {
     //! ```text
     //! <p>The sum @a+3 is @(a+3).</p>
     //! ```
+    //! If `a` is 2, this exapands to:
+    //! ```text
+    //! <p>The sum 2+3 is 5.</p>
+    //! ```
     //!
     //! Anything is allowed in parenthesis, as long as parenthesis,
     //! brackets and string quotes are balanced.
@@ -109,6 +113,32 @@ pub mod a_Value_expressions {
     //! ```text
     //! <p>Index: @myvec[t.map(|s| s.length()).unwrap_or(0)].</p>
     //! <p>Argument: @call(a + 3, |t| t.something()).</p>
+    //! ```
+    //!
+    //! An expression ends when parenthesis and brackets are matched
+    //! and it is followed by something not allowed in an expression.
+    //! This includes whitespace and e.g. the `<` and `@` characters.
+    //! If an expression starts with an open parenthesis, the
+    //! expression ends when that parentheis is closed.
+    //! That is usefull if an expression is to be emmediatley followed
+    //! by something that would be allowed in an expression.
+    //!
+    //! ```text
+    //! <p>@arg</p>
+    //! <p>@arg.</p>
+    //! <p>@arg.@arg</p>
+    //! <p>@arg.len()</p>
+    //! <p>@(arg).len()</p>
+    //! <p>@((2_i8 - 3).abs())</p>@* Note extra parens needed here *@
+    //! ```
+    //! With `arg = "name"`, the above renders as:
+    //! ```text
+    //! <p>name</p>
+    //! <p>name.</p>
+    //! <p>name.name</p>
+    //! <p>4</p>
+    //! <p>name.len()</p>
+    //! <p>1</p>
     //! ```
 }
 

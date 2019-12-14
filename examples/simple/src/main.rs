@@ -286,3 +286,16 @@ fn test_page_two() {
          \n</html>\n\n",
     )
 }
+
+#[test]
+fn test_some_expressions() {
+    assert_eq!(
+        r2s(|o| some_expressions(o, "name")),
+        "<p>name</p>\
+         \n<p>name.name</p>\
+         \n<p>4</p>\
+         \n<p>name.len()</p>\
+         \n<p>-1</p>\
+         \n<p>1</p>\n"
+    )
+}

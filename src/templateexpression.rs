@@ -1,5 +1,6 @@
 use expression::{
-    comma_expressions, expr_in_braces, expression, input_to_str, rust_name,
+    comma_expressions, expr_in_braces, expr_inside_parens, expression,
+    input_to_str, rust_name,
 };
 use itertools::Itertools;
 use nom::branch::alt;
@@ -125,6 +126,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             tag("@"),
             tag("{"),
             tag("}"),
+            tag("("),
             terminated(alt((tag("if"), tag("for"))), tag(" ")),
             value(&b""[..], tag("")),
         )),
@@ -193,6 +195,13 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 body,
             },
         )(i),
+        (i, Some(b"(")) => {
+            map(terminated(expr_inside_parens, tag(")")), |expr| {
+                TemplateExpression::Expression {
+                    expr: format!("({})", expr),
+                }
+            })(i)
+        }
         (i, Some(b"")) => {
             map(expression, |expr| TemplateExpression::Expression {
                 expr: expr.to_string(),
