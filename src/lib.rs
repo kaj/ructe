@@ -133,6 +133,8 @@ mod templateexpression;
 
 use parseresult::show_errors;
 use std::env;
+use std::error::Error;
+use std::fmt::{self, Display};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
@@ -507,6 +509,17 @@ pub enum RucteError {
     Io(io::Error),
     /// Error resolving a given environment variable.
     Env(String, env::VarError),
+}
+
+impl Error for RucteError {}
+
+impl Display for RucteError {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RucteError::Io(err) => err.fmt(out),
+            RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
+        }
+    }
 }
 
 impl From<io::Error> for RucteError {
