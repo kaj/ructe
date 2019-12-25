@@ -191,7 +191,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             )),
             |(name, expr, body)| TemplateExpression::ForLoop {
                 name,
-                expr: expr.to_string(),
+                expr,
                 body,
             },
         )(i),
