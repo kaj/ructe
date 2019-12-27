@@ -232,7 +232,7 @@ impl StaticFile {
     /// Get a single `StaticFile` by name, if it exists.
     pub fn get(name: &str) -> Option<&'static Self> {
         if let Ok(pos) = STATICS.binary_search_by_key(&name, |s| s.name) {
-            return Some(STATICS[pos]);
+            Some(STATICS[pos])
         } else {None}
     }
 }
@@ -537,7 +537,7 @@ impl Drop for StaticFiles {
         // Ignore a possible write failure, rather than a panic in drop.
         let _ = writeln!(
             self.src,
-            "\npub static STATICS: &'static [&'static StaticFile] \
+            "\npub static STATICS: &[&StaticFile] \
              = &[{}];",
             self.names_r
                 .iter()
