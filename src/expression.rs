@@ -124,7 +124,7 @@ pub fn quoted_string(input: &[u8]) -> PResult<&str> {
     map_res(
         recognize(delimited(
             char('"'),
-            opt(escaped(is_not("\"\\"), '\\', one_of("\"\\"))),
+            opt(escaped(is_not("\"\\"), '\\', one_of("'\"\\nrt0xu"))),
             char('"'),
         )),
         input_to_str,
@@ -189,6 +189,14 @@ mod test {
     #[test]
     fn expression_str_paren() {
         check_expr("(\")\")");
+    }
+    #[test]
+    fn expression_str_quoted() {
+        check_expr("\"line 1\\nline\\t2\"");
+    }
+    #[test]
+    fn expression_str_quoted_unicode() {
+        check_expr("\"Snowman: \\u{2603}\"");
     }
     #[test]
     fn expression_enum_variant() {
