@@ -21,6 +21,7 @@ matrix:
       - cd ../static-sass && cargo fmt -- --check
       - cd ../statics && cargo fmt -- --check
       - cd ../warp && cargo fmt -- --check
+      - cd ../warp02 && cargo fmt -- --check
    - rust: stable
      env: EXAMPLE=ed2018
      script: cd examples/$EXAMPLE && cargo test
@@ -32,6 +33,9 @@ matrix:
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
      env: EXAMPLE=warp
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
+     env: EXAMPLE=warp02
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
      env: EXAMPLE=gotham
