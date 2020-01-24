@@ -79,21 +79,21 @@ static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 /// Create custom error pages.
 async fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     if err.is_not_found() {
-            eprintln!("Got a 404: {:?}", err);
-            // We have a custom 404 page!
-            Response::builder().status(StatusCode::NOT_FOUND).html(|o| {
-                templates::error(
-                    o,
-                    StatusCode::NOT_FOUND,
-                    "The resource you requested could not be located.",
-                )
-            })
+        eprintln!("Got a 404: {:?}", err);
+        // We have a custom 404 page!
+        Response::builder().status(StatusCode::NOT_FOUND).html(|o| {
+            templates::error(
+                o,
+                StatusCode::NOT_FOUND,
+                "The resource you requested could not be located.",
+            )
+        })
     } else {
         let code = StatusCode::INTERNAL_SERVER_ERROR; // FIXME
         eprintln!("Got a {}: {:?}", code.as_u16(), err);
         Response::builder()
-           .status(code)
-           .html(|o| templates::error(o, code, "Something went wrong."))
+            .status(code)
+            .html(|o| templates::error(o, code, "Something went wrong."))
     }
 }
 
