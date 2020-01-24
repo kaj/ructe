@@ -306,6 +306,14 @@ impl Drop for Ructe {
                 )))
                 .unwrap();
         }
+        if cfg!(feature = "warp02") {
+            self.f
+                .write_all(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/template_utils_warp02.rs"
+                )))
+                .unwrap();
+        }
         self.f.write_all(b"\n}\n").unwrap();
     }
 }
