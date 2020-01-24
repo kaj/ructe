@@ -388,6 +388,8 @@ impl StaticFile {
     /// # pub static black_css: StaticFile = StaticFile {
     /// #     content: b"body{color:black}\n",
     /// #     name: "black-r3rltVhW.css",
+    /// #     #[cfg(feature = "mime03")]
+    /// #     mime: &mime::TEXT_CSS,
     /// # };
     /// # }
     /// assert_eq!(statics::black_css.name, "black-r3rltVhW.css");
