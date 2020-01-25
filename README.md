@@ -35,8 +35,7 @@ First a preamble of `use` statements, each prepended by an @ sign.
 Secondly a declaration of the parameters the template takes.
 And third, the template body.
 
-The full syntax is described [in the
-documentation](https://docs.rs/ructe/~0.3/ructe/Template_syntax/index.html).
+The full syntax is described [in the documentation](https://docs.rs/ructe/).
 Some examples can be seen in
 [examples/simple/templates](examples/simple/templates).
 A template may look something like this:
@@ -73,6 +72,6 @@ There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
 frameworks [actix-web](examples/actix),
 [iron](examples/iron), [nickel](examples/nickel),
-[gotham](examples/gotham), and [warp](examples/warp).
+[gotham](examples/gotham), and [warp](examples/warp02).
 There is also [a separate example of using ructe with warp and
 diesel](https://github.com/kaj/warp-diesel-ructe-sample).

@@ -84,12 +84,14 @@
 //! Ructe has some options that can be enabled from `Cargo.toml`.
 //!
 //! * `sass` -- Compile sass and include the compiled css as static assets.
-//! * `mime02` -- Static files know their mime types, compatible with
-//! version 0.2.x of the [mime] crate.
 //! * `mime03` -- Static files know their mime types, compatible with
 //! version 0.3.x of the [mime] crate.
-//! * `warp` -- Provide an extension to [`Response::Builder`] to
-//! simplify template rendering in the [warp] framework.
+//! * `mime02` -- Static files know their mime types, compatible with
+//! version 0.2.x of the [mime] crate.
+//! * `warp02` -- Provide an extension to [`Response::Builder`] to
+//! simplify template rendering in the [warp] framework, versions 0.2.x.
+//! * `warp01` -- Provide an extension to [`Response::Builder`] to
+//! simplify template rendering in the [warp] framework, versions 0.1.x.
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
