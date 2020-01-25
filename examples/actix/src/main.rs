@@ -16,7 +16,8 @@ use templates::statics::StaticFile;
 mod actix_ructe;
 
 /// Main program: Set up routes and start server.
-fn main() {
+#[actix_rt::main]
+async fn main() {
     env_logger::init();
     HttpServer::new(|| {
         App::new()
@@ -33,6 +34,7 @@ fn main() {
     .bind("127.0.0.1:8088")
     .unwrap()
     .run()
+    .await
     .expect("Run server");
 }
 
@@ -62,7 +64,9 @@ fn static_file(path: Path<(String,)>) -> HttpResponse {
     }
 }
 
-fn take_int(args: Path<(usize,)>) -> Result<HttpResponse, ExampleAppError> {
+async fn take_int(
+    args: Path<(usize,)>,
+) -> Result<HttpResponse, ExampleAppError> {
     let i = args.0;
     Ok(HttpResponse::Ok().body(render!(
         templates::page,
@@ -70,7 +74,7 @@ fn take_int(args: Path<(usize,)>) -> Result<HttpResponse, ExampleAppError> {
     )))
 }
 
-fn make_error() -> Result<HttpResponse, ExampleAppError> {
+async fn make_error() -> Result<HttpResponse, ExampleAppError> {
     let i = "three".parse()?;
     Ok(HttpResponse::Ok().body(render!(templates::page, &[("first", i)])))
 }

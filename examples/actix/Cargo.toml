@@ -10,6 +10,7 @@ build = "src/build.rs"
 ructe = { path = "../..", features = ["sass", "mime03"] }
 
 [dependencies]
-actix-web = "1.0.2"
+actix-web = "2.0.0"
+actix-rt = "1"
 mime = "0.3.0"
 env_logger = "0.7.1"
