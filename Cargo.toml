@@ -18,7 +18,7 @@ warp01 = ["warp", "mime03"]
 warp02 = ["mime03"]
 
 [dependencies]
-base64 = "^0.11.0"
+base64 = "^0.12.0"
 bytecount = "0.6.0"
 itertools = "^0.8.0"
 md5 = "0.7"
