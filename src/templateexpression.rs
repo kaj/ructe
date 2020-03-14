@@ -55,7 +55,7 @@ impl Display for TemplateArgument {
             }
             TemplateArgument::Body(ref v) => writeln!(
                 out,
-                "|mut out| {{\n{}\nOk(())\n}}",
+                "|mut _ructe_out_| {{\n{}\nOk(())\n}}",
                 v.iter().map(|b| b.code()).format(""),
             ),
         }
@@ -72,13 +72,13 @@ impl TemplateExpression {
         match *self {
             TemplateExpression::Comment => String::new(),
             TemplateExpression::Text { ref text } if text.is_ascii() => {
-                format!("out.write_all(b{:?})?;\n", text)
+                format!("_ructe_out_.write_all(b{:?})?;\n", text)
             }
             TemplateExpression::Text { ref text } => {
-                format!("out.write_all({:?}.as_bytes())?;\n", text)
+                format!("_ructe_out_.write_all({:?}.as_bytes())?;\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("{}.to_html(&mut out)?;\n", expr)
+                format!("{}.to_html(&mut _ructe_out_)?;\n", expr)
             }
             TemplateExpression::ForLoop {
                 ref name,
@@ -105,7 +105,7 @@ impl TemplateExpression {
             ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
-                    "{}(&mut out{})?;\n",
+                    "{}(&mut _ructe_out_{})?;\n",
                     name,
                     args.iter().format_with("", |arg, f| f(&format_args!(
                         ", {}",
