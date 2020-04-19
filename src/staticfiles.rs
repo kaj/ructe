@@ -431,7 +431,11 @@ impl StaticFile {
         let src = self.path_for(src);
         use rsass::*;
         use std::sync::Arc;
-        let mut scope = GlobalScope::new();
+        let format = output::Format {
+            style: output::Style::Compressed,
+            precision: 4,
+        };
+        let mut scope = GlobalScope::new(format);
 
         // TODO Find any referenced files!
         println!("cargo:rerun-if-changed={}", src.display());
@@ -466,8 +470,8 @@ impl StaticFile {
         let file_context = FileContext::new();
         let (file_context, src) = file_context.file(&src);
         let scss = parse_scss_file(&src).unwrap();
-        let style = OutputStyle::Compressed;
-        let css = style.write_root(&scss, &mut scope, &file_context).unwrap();
+        let css =
+            format.write_root(&scss, &mut scope, &file_context).unwrap();
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
