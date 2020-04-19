@@ -90,8 +90,6 @@
 //! version 0.2.x of the [mime] crate.
 //! * `warp02` -- Provide an extension to [`Response::Builder`] to
 //! simplify template rendering in the [warp] framework, versions 0.2.x.
-//! * `warp01` -- Provide an extension to [`Response::Builder`] to
-//! simplify template rendering in the [warp] framework, versions 0.1.x.
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
@@ -120,8 +118,6 @@ extern crate mime;
 extern crate nom;
 #[cfg(feature = "sass")]
 extern crate rsass;
-#[cfg(feature = "warp")]
-extern crate warp;
 
 pub mod Template_syntax;
 mod expression;
@@ -300,14 +296,6 @@ impl Drop for Ructe {
                 "/src/template_utils.rs"
             )))
             .unwrap();
-        if cfg!(feature = "warp") {
-            self.f
-                .write_all(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/src/template_utils_warp.rs"
-                )))
-                .unwrap();
-        }
         if cfg!(feature = "warp02") {
             self.f
                 .write_all(include_bytes!(concat!(
@@ -453,9 +441,6 @@ pub mod templates {
     }
 
     include!("template_utils.rs");
-
-    #[cfg(feature = "warp")]
-    include!("template_utils_warp.rs");
 
     #[test]
     fn encoded() {
