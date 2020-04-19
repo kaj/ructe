@@ -504,6 +504,9 @@ pub enum RucteError {
     Io(io::Error),
     /// Error resolving a given environment variable.
     Env(String, env::VarError),
+    /// Error bundling a sass stylesheet as css.
+    #[cfg(feature = "sass")]
+    Sass(rsass::Error),
 }
 
 impl Error for RucteError {}
@@ -513,6 +516,8 @@ impl Display for RucteError {
         match self {
             RucteError::Io(err) => err.fmt(out),
             RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
+            #[cfg(feature = "sass")]
+            RucteError::Sass(err) => err.fmt(out),
         }
     }
 }
@@ -520,6 +525,13 @@ impl Display for RucteError {
 impl From<io::Error> for RucteError {
     fn from(e: io::Error) -> RucteError {
         RucteError::Io(e)
+    }
+}
+
+#[cfg(feature = "sass")]
+impl From<rsass::Error> for RucteError {
+    fn from(e: rsass::Error) -> RucteError {
+        RucteError::Sass(e)
     }
 }
 
