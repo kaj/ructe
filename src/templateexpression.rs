@@ -34,6 +34,10 @@ pub enum TemplateExpression {
         body: Vec<TemplateExpression>,
         else_body: Option<Vec<TemplateExpression>>,
     },
+    MatchBlock {
+        expr: String,
+        arms: Vec<(String, Vec<TemplateExpression>)>,
+    },
     CallTemplate {
         name: String,
         args: Vec<TemplateArgument>,
@@ -103,6 +107,17 @@ impl TemplateExpression {
                     body.iter().map(|b| b.code()).format(""),
                 ))),
             ),
+            TemplateExpression::MatchBlock { ref expr, ref arms } => format!(
+                "match {} {{{}}}\n",
+                expr,
+                arms.iter().format_with("", |(expr, body), f| {
+                    f(&format_args!(
+                        "\n  {} => {{\n{}}}",
+                        expr,
+                        body.iter().map(|b| b.code()).format(""),
+                    ))
+                })
+            ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
                     "{}(&mut _ructe_out_{})?;\n",
@@ -127,7 +142,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             tag("{"),
             tag("}"),
             tag("("),
-            terminated(alt((tag("if"), tag("for"))), tag(" ")),
+            terminated(alt((tag("if"), tag("for"), tag("match"))), tag(" ")),
             value(&b""[..], tag("")),
         )),
     ))(input)?
@@ -194,6 +209,34 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 expr,
                 body,
             },
+        )(i),
+        (i, Some(b"match")) => context(
+            "Error in match expression:",
+            map(
+                tuple((
+                    delimited(spacelike, loop_expression, spacelike),
+                    preceded(
+                        char('{'),
+                        map(
+                            many_till(
+                                context(
+                                    "Error in match arm starting here:",
+                                    pair(
+                                        for_variable,
+                                        preceded(
+                                            terminated(tag("=>"), spacelike),
+                                            template_block,
+                                        ),
+                                    ),
+                                ),
+                                char('}'),
+                            ),
+                            |(block, _end)| block,
+                        ),
+                    ),
+                )),
+                |(expr, arms)| TemplateExpression::MatchBlock { expr, arms },
+            ),
         )(i),
         (i, Some(b"(")) => {
             map(terminated(expr_inside_parens, tag(")")), |expr| {
