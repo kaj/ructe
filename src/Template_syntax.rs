@@ -181,8 +181,8 @@ pub mod b_Loops {
 }
 
 pub mod c_Conditionals {
-    //! Both `@if` statements with boolean expressions and match-like
-    //! guard `@if let` statements are supported.
+    //! Both `@if` statements with boolean expressions, `@if let` guard
+    //! statements, and `@match` statements are supported.
     //!
     //! # Conditionals
     //!
@@ -205,8 +205,29 @@ pub mod c_Conditionals {
     //! }
     //! ```
     //!
-    //! General rust `match` statements are _not_ supported in ructe
-    //! (at least not yet).
+    //! The condition or let expression should allow anything that would be
+    //! allowed in the same place in plain rust.
+    //! As with loops, the things in the curly brackets are ructe template
+    //! code.
+    //!
+    //! ## match
+    //!
+    //! Pattern matching using `match` statements are also supported.
+    //!
+    //! ```text
+    //! @match answer {
+    //!   Ok(value) => {
+    //!     <p>The answer is @value.</p>
+    //!   }
+    //!   Err(_) => {
+    //!     <p>I don't know the answer.</p>
+    //!   }
+    //! }
+    //! ```
+    //!
+    //! The let expression and patterns should allow anything that would be
+    //! allowed in the same place in plain rust.
+    //! As above, the things in the curly brackets are ructe template code.
 }
 
 pub mod d_Calling_other_templates {
