@@ -229,7 +229,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                                         ),
                                     ),
                                 ),
-                                char('}'),
+                                preceded(spacelike, char('}')),
                             ),
                             |(block, _end)| block,
                         ),
