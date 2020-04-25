@@ -214,7 +214,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             "Error in match expression:",
             map(
                 tuple((
-                    delimited(spacelike, loop_expression, spacelike),
+                    delimited(spacelike, expression, spacelike),
                     preceded(
                         char('{'),
                         map(
@@ -222,7 +222,11 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                                 context(
                                     "Error in match arm starting here:",
                                     pair(
-                                        for_variable,
+                                        delimited(
+                                            spacelike,
+                                            map(expression, String::from),
+                                            spacelike,
+                                        ),
                                         preceded(
                                             terminated(tag("=>"), spacelike),
                                             template_block,
@@ -231,11 +235,14 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                                 ),
                                 preceded(spacelike, char('}')),
                             ),
-                            |(block, _end)| block,
+                            |(arms, _end)| arms,
                         ),
                     ),
                 )),
-                |(expr, arms)| TemplateExpression::MatchBlock { expr, arms },
+                |(expr, arms)| TemplateExpression::MatchBlock {
+                    expr: expr.to_string(),
+                    arms,
+                },
             ),
         )(i),
         (i, Some(b"(")) => {
