@@ -2,6 +2,7 @@ use super::Result;
 use base64;
 use itertools::Itertools;
 use md5;
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
 use std::fs::{read_dir, File};
@@ -225,6 +226,11 @@ pub struct StaticFile {
         if cfg!(feature = "mime03") {
             src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
+        if cfg!(feature = "sri") {
+            src.write_all(b"    pub integrity_sha256: &'static str,\n")?;
+            src.write_all(b"    pub integrity_sha384: &'static str,\n")?;
+            src.write_all(b"    pub integrity_sha512: &'static str,\n")?;
+        }
         src.write_all(
             b"}
 #[allow(dead_code)]
@@ -332,7 +338,7 @@ impl StaticFile {
                 &path,
                 &rust_name,
                 &url_name,
-                &FileContent(&path),
+                FileContent(&path),
                 ext,
             )?;
         }
@@ -350,7 +356,7 @@ impl StaticFile {
         let path = &self.path_for(path);
         let ext = name_and_ext(path).map(|(_, e)| e).unwrap_or("");
         println!("cargo:rerun-if-changed={}", path.display());
-        self.add_static(path, url_name, url_name, &FileContent(path), ext)?;
+        self.add_static(path, url_name, url_name, FileContent(path), ext)?;
         Ok(())
     }
 
@@ -407,7 +413,7 @@ impl StaticFile {
                 path,
                 &rust_name,
                 &url_name,
-                &ByteString(data),
+                ByteString(data),
                 ext,
             )?;
         }
@@ -474,14 +480,17 @@ impl StaticFile {
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
-    fn add_static(
+    fn add_static<'a, C>(
         &mut self,
         path: &Path,
         rust_name: &str,
         url_name: &str,
-        content: &impl Display,
+        content: C,
         suffix: &str,
-    ) -> io::Result<()> {
+    ) -> io::Result<()>
+    where
+        C: Display + Into<Cow<'a, [u8]>>,
+    {
         let rust_name = rust_name
             .replace("/", "_")
             .replace("-", "_")
@@ -494,12 +503,14 @@ impl StaticFile {
              \n  content: {content},\
              \n  name: \"{url_name}\",\
              \n{mime}\
+             \n{sri}\
              }};",
             path = path,
             rust_name = rust_name,
             url_name = url_name,
-            content = content,
+            content = format!("{}", content),
             mime = mime_arg(suffix),
+            sri = sri_args(&content.into()),
         )?;
         self.names.insert(rust_name.clone(), url_name.into());
         self.names_r.insert(url_name.into(), rust_name);
@@ -560,6 +571,22 @@ impl<'a> Display for FileContent<'a> {
     }
 }
 
+impl<'a> From<FileContent<'a>> for Cow<'a, [u8]> {
+    fn from(file_content: FileContent<'a>) -> Self {
+        let mut bytes = vec![];
+        let mut file = File::open(file_content.0).expect(&format!(
+            "path does not exist: {}",
+            file_content.0.display()
+        ));
+        file.read_to_end(&mut bytes).expect(&format!(
+            "could not read file: {}",
+            file_content.0.display()
+        ));
+
+        Cow::Owned(bytes)
+    }
+}
+
 struct ByteString<'a>(&'a [u8]);
 
 impl<'a> Display for ByteString<'a> {
@@ -581,6 +608,12 @@ impl<'a> Display for ByteString<'a> {
     }
 }
 
+impl<'a> From<ByteString<'a>> for Cow<'a, [u8]> {
+    fn from(bytes: ByteString<'a>) -> Self {
+        Cow::Borrowed(bytes.0)
+    }
+}
+
 fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
     if let (Some(name), Some(ext)) = (path.file_name(), path.extension()) {
         if let (Some(name), Some(ext)) = (name.to_str(), ext.to_str()) {
@@ -594,6 +627,41 @@ fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
 fn checksum_slug(data: &[u8]) -> String {
     base64::encode_config(&md5::compute(data)[..6], base64::URL_SAFE)
 }
+
+#[cfg(not(feature = "sri"))]
+fn sri_args(_: &[u8]) -> String {
+    "".to_string()
+}
+
+#[cfg(feature = "sri")]
+fn sri_args(content: &[u8]) -> String {
+    use ssri::{Algorithm, IntegrityOpts};
+
+    let sha256 = IntegrityOpts::new()
+        .algorithm(Algorithm::Sha256)
+        .chain(content)
+        .result()
+        .to_string();
+
+    let sha384 = IntegrityOpts::new()
+        .algorithm(Algorithm::Sha384)
+        .chain(content)
+        .result()
+        .to_string();
+    let sha512 = IntegrityOpts::new()
+        .algorithm(Algorithm::Sha512)
+        .chain(content)
+        .result()
+        .to_string();
+
+    format!(
+        "integrity_sha256: {sha256:?},\nintegrity_sha384: {sha384:?},\nintegrity_sha512: {sha512:?}",
+        sha256 = sha256,
+        sha384 = sha384,
+        sha512 = sha512,
+    )
+}
+
 #[cfg(not(feature = "mime02"))]
 #[cfg(not(feature = "mime03"))]
 fn mime_arg(_: &str) -> String {

@@ -12,6 +12,7 @@ license = "MIT/Apache-2.0"
 
 [features]
 sass = ["rsass"]
+sri = ["ssri"]
 mime02 = []
 mime03 = ["mime"]
 warp02 = ["mime03"]
@@ -24,6 +25,7 @@ md5 = "0.7"
 nom = "5.0.0"
 
 rsass = { version = "0.13.0", optional = true }
+ssri = { version = "5.0.0", optional = true }
 mime = { version = "0.3", optional = true }
 
 [badges]

@@ -7,7 +7,7 @@ edition = "2018"
 build = "src/build.rs"
 
 [build-dependencies]
-ructe = { path = "../..", features = ["sass", "mime03"] }
+ructe = { path = "../..", features = ["sass", "sri", "mime03"] }
 
 [dependencies]
 actix-web = "2.0.0"
