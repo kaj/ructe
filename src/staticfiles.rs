@@ -565,11 +565,19 @@ struct ByteString<'a>(&'a [u8]);
 impl<'a> Display for ByteString<'a> {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use std::ascii::escape_default;
-        out.write_str("b\"")?;
-        for byte in self.0 {
-            escape_default(*byte).fmt(out)?;
-        }
-        out.write_str("\"")
+        use std::str::from_utf8_unchecked;
+        let escaped = self
+            .0
+            .iter()
+            .flat_map(|c| escape_default(*c))
+            .collect::<Vec<u8>>();
+        write!(
+            out,
+            "b\"{}\"",
+            // The above escaping makes sure t contains only printable ascii,
+            // which is always valid utf8.
+            unsafe { from_utf8_unchecked(&escaped) },
+        )
     }
 }
 
