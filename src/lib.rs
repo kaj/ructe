@@ -90,6 +90,9 @@
 //! version 0.2.x of the [mime] crate.
 //! * `warp02` -- Provide an extension to [`Response::Builder`] to
 //! simplify template rendering in the [warp] framework, versions 0.2.x.
+//! * `sri` -- Generate [subresource
+//! integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity)
+//! strings using the [ssri] crate
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
@@ -103,7 +106,7 @@
 //! build = "src/build.rs"
 //!
 //! [build-dependencies]
-//! ructe = { version = "0.6.0", features = ["sass", "mime03"] }
+//! ructe = { version = "0.6.0", features = ["sass", "sri", "mime03"] }
 //!
 //! [dependencies]
 //! mime = "0.3.13"
@@ -118,6 +121,8 @@ extern crate mime;
 extern crate nom;
 #[cfg(feature = "sass")]
 extern crate rsass;
+#[cfg(feature = "sri")]
+extern crate ssri;
 
 pub mod Template_syntax;
 mod expression;
