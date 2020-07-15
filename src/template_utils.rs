@@ -7,6 +7,64 @@
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
     fn to_html(&self, out: &mut dyn Write) -> io::Result<()>;
+
+    /// Write the HTML represention of this value to a buffer.
+    ///
+    /// This can be used for testing, and for short-cutting situations
+    /// with complex ownership, since the resulting buffer gets owned
+    /// by the caller.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> std::io::Result<()> {
+    /// use ructe::templates::ToHtml;
+    /// assert_eq!(17_u8.to_buffer().unwrap(), &b"17"[..]);
+    /// assert_eq!("a < b".to_buffer()?, "a &lt; b");
+    /// Ok(())
+    /// }
+    /// ```
+    fn to_buffer(&self) -> io::Result<HtmlBuffer> {
+        let mut buf = Vec::new();
+        self.to_html(&mut buf)?;
+        Ok(HtmlBuffer { buf })
+    }
+}
+
+/// Return type for [`ToHtml::to_buffer`].
+///
+/// An opaque heap-allocated buffer containing a rendered HTML snippet.
+pub struct HtmlBuffer {
+    buf: Vec<u8>
+}
+
+impl std::fmt::Debug for HtmlBuffer {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(out, "HtmlBuffer {{ {:?} }}", String::from_utf8_lossy(&self.buf))
+    }
+}
+
+impl ToHtml for HtmlBuffer {
+    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+        out.write_all(&self.buf)
+    }
+}
+
+impl AsRef<[u8]> for HtmlBuffer {
+    fn as_ref(&self) -> &[u8] {
+        &self.buf
+    }
+}
+
+impl PartialEq<&[u8]> for HtmlBuffer {
+    fn eq(&self, other: &&[u8]) -> bool {
+        &self.buf == other
+    }
+}
+impl PartialEq<&str> for HtmlBuffer {
+    fn eq(&self, other: &&str) -> bool {
+        let other: &[u8] = other.as_ref();
+        &self.buf == &other
+    }
 }
 
 /// Wrapper object for data that should be outputted as raw html
