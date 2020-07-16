@@ -2,6 +2,7 @@ use super::Result;
 use base64;
 use itertools::Itertools;
 use md5;
+use std::ascii::escape_default;
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
 use std::fs::{read_dir, File};
@@ -564,19 +565,9 @@ struct ByteString<'a>(&'a [u8]);
 
 impl<'a> Display for ByteString<'a> {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        use std::fmt::Write;
         out.write_str("b\"")?;
         for byte in self.0 {
-            match *byte {
-                b'\t' => out.write_str("\\t"),
-                b'\r' => out.write_str("\\r"),
-                b'\n' => out.write_str("\\n"),
-                b'\\' => out.write_str("\\\\"),
-                b'\'' => out.write_str("\\\'"),
-                b'"' => out.write_str("\\\""),
-                b'\x20'..=b'\x7e' => out.write_char(*byte as char),
-                c => write!(out, "\\x{:02x}", c),
-            }?
+            escape_default(*byte).fmt(out)?;
         }
         out.write_str("\"")
     }
