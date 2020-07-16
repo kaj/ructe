@@ -4,7 +4,7 @@ This is my attempt at writing a HTML template system for Rust.
 Some inspiration comes from the scala template system used in play 2,
 as well as plain old jsp.
 
-[![Build Status](https://travis-ci.org/kaj/ructe.svg?branch=master)](https://travis-ci.org/kaj/ructe)
+[![Build Status](https://travis-ci.com/kaj/ructe.svg?branch=master)](https://travis-ci.com/kaj/ructe)
 [![Crate](https://meritbadge.herokuapp.com/ructe)](https://crates.io/crates/ructe)
 [![docs](https://docs.rs/ructe/badge.svg)](https://docs.rs/ructe)
 
