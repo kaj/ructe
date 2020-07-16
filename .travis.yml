@@ -34,6 +34,9 @@ matrix:
      env: EXAMPLE=warp02
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
+     env: EXAMPLE=tide
+     script: cd examples/$EXAMPLE && cargo test
+   - rust: stable
      env: EXAMPLE=gotham
      script: cd examples/$EXAMPLE && cargo test
    - rust: stable
