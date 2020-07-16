@@ -20,6 +20,7 @@ matrix:
       - cd ../simple && cargo fmt -- --check
       - cd ../static-sass && cargo fmt -- --check
       - cd ../statics && cargo fmt -- --check
+      - cd ../tide && cargo fmt -- --check
       - cd ../warp02 && cargo fmt -- --check
    - rust: stable
      env: EXAMPLE=ed2018
