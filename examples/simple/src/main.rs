@@ -299,3 +299,8 @@ fn test_some_expressions() {
          \n<p>1</p>\n"
     )
 }
+
+#[test]
+fn test_issue_66() {
+    assert_eq!(r2s(|o| issue_66(o)), "ABC\n");
+}

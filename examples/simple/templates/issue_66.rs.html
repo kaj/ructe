@@ -1,0 +1,11 @@
+@()
+
+@Option::None.unwrap_or_else(|| {
+    let mut text = String::from("AB");
+
+    if true {
+        text.push('C');
+    }
+
+    return text;
+})

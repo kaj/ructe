@@ -94,6 +94,7 @@ pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
             many0(alt((
                 value((), is_not("{}[]()\"/")),
                 value((), expr_in_brackets),
+                value((), expr_in_braces),
                 value((), expr_in_parens),
                 value((), quoted_string),
                 value((), rust_comment),
