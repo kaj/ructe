@@ -83,7 +83,7 @@ fn test_if_let_destructure() {
 fn test_list() {
     assert_eq!(
         r2s(|o| list_html(o, &["foo", "bar"])),
-        "\n<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  </ul>\n\n"
+        "\n<ul>\n  \n    <li>foo</li>\n  \n    <li>bar</li>\n  \n</ul>\n\n"
     );
 }
 
@@ -97,7 +97,7 @@ fn test_list_destructure() {
     assert_eq!(
         r2s(|o| list_destructure_html(o, &["foo", "bar"])),
         "<ul>\n  \n    <li>0: foo</li>\n  \n    \
-         <li>1: bar</li>\n  </ul>\n"
+         <li>1: bar</li>\n  \n</ul>\n"
     );
 }
 
@@ -106,7 +106,7 @@ fn test_list_destructure_2() {
     assert_eq!(
         r2s(|o| list_destructure_2_html(o)),
         "\n    <p>Rasmus is 44 years old.</p>\n\n    \
-         <p>Mike is 36 years old.</p>\n"
+         <p>Mike is 36 years old.</p>\n\n"
     );
 }
 
@@ -116,7 +116,7 @@ fn test_uselist() {
         r2s(|o| uselist_html(o)),
         "<h1>Two items</h1>\n\n\
          <ul>\n  \n    <li>foo</li>\n  \
-         \n    <li>bar</li>\n  </ul>\n\n\n\
+         \n    <li>bar</li>\n  \n</ul>\n\n\n\
          <h2>No items</h2>\n\n\
          <p>No items</p>\n\n\n"
     );
@@ -202,7 +202,7 @@ fn test_for_loop() {
     assert_eq!(
         r2s(|o| for_loop_html(o, &vec!["Hello", "World"])),
         "<h1>Looped paragraphs</h1>\n\n  \
-         <p>Hello</p>\n\n  <p>World</p>\n"
+         <p>Hello</p>\n\n  <p>World</p>\n\n"
     );
 }
 
@@ -303,4 +303,12 @@ fn test_some_expressions() {
 #[test]
 fn test_issue_66() {
     assert_eq!(r2s(|o| issue_66(o)), "ABC\n");
+}
+
+#[test]
+fn test_issue_68() {
+    assert_eq!(
+        r2s(|o| issue_68(o)),
+        "Hello!\n\nThe 0 number.\n\nThe 1 number.\n\nThe 2 number.\n\nGood bye!\n",
+    );
 }
