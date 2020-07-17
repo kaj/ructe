@@ -34,12 +34,12 @@ pub trait ToHtml {
 ///
 /// An opaque heap-allocated buffer containing a rendered HTML snippet.
 pub struct HtmlBuffer {
-    buf: Vec<u8>
+    buf: Vec<u8>,
 }
 
 impl std::fmt::Debug for HtmlBuffer {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(out, "HtmlBuffer {{ {:?} }}", String::from_utf8_lossy(&self.buf))
+        write!(out, "HtmlBuffer({:?})", String::from_utf8_lossy(&self.buf))
     }
 }
 
@@ -63,7 +63,7 @@ impl PartialEq<&[u8]> for HtmlBuffer {
 impl PartialEq<&str> for HtmlBuffer {
     fn eq(&self, other: &&str) -> bool {
         let other: &[u8] = other.as_ref();
-        &self.buf == &other
+        self.buf == other
     }
 }
 

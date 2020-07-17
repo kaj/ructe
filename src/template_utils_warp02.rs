@@ -1,6 +1,6 @@
 use mime::TEXT_HTML_UTF_8;
 use warp::http::{header::CONTENT_TYPE, response::Builder};
-use warp::{reject::custom, reject::Reject, Rejection, reply::Response};
+use warp::{reject::custom, reject::Reject, reply::Response, Rejection};
 
 /// Extension trait for [`response::Builder`] to simplify template rendering.
 ///
