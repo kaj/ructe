@@ -2,7 +2,7 @@ use std::io;
 use std::str::from_utf8;
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
-use templates::*;
+use crate::templates::*;
 
 fn main() {
     println!("### Page:");
@@ -18,8 +18,9 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+    use crate::templates::statics::{StaticFile, STATICS};
+    use crate::templates::*;
     use std::io::{self, Write};
-    use templates::*;
 
     #[test]
     fn page_w_static() {
@@ -41,8 +42,8 @@ mod test {
 
     #[test]
     fn static_css_data() {
+        use crate::templates::statics::style_css;
         use std::str::from_utf8;
-        use templates::statics::style_css;
         assert_eq!(
             from_utf8(&style_css.content).unwrap(),
             "\u{feff}body{background:\"burlap-oPfjAg2n.jpg\"}\
@@ -52,7 +53,6 @@ mod test {
 
     #[test]
     fn get_static_by_name() {
-        use templates::statics::StaticFile;
         assert_eq!(
             StaticFile::get("style-uNrEkqKN.css").map(|s| s.name),
             Some("style-uNrEkqKN.css")
@@ -61,13 +61,11 @@ mod test {
 
     #[test]
     fn get_static_unknown() {
-        use templates::statics::StaticFile;
         assert_eq!(StaticFile::get("style-bar.css").map(|s| s.name), None)
     }
 
     #[test]
     fn all_statics_known() {
-        use templates::statics::STATICS;
         assert_eq!(
             STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
             ["burlap-oPfjAg2n.jpg", "style-uNrEkqKN.css"]

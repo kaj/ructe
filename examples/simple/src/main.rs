@@ -3,7 +3,7 @@
 use std::io::{self, Write};
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
-use templates::*;
+use crate::templates::*;
 
 fn main() {
     page::page_html(&mut io::stdout(), "sample page").unwrap();
@@ -143,8 +143,8 @@ fn test_comments() {
 }
 
 mod models {
+    use crate::templates::Html;
     use std::fmt;
-    use templates::Html;
 
     pub struct User<'a> {
         pub name: &'a str,

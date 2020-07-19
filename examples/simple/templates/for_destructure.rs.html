@@ -1,5 +1,5 @@
 @* A sample template that takes a vector argument and loops over it. *@
-@use models::User;
+@use crate::models::User;
 @(users: &[User])
 
 <ul>@for User{name, ..} in users {<li>@name</li>}</ul>

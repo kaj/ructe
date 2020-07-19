@@ -1,5 +1,3 @@
-extern crate ructe;
-
 use ructe::{Result, Ructe};
 
 fn main() -> Result<()> {
