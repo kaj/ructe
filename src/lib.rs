@@ -108,7 +108,7 @@
 //! [dependencies]
 //! mime = "0.3.13"
 //! ```
-#![warn(missing_docs)]
+#![forbid(unsafe_code, missing_docs)]
 extern crate base64;
 extern crate bytecount;
 extern crate itertools;
