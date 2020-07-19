@@ -199,10 +199,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                     context("Expected iterable expression", loop_expression),
                     spacelike,
                 ),
-                terminated(
-                    context("Error in loop block:", template_block),
-                    spacelike,
-                ),
+                context("Error in loop block:", template_block),
             )),
             |(name, expr, body)| TemplateExpression::ForLoop {
                 name,
