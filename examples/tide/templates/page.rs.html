@@ -1,0 +1,36 @@
+@use super::statics::*;
+@use crate::footer;
+
+@(paras: &[(&str, usize)])
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="/static/@style_css.name"/>
+  </head>
+  <body>
+    <main>
+      <h1>Example</h1>
+
+      <p>This is a simple sample page,
+      to be served with warp.
+      It contains an image of a squirrel and not much more.</p>
+
+      <figure>
+        <img src="/static/@squirrel_jpg.name" alt="Squirrel!"
+             width="240" height="160"/>
+        <figcaption>A squirrel</figcaption>
+      </figure>
+
+      @for (order, n) in paras {
+      <p>This is a @order paragraph, with @n repeats.
+	@for _ in 1..=*n {
+	This is a @order paragraph.
+	}
+      }
+    </main>
+    @:footer()
+  </body>
+</html>
