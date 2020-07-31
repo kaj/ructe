@@ -7,10 +7,10 @@ edition = "2018"
 build = "src/build.rs"
 
 [build-dependencies]
-ructe = { path = "../..", features = ["mime03", "sass"] }
+ructe = { path = "../..", features = ["http-types", "sass"] }
 
 [dependencies]
 async-std = { version = "1.6.0", features = ["attributes"] }
 tide = "0.12.0"
-mime = "0.3.16"
 httpdate = "0.3.1"
+http-types = "2.3.0"

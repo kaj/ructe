@@ -6,11 +6,10 @@ use httpdate::fmt_http_date;
 use std::future::Future;
 use std::io::{self, Write};
 use std::pin::Pin;
-use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use templates::statics::{cloud_svg, StaticFile};
 use tide::http::headers::EXPIRES;
-use tide::http::{mime, Error};
+use tide::http::Error;
 use tide::{Next, Redirect, Request, Response, StatusCode};
 
 /// Main entry point.
@@ -51,8 +50,7 @@ async fn static_file(req: Request<()>) -> Result<Response, Error> {
     let data = StaticFile::get(&path)
         .ok_or_else(|| Error::from_str(StatusCode::NotFound, "not found"))?;
     Ok(Response::builder(StatusCode::Ok)
-        // TODO: Provide http_types::Mime directly in ructe.
-        .content_type(mime::Mime::from_str(data.mime.as_ref()).unwrap())
+        .content_type(data.mime.clone()) // Takes Into<Mime>, not AsRef<Mime>
         .header(EXPIRES, fmt_http_date(SystemTime::now() + 180 * DAY))
         .body(data.content)
         .build())
