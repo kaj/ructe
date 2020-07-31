@@ -100,11 +100,7 @@ fn handle_error<'a>(
                 // so the builder patern cannot be used here.
                 // The Render trait is provided for Response.
                 res.render_html(|o| {
-                    templates::error(
-                        o,
-                        status,
-                        status.canonical_reason(),
-                    )
+                    templates::error(o, status, status.canonical_reason())
                 })?
             }
         }
