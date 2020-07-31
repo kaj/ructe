@@ -1,6 +1,6 @@
 //! An example of how ructe can be used with the tide framework.
 mod ructe_tide;
-use ructe_tide::Render;
+use ructe_tide::{Render, RenderBuilder};
 
 use httpdate::fmt_http_date;
 use std::future::Future;
@@ -33,11 +33,9 @@ async fn main() -> Result<(), std::io::Error> {
 /// Handler for a page in the web site.
 async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
     // A real site would probably have some business logic here.
-    let mut res = Response::new(StatusCode::Ok);
-    res.render_html(|o| {
-        Ok(templates::page(o, &[("world", 5), ("tide", 7)])?)
-    })?;
-    Ok(res)
+    Ok(Response::builder(StatusCode::Ok)
+        .render_html(|o| templates::page(o, &[("world", 5), ("tide", 7)]))
+        .build())
 }
 
 /// Handler for static files.
@@ -98,12 +96,15 @@ fn handle_error<'a>(
         if status.is_client_error() || status.is_server_error() {
             println!("Error {} on {}: {:?}", status, rdesc, res.error());
             if res.is_empty().unwrap_or(false) {
+                // Note: We are adding a body to an existing response,
+                // so the builder patern cannot be used here.
+                // The Render trait is provided for Response.
                 res.render_html(|o| {
-                    Ok(templates::error(
+                    templates::error(
                         o,
                         status,
                         status.canonical_reason(),
-                    )?)
+                    )
                 })?
             }
         }
