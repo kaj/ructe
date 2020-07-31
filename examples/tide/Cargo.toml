@@ -11,6 +11,6 @@ ructe = { path = "../..", features = ["http-types", "sass"] }
 
 [dependencies]
 async-std = { version = "1.6.0", features = ["attributes"] }
-tide = "0.12.0"
+tide = "0.13.0"
 httpdate = "0.3.1"
 http-types = "2.3.0"

@@ -18,7 +18,7 @@ use tide::{Next, Request, Response, StatusCode};
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     let mut app = tide::new();
-    app.middleware(handle_error);
+    app.with(handle_error);
     app.at("/static/*path").get(static_file);
     app.at("/favicon.ico").get(favicon);
     app.at("/").get(frontpage);
