@@ -10,7 +10,7 @@ use std::time::{Duration, SystemTime};
 use templates::statics::{cloud_svg, StaticFile};
 use tide::http::headers::EXPIRES;
 use tide::http::Error;
-use tide::{Next, Redirect, Request, Response, StatusCode};
+use tide::{Next, Request, Response, StatusCode};
 
 /// Main entry point.
 ///
@@ -20,8 +20,7 @@ async fn main() -> Result<(), std::io::Error> {
     let mut app = tide::new();
     app.middleware(handle_error);
     app.at("/static/*path").get(static_file);
-    app.at("/favicon.ico")
-        .get(Redirect::new(format!("/static/{}", cloud_svg.name)));
+    app.at("/favicon.ico").get(favicon);
     app.at("/").get(frontpage);
 
     let addr = "127.0.0.1:3000";
@@ -47,13 +46,25 @@ async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
 /// interface to get a file by url path.
 async fn static_file(req: Request<()>) -> Result<Response, Error> {
     let path = req.param::<String>("path")?;
-    let data = StaticFile::get(&path)
-        .ok_or_else(|| Error::from_str(StatusCode::NotFound, "not found"))?;
-    Ok(Response::builder(StatusCode::Ok)
+    StaticFile::get(&path)
+        .ok_or_else(|| Error::from_str(StatusCode::NotFound, "not found"))
+        .map(static_response)
+}
+
+/// Specialized static file handler for the favicon
+async fn favicon(_req: Request<()>) -> Result<Response, Error> {
+    Ok(static_response(&cloud_svg))
+}
+
+/// Make a response from a StaticFile
+///
+/// Helper for static_file and favicon.
+fn static_response(data: &StaticFile) -> Response {
+    Response::builder(StatusCode::Ok)
         .content_type(data.mime.clone()) // Takes Into<Mime>, not AsRef<Mime>
         .header(EXPIRES, fmt_http_date(SystemTime::now() + 180 * DAY))
         .body(data.content)
-        .build())
+        .build()
 }
 
 /// 24 hours.
