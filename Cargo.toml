@@ -16,6 +16,7 @@ mime02 = []
 mime03 = ["mime"]
 warp02 = ["mime03"]
 http-types = []
+tide = ["http-types"]
 
 [dependencies]
 base64 = "^0.12.0"
