@@ -208,7 +208,7 @@ impl StaticFiles {
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
-        if cfg!(feature = "tide") {
+        if cfg!(feature = "tide013") {
             src.write_all(b"use tide::http::mime::{self, Mime};\n\n")?;
         } else if cfg!(feature = "http-types") {
             src.write_all(b"use http_types::mime::{self, Mime};\n\n")?;
