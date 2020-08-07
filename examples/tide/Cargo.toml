@@ -1,5 +1,5 @@
 [package]
-name = "tide"
+name = "ructe-tide"
 version = "0.4.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 edition = "2018"
@@ -7,8 +7,9 @@ edition = "2018"
 build = "src/build.rs"
 
 [build-dependencies]
-ructe = { path = "../.." }
+ructe = { path = "../..", features = ["tide013", "sass"] }
 
 [dependencies]
 async-std = { version = "1.6.0", features = ["attributes"] }
-tide = "0.10.0"
+tide = "0.13.0" # Note: Feature flag for ructe matches this version
+httpdate = "0.3.1"

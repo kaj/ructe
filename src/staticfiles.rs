@@ -208,6 +208,11 @@ impl StaticFiles {
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
+        if cfg!(feature = "tide013") {
+            src.write_all(b"use tide::http::mime::{self, Mime};\n\n")?;
+        } else if cfg!(feature = "http-types") {
+            src.write_all(b"use http_types::mime::{self, Mime};\n\n")?;
+        }
         src.write_all(
 b"/// A static file has a name (so its url can be recognized) and the
 /// actual file contents.
@@ -224,6 +229,9 @@ pub struct StaticFile {
             src.write_all(b"    _mime: &'static str,\n")?;
         }
         if cfg!(feature = "mime03") {
+            src.write_all(b"    pub mime: &'static Mime,\n")?;
+        }
+        if cfg!(feature = "http-types") {
             src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
         src.write_all(
@@ -588,12 +596,13 @@ fn checksum_slug(data: &[u8]) -> String {
 }
 #[cfg(not(feature = "mime02"))]
 #[cfg(not(feature = "mime03"))]
+#[cfg(not(feature = "http-types"))]
 fn mime_arg(_: &str) -> String {
     "".to_string()
 }
 #[cfg(feature = "mime02")]
 fn mime_arg(suffix: &str) -> String {
-    format!("_mime: {:?},\n", mime_from_suffix(suffix))
+    format!("  _mime: {:?},\n", mime_from_suffix(suffix))
 }
 
 #[cfg(feature = "mime02")]
@@ -614,9 +623,9 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
     }
 }
 
-#[cfg(feature = "mime03")]
+#[cfg(any(feature = "mime03", feature = "http-types"))]
 fn mime_arg(suffix: &str) -> String {
-    format!("mime: &mime::{},\n", mime_from_suffix(suffix))
+    format!("  mime: &mime::{},\n", mime_from_suffix(suffix))
 }
 
 #[cfg(feature = "mime03")]
@@ -634,5 +643,23 @@ fn mime_from_suffix(suffix: &str) -> &'static str {
         "woff" => "FONT_WOFF",
         "woff2" => "FONT_WOFF",
         _ => "APPLICATION_OCTET_STREAM",
+    }
+}
+
+#[cfg(feature = "http-types")]
+fn mime_from_suffix(suffix: &str) -> &'static str {
+    match suffix.to_lowercase().as_ref() {
+        "css" => "CSS",
+        "html" | "htm" => "CSS",
+        "ico" => "ICO",
+        "jpg" | "jpeg" => "JPEG",
+        "js" | "jsonp" => "JAVASCRIPT",
+        "json" => "JSON",
+        "png" => "PNG",
+        "svg" => "SVG",
+        "txt" => "PLAIN",
+        "wasm" => "WASM",
+        "xml" => "XML",
+        _ => "mime::BYTE_STREAM",
     }
 }

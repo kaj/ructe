@@ -90,13 +90,21 @@
 //! version 0.2.x of the [mime] crate.
 //! * `warp02` -- Provide an extension to [`Response::Builder`] to
 //! simplify template rendering in the [warp] framework, versions 0.2.x.
+//! * `http-types` -- Static files know their mime types, compatible with
+//! the [http-types] crate.
+//! * `tide013` -- Support for the [tide] framework version 0.13.x.
+//! Implies the `http-types` feature (but does not require a direct
+//! http-types requirement, as that is reexported by tide).
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
 //! [warp]: https://crates.rs/crates/warp
+//! [tide]: https://crates.rs/crates/tide
+//! [http-types]: https://crates.rs/crates/http-types
 //!
-//! The `mime02` and `mime03` features are mutually exclusive and
-//! requires a dependency on a matching version of `mime`.
+//! The `mime02`, `mime03`, and `http-types` features are mutually
+//! exclusive and requires a dependency on a matching version of
+//! `mime` or `http-types`.
 //! Any of them can be combined with the `sass` feature.
 //!
 //! ```toml
