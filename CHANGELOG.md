@@ -9,7 +9,9 @@ project adheres to
 
 ## Unreleased
 
-* Update rsass to 0.16.0.
+* Update optional rsass dependency to 0.16.0.
+* Add optional support for tide 0.14.
+
 
 ## Release 0.12.0 - 2020-08-14
 

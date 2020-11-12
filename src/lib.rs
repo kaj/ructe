@@ -85,16 +85,19 @@
 //!
 //! * `sass` -- Compile sass and include the compiled css as static assets.
 //! * `mime03` -- Static files know their mime types, compatible with
-//! version 0.3.x of the [mime] crate.
+//!   version 0.3.x of the [mime] crate.
 //! * `mime02` -- Static files know their mime types, compatible with
-//! version 0.2.x of the [mime] crate.
+//!   version 0.2.x of the [mime] crate.
 //! * `warp02` -- Provide an extension to [`Response::Builder`] to
-//! simplify template rendering in the [warp] framework, versions 0.2.x.
+//!   simplify template rendering in the [warp] framework, versions 0.2.x.
 //! * `http-types` -- Static files know their mime types, compatible with
-//! the [http-types] crate.
+//!   the [http-types] crate.
 //! * `tide013` -- Support for the [tide] framework version 0.13.x.
-//! Implies the `http-types` feature (but does not require a direct
-//! http-types requirement, as that is reexported by tide).
+//!   Implies the `http-types` feature (but does not require a direct
+//!   http-types requirement, as that is reexported by tide).
+//! * `tide014` -- Support for the [tide] framework version 0.14.x
+//!   (version 0.14.x is compatible with 0.13.x so the `tide014` feature
+//!   is actually just an alias for `tide013`.
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime

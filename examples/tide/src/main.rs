@@ -43,7 +43,7 @@ async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
 /// Ructe provides the static files as constants, and the StaticFile
 /// interface to get a file by url path.
 async fn static_file(req: Request<()>) -> Result<Response, Error> {
-    let path = req.param::<String>("path")?;
+    let path = req.param("path")?;
     StaticFile::get(&path)
         .ok_or_else(|| Error::from_str(StatusCode::NotFound, "not found"))
         .map(static_response)

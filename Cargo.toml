@@ -16,6 +16,7 @@ mime02 = []
 mime03 = ["mime"]
 warp02 = ["mime03"]
 http-types = []
+tide014 = ["tide013"]
 tide013 = ["http-types"]
 
 [dependencies]
