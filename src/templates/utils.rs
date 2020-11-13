@@ -1,3 +1,6 @@
+use std::fmt::Display;
+use std::io::{self, Write};
+
 /// This trait should be implemented for any value that can be the
 /// result of an expression in a template.
 ///
