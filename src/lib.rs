@@ -200,7 +200,7 @@ pub use staticfiles::StaticFiles;
 ///
 /// [cargo]: https://doc.rust-lang.org/cargo/
 pub struct Ructe {
-    f: File,
+    f: Vec<u8>,
     outdir: PathBuf,
 }
 
@@ -230,15 +230,35 @@ impl Ructe {
     ///
     /// [cargo]: https://doc.rust-lang.org/cargo/
     /// [`from_env`]: #method.from_env
-    pub fn new(out_dir: PathBuf) -> Result<Ructe> {
-        let mut f = File::create(out_dir.join("templates.rs"))?;
-        f.write_all(
-            b"pub mod templates {\n\
-              use std::io::{self, Write};\n\
-              use std::fmt::Display;\n\n",
-        )?;
-        let outdir = out_dir.join("templates");
+    pub fn new(outdir: PathBuf) -> Result<Ructe> {
+        let mut f = Vec::with_capacity(512);
+        let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
+        f.write_all(b"pub mod templates {\n")?;
+        write_if_changed(
+            &outdir.join("_utils.rs"),
+            include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/src/templates/utils.rs"
+            )),
+        )?;
+        f.write_all(
+            b"#[doc(hidden)]\nmod _utils;\n\
+              #[doc(inline)]\npub use self::_utils::*;\n\n",
+        )?;
+        if cfg!(feature = "warp02") {
+            write_if_changed(
+                &outdir.join("_utils_warp02.rs"),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/templates/utils_warp02.rs"
+                )),
+            )?;
+            f.write_all(
+                b"#[doc(hidden)]\nmod _utils_warp02;\n\
+                  #[doc(inline)]\npub use self::_utils_warp02::*;\n\n",
+            )?;
+        }
         Ok(Ructe { f, outdir })
     }
 
@@ -301,22 +321,20 @@ impl Ructe {
 
 impl Drop for Ructe {
     fn drop(&mut self) {
-        self.f
-            .write_all(include_bytes!(concat!(
-                env!("CARGO_MANIFEST_DIR"),
-                "/src/template_utils.rs"
-            )))
-            .unwrap();
-        if cfg!(feature = "warp02") {
-            self.f
-                .write_all(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/src/template_utils_warp02.rs"
-                )))
-                .unwrap();
-        }
-        self.f.write_all(b"\n}\n").unwrap();
+        let _ = self.f.write_all(b"}\n");
+        let _ =
+            write_if_changed(&self.outdir.join("../templates.rs"), &self.f);
     }
+}
+
+fn write_if_changed(path: &Path, content: &[u8]) -> io::Result<()> {
+    use std::fs::{read, write};
+    if let Ok(old) = read(path) {
+        if old == content {
+            return Ok(());
+        }
+    }
+    write(path, content)
 }
 
 fn handle_entries(
@@ -332,7 +350,7 @@ fn handle_entries(
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
                 create_dir_all(&outdir)?;
-                let mut modrs = File::create(outdir.join("mod.rs"))?;
+                let mut modrs = Vec::with_capacity(512);
                 modrs.write_all(
                     b"#[allow(renamed_and_removed_lints)]\n\
                       #[cfg_attr(feature=\"cargo-clippy\", \
@@ -341,6 +359,7 @@ fn handle_entries(
                       use super::{Html,ToHtml};\n",
                 )?;
                 handle_entries(&mut modrs, &path, &outdir)?;
+                write_if_changed(&outdir.join("mod.rs"), &modrs)?;
                 writeln!(f, "pub mod {name};\n", name = filename)?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
@@ -353,7 +372,9 @@ fn handle_entries(
                     if handle_template(&name, &path, outdir)? {
                         writeln!(
                             f,
-                            "mod template_{name};\n\
+                            "#[doc(hidden)]\n\
+                             mod template_{name};\n\
+                             #[doc(inline)]\n\
                              pub use self::template_{name}::{name};\n",
                             name = name,
                         )?;
@@ -363,6 +384,7 @@ fn handle_entries(
                                 f,
                                 "#[deprecated(since=\"0.7.4\", \
                                  note=\"please use `{name}` instead\")]\n\
+                                 #[doc(hidden)]\n\
                                  pub use self::{name} as {alias};\n",
                                 alias = prename,
                                 name = name,
@@ -386,8 +408,12 @@ fn handle_template(
     input.read_to_end(&mut buf)?;
     match template(&buf) {
         Ok((_, t)) => {
-            File::create(outdir.join(format!("template_{}.rs", name)))
-                .and_then(|mut f| t.write_rust(&mut f, name))?;
+            let mut data = Vec::new();
+            t.write_rust(&mut data, name)?;
+            write_if_changed(
+                &outdir.join(format!("template_{}.rs", name)),
+                &data,
+            )?;
             Ok(true)
         }
         Err(error) => {
@@ -398,111 +424,7 @@ fn handle_template(
     }
 }
 
-/// The module containing your generated template code will also
-/// contain everything from here.
-///
-/// The name `ructe::templates` should never be used.  Instead, you
-/// should use the module templates created when compiling your
-/// templates.
-/// If you include the generated `templates.rs` in your `main.rs` (or
-/// `lib.rs` in a library crate), this module will be
-/// `crate::templates`.
-pub mod templates {
-    #[cfg(feature = "mime03")]
-    use mime::Mime;
-    use std::fmt::Display;
-    use std::io::{self, Write};
-
-    #[cfg(feature = "mime02")]
-    /// Documentation mock.  The real Mime type comes from the `mime` crate.
-    pub type Mime = u8; // mock
-
-    /// A static file has a name (so its url can be recognized) and the
-    /// actual file contents.
-    ///
-    /// The content-type (mime type) of the file is available as a
-    /// static field when building ructe with the `mime03` feature or
-    /// as the return value of a method when building ructe with the
-    /// `mime02` feature (in `mime` version 0.2.x, a Mime cannot be
-    /// defined as a part of a const static value.
-    pub struct StaticFile {
-        /// The actual static file contents.
-        pub content: &'static [u8],
-        /// The file name as used in a url, including a short (48 bits
-        /// as 8 base64 characters) hash of the content, to enable
-        /// long-time caching of static resourses in the clients.
-        pub name: &'static str,
-        /// The Mime type of this static file, as defined in the mime
-        /// crate version 0.3.x.
-        #[cfg(feature = "mime03")]
-        pub mime: &'static Mime,
-    }
-
-    impl StaticFile {
-        /// Get the mime type of this static file.
-        ///
-        /// Currently, this method parses a (static) string every time.
-        /// A future release of `mime` may support statically created
-        /// `Mime` structs, which will make this nicer.
-        #[allow(unused)]
-        #[cfg(feature = "mime02")]
-        pub fn mime(&self) -> Mime {
-            unimplemented!()
-        }
-    }
-
-    include!("template_utils.rs");
-
-    #[test]
-    fn encoded() {
-        let mut buf = Vec::new();
-        "a < b\0\n".to_html(&mut buf).unwrap();
-        assert_eq!(b"a &lt; b\0\n", &buf[..]);
-
-        let mut buf = Vec::new();
-        "'b".to_html(&mut buf).unwrap();
-        assert_eq!(b"&#39;b", &buf[..]);
-
-        let mut buf = Vec::new();
-        "xxxxx>&".to_html(&mut buf).unwrap();
-        assert_eq!(b"xxxxx&gt;&amp;", &buf[..]);
-    }
-
-    #[test]
-    fn encoded_empty() {
-        let mut buf = Vec::new();
-        "".to_html(&mut buf).unwrap();
-        "".to_html(&mut buf).unwrap();
-        "".to_html(&mut buf).unwrap();
-        assert_eq!(b"", &buf[..]);
-    }
-
-    #[test]
-    fn double_encoded() {
-        let mut buf = Vec::new();
-        "&amp;".to_html(&mut buf).unwrap();
-        "&lt;".to_html(&mut buf).unwrap();
-        assert_eq!(b"&amp;amp;&amp;lt;", &buf[..]);
-    }
-
-    #[test]
-    fn encoded_only() {
-        let mut buf = Vec::new();
-        "&&&&&&&&&&&&&&&&".to_html(&mut buf).unwrap();
-        assert_eq!(b"&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;" as &[u8], &buf[..]);
-
-        let mut buf = Vec::new();
-        "''''''''''''''".to_html(&mut buf).unwrap();
-        assert_eq!(b"&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;" as &[u8], &buf[..]);
-    }
-
-    #[test]
-    fn raw_html() {
-        let mut buf = Vec::new();
-        Html("a<b>c</b>").to_html(&mut buf).unwrap();
-        assert_eq!(b"a<b>c</b>", &buf[..]);
-    }
-}
+pub mod templates;
 
 fn get_env(name: &str) -> Result<String> {
     env::var(name).map_err(|e| RucteError::Env(name.into(), e))

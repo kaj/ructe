@@ -9,6 +9,9 @@ project adheres to
 
 ## Unreleased
 
+* Try to improve incremental compile times of projects using ructe by
+  only writing fils if their contents actually changed. Also some code
+  cleanup. PR #97.
 * Update optional rsass dependency to 0.16.0.
 * Add optional support for tide 0.14 and 0.15.
 
