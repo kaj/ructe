@@ -16,7 +16,7 @@ use templates::statics::StaticFile;
 mod actix_ructe;
 
 /// Main program: Set up routes and start server.
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() {
     env_logger::init();
     HttpServer::new(|| {
@@ -49,7 +49,7 @@ fn home_page() -> HttpResponse {
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
-fn static_file(path: Path<(String,)>) -> HttpResponse {
+fn static_file(path: Path<String>) -> HttpResponse {
     let name = &path.0;
     if let Some(data) = StaticFile::get(name) {
         let far_expires = SystemTime::now() + FAR;
@@ -65,7 +65,7 @@ fn static_file(path: Path<(String,)>) -> HttpResponse {
 }
 
 async fn take_int(
-    args: Path<(usize,)>,
+    args: Path<usize>,
 ) -> Result<HttpResponse, ExampleAppError> {
     let i = args.0;
     Ok(HttpResponse::Ok().body(render!(
