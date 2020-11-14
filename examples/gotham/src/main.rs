@@ -8,12 +8,12 @@ extern crate serde_derive;
 
 mod ructe_response;
 
+use gotham::hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
+use gotham::hyper::{Body, Response, StatusCode};
 use gotham::router::builder::{
     build_simple_router, DefineSingleRoute, DrawRoutes,
 };
 use gotham::state::{FromState, State};
-use gotham::hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
-use gotham::hyper::{Body, Response, StatusCode};
 use mime::TEXT_HTML;
 use ructe_response::RucteResponse;
 use std::io::{self, Write};
