@@ -200,7 +200,7 @@ pub use staticfiles::StaticFiles;
 ///
 /// [cargo]: https://doc.rust-lang.org/cargo/
 pub struct Ructe {
-    f: File,
+    f: Vec<u8>,
     outdir: PathBuf,
 }
 
@@ -231,30 +231,32 @@ impl Ructe {
     /// [cargo]: https://doc.rust-lang.org/cargo/
     /// [`from_env`]: #method.from_env
     pub fn new(outdir: PathBuf) -> Result<Ructe> {
-        let mut f = File::create(outdir.join("templates.rs"))?;
+        let mut f = Vec::with_capacity(512);
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
         f.write_all(b"pub mod templates {\n")?;
-        {
-            let mut utils = File::create(outdir.join("_utils.rs"))?;
-            utils.write_all(include_bytes!(concat!(
+        write_if_changed(
+            &outdir.join("_utils.rs"),
+            include_bytes!(concat!(
                 env!("CARGO_MANIFEST_DIR"),
                 "/src/templates/utils.rs"
-            )))?;
-        }
+            )),
+        )?;
         f.write_all(
             b"#[doc(hidden)]\nmod _utils;\n\
-                      #[doc(inline)]\npub use self::_utils::*;\n\n",
+              #[doc(inline)]\npub use self::_utils::*;\n\n",
         )?;
         if cfg!(feature = "warp02") {
-            let mut utils = File::create(outdir.join("_utils_warp02.rs"))?;
-            utils.write_all(include_bytes!(concat!(
-                env!("CARGO_MANIFEST_DIR"),
-                "/src/templates/utils_warp02.rs"
-            )))?;
+            write_if_changed(
+                &outdir.join("_utils_warp02.rs"),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/templates/utils_warp02.rs"
+                )),
+            )?;
             f.write_all(
                 b"#[doc(hidden)]\nmod _utils_warp02;\n\
-                          #[doc(inline)]\npub use self::_utils_warp02::*;\n\n",
+                  #[doc(inline)]\npub use self::_utils_warp02::*;\n\n",
             )?;
         }
         Ok(Ructe { f, outdir })
@@ -319,8 +321,20 @@ impl Ructe {
 
 impl Drop for Ructe {
     fn drop(&mut self) {
-        self.f.write_all(b"}\n").unwrap();
+        let _ = self.f.write_all(b"}\n");
+        let _ =
+            write_if_changed(&self.outdir.join("../templates.rs"), &self.f);
     }
+}
+
+fn write_if_changed(path: &Path, content: &[u8]) -> io::Result<()> {
+    use std::fs::{read, write};
+    if let Ok(old) = read(path) {
+        if old == content {
+            return Ok(());
+        }
+    }
+    write(path, content)
 }
 
 fn handle_entries(
@@ -336,7 +350,7 @@ fn handle_entries(
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
                 create_dir_all(&outdir)?;
-                let mut modrs = File::create(outdir.join("mod.rs"))?;
+                let mut modrs = Vec::with_capacity(512);
                 modrs.write_all(
                     b"#[allow(renamed_and_removed_lints)]\n\
                       #[cfg_attr(feature=\"cargo-clippy\", \
@@ -345,6 +359,7 @@ fn handle_entries(
                       use super::{Html,ToHtml};\n",
                 )?;
                 handle_entries(&mut modrs, &path, &outdir)?;
+                write_if_changed(&outdir.join("mod.rs"), &modrs)?;
                 writeln!(f, "pub mod {name};\n", name = filename)?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
@@ -393,8 +408,12 @@ fn handle_template(
     input.read_to_end(&mut buf)?;
     match template(&buf) {
         Ok((_, t)) => {
-            File::create(outdir.join(format!("template_{}.rs", name)))
-                .and_then(|mut f| t.write_rust(&mut f, name))?;
+            let mut data = Vec::new();
+            t.write_rust(&mut data, name)?;
+            write_if_changed(
+                &outdir.join(format!("template_{}.rs", name)),
+                &data,
+            )?;
             Ok(true)
         }
         Err(error) => {

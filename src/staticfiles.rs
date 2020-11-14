@@ -190,7 +190,9 @@ use std::path::{Path, PathBuf};
 /// ```
 pub struct StaticFiles {
     /// Rust source file `statics.rs` beeing written.
-    src: File,
+    src: Vec<u8>,
+    /// Path for writing the file `statics.rs`.
+    src_path: PathBuf,
     /// Base path for finding static files with relative paths
     base_path: PathBuf,
     /// Maps rust names to public names (foo_jpg -> foo-abc123.jpg)
@@ -204,7 +206,7 @@ impl StaticFiles {
         outdir: &Path,
         base_path: &Path,
     ) -> Result<Self> {
-        let mut src = File::create(outdir.join("statics.rs"))?;
+        let mut src = Vec::with_capacity(512);
         if cfg!(feature = "mime03") {
             src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
         }
@@ -267,6 +269,7 @@ impl StaticFile {
         }
         Ok(StaticFiles {
             src,
+            src_path: outdir.join("statics.rs"),
             base_path: base_path.into(),
             names: BTreeMap::new(),
             names_r: BTreeMap::new(),
@@ -558,6 +561,7 @@ impl Drop for StaticFiles {
                 .map(|s| format!("&{}", s.1))
                 .format(", "),
         );
+        let _ = super::write_if_changed(&self.src_path, &self.src);
     }
 }
 
