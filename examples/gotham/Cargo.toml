@@ -1,7 +1,8 @@
 [package]
 name = "gotham-ructe"
-version = "0.4.0"
+version = "0.12.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
+edition = "2018"
 
 build = "src/build.rs"
 
@@ -9,9 +10,8 @@ build = "src/build.rs"
 ructe = { path = "../..", features = ["sass", "mime03"] }
 
 [dependencies]
-gotham = "0.4.0"
-gotham_derive = "0.4.0"
-hyper = "0.12.0" # Must match gotham dependency
+gotham = "0.5.0"
+gotham_derive = "0.5.0"
 serde = "~1.0.66"  # Must match gotham dependency
 serde_derive = "~1.0.66"  # Must match gotham dependency
 mime = "~0.3.8"

@@ -1,6 +1,6 @@
 use gotham::state::State;
-use hyper::http::header::CONTENT_TYPE;
-use hyper::{Body, Response, StatusCode};
+use gotham::hyper::http::header::CONTENT_TYPE;
+use gotham::hyper::{Body, Response, StatusCode};
 use mime::TEXT_HTML_UTF_8;
 use std::io::{self, Write};
 

@@ -2,7 +2,6 @@
 extern crate gotham;
 #[macro_use]
 extern crate gotham_derive;
-extern crate hyper;
 extern crate mime;
 #[macro_use]
 extern crate serde_derive;
@@ -13,8 +12,8 @@ use gotham::router::builder::{
     build_simple_router, DefineSingleRoute, DrawRoutes,
 };
 use gotham::state::{FromState, State};
-use hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
-use hyper::{Body, Response, StatusCode};
+use gotham::hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
+use gotham::hyper::{Body, Response, StatusCode};
 use mime::TEXT_HTML;
 use ructe_response::RucteResponse;
 use std::io::{self, Write};
