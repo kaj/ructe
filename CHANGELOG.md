@@ -12,6 +12,8 @@ project adheres to
 * Try to improve incremental compile times of projects using ructe by
   only writing fils if their contents actually changed. Also some code
   cleanup. PR #97.
+* Update ructe itself to use edition 2018 (it is still useable for
+  projects using both editios).  PR #98.
 * Update optional rsass dependency to 0.16.0.
 * Add optional support for tide 0.14 and 0.15.
 * Update gotham to 0.5 and axtix-web to 3.2 in examples.
