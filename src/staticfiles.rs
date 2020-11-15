@@ -305,6 +305,17 @@ impl StaticFile {
     /// urls, the file names are taken as is, without adding any hash.
     /// This is usefull for resources used by preexisting javascript
     /// packages, where it might be hard to change the used urls.
+    ///
+    /// Note that some way of changing the url when the content
+    /// changes is still needed if you serve the files with far
+    /// expire, and using this method makes that your responsibility
+    /// rathr than ructes.
+    /// Either the file may have hashed names as is, or you may use
+    /// the version number of a 3:rd party package as part of the `to`
+    /// parameter.
+    ///
+    /// The `to` parameter may be an empty string.
+    /// In that case, no extra slash is added.
     pub fn add_files_as(
         &mut self,
         indir: impl AsRef<Path>,
@@ -313,8 +324,11 @@ impl StaticFile {
         for entry in read_dir(self.path_for(indir))? {
             let entry = entry?;
             let file_type = entry.file_type()?;
-            let to =
-                format!("{}/{}", to, entry.file_name().to_string_lossy());
+            let to = if to.is_empty() {
+                entry.file_name().to_string_lossy().to_string()
+            } else {
+                format!("{}/{}", to, entry.file_name().to_string_lossy())
+            };
             if file_type.is_file() {
                 self.add_file_as(&entry.path(), &to)?;
             } else if file_type.is_dir() {
