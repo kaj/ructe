@@ -19,12 +19,13 @@ pub trait ToHtml {
     ///
     /// # Examples
     /// ```
-    /// fn main() -> std::io::Result<()> {
-    /// use ructe::templates::ToHtml;
-    /// assert_eq!(17_u8.to_buffer().unwrap(), &b"17"[..]);
+    /// # fn main() -> std::io::Result<()> {
+    /// # use ructe::templates;
+    /// use templates::ToHtml;
+    /// assert_eq!(17.to_buffer()?, "17");
     /// assert_eq!("a < b".to_buffer()?, "a &lt; b");
-    /// Ok(())
-    /// }
+    /// # Ok(())
+    /// # }
     /// ```
     fn to_buffer(&self) -> io::Result<HtmlBuffer> {
         let mut buf = Vec::new();
@@ -37,6 +38,7 @@ pub trait ToHtml {
 ///
 /// An opaque heap-allocated buffer containing a rendered HTML snippet.
 pub struct HtmlBuffer {
+    #[doc(hidden)]
     buf: Vec<u8>,
 }
 
