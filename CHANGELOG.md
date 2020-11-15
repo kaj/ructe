@@ -7,7 +7,7 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Release 0.13.0 - 2020-11-15
 
 * Try to improve incremental compile times of projects using ructe by
   only writing fils if their contents actually changed. Also some code
@@ -19,6 +19,11 @@ project adheres to
 * Update optional rsass dependency to 0.16.0.
 * Add optional support for tide 0.14 and 0.15.
 * Update gotham to 0.5 and axtix-web to 3.2 in examples.
+
+Tested with rustc 1.47.0 (18bf6b4f0 2020-10-07),
+1.42.0 (b8cedc004 2020-03-09), 1.40.0 (73528e339 2019-12-16),
+1.48.0-beta.8 (121901459 2020-11-08), and
+1.50.0-nightly (98d66340d 2020-11-14)
 
 
 ## Release 0.12.0 - 2020-08-14
