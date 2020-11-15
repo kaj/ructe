@@ -1,4 +1,8 @@
-use expression::{input_to_str, rust_name};
+use crate::expression::{input_to_str, rust_name};
+use crate::nom_delimited_list::delimited_list;
+use crate::parseresult::PResult;
+use crate::spacelike::spacelike;
+use crate::templateexpression::{template_expression, TemplateExpression};
 use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
@@ -8,11 +12,7 @@ use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list};
 use nom::sequence::{delimited, preceded, terminated, tuple};
-use nom_delimited_list::delimited_list;
-use parseresult::PResult;
-use spacelike::spacelike;
 use std::io::{self, Write};
-use templateexpression::{template_expression, TemplateExpression};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
@@ -167,7 +167,7 @@ pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
 
 #[cfg(test)]
 mod test {
-    use template::type_expression;
+    use super::type_expression;
 
     #[test]
     fn tuple() {

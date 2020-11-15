@@ -1,7 +1,9 @@
-use expression::{
+use crate::expression::{
     comma_expressions, expr_in_braces, expr_inside_parens, expression,
     input_to_str, rust_name,
 };
+use crate::parseresult::PResult;
+use crate::spacelike::{comment_tail, spacelike};
 use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
@@ -11,8 +13,6 @@ use nom::combinator::{map, map_res, opt, recognize, value};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
-use parseresult::PResult;
-use spacelike::{comment_tail, spacelike};
 use std::fmt::{self, Display};
 
 #[derive(Debug, PartialEq, Eq)]

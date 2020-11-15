@@ -1,3 +1,4 @@
+use crate::parseresult::PResult;
 use nom::branch::alt;
 use nom::bytes::complete::{escaped, is_a, is_not, tag};
 use nom::character::complete::{alpha1, char, digit1, none_of, one_of};
@@ -5,7 +6,6 @@ use nom::combinator::{map, map_res, not, opt, recognize, value};
 use nom::error::context; //, VerboseError};
 use nom::multi::{fold_many0, many0, separated_list};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
-use parseresult::PResult;
 use std::str::{from_utf8, Utf8Error};
 
 pub fn expression(input: &[u8]) -> PResult<&str> {
@@ -145,7 +145,7 @@ pub fn rust_comment(input: &[u8]) -> PResult<&[u8]> {
 
 #[cfg(test)]
 mod test {
-    use expression::expression;
+    use super::expression;
 
     #[test]
     fn expression_1() {
