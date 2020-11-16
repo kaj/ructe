@@ -7,6 +7,11 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* Update base64 to 0.13.
+
+
 ## Release 0.13.0 - 2020-11-15
 
 * Try to improve incremental compile times of projects using ructe by
