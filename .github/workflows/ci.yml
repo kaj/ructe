@@ -56,13 +56,10 @@ jobs:
           args: --all -- --check
 
   examples:
-    name: Build cli
+    name: Test example
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust:
-          - stable
-          - nightly
         example:
           - actix
           - gotham
@@ -73,6 +70,9 @@ jobs:
           - static-sass
           - tide
           - warp02
+        rust:
+          - stable
+          - nightly
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -82,6 +82,9 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+
+      - name: Install rustfmt
+        run: rustup component add rustfmt
 
       - name: Check format
         run: |
