@@ -93,4 +93,5 @@ jobs:
 
       - name: Run test
         run: |
+          cd examples/${{ matrix.example }}
           cargo test
