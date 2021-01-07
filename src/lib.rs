@@ -120,6 +120,7 @@
 //! mime = "0.3.13"
 //! ```
 #![forbid(unsafe_code, missing_docs)]
+#![allow(clippy::manual_strip)] // Until MSR is 1.45.0
 extern crate base64;
 extern crate bytecount;
 extern crate itertools;

@@ -1,7 +1,5 @@
 use super::Result;
-use base64;
 use itertools::Itertools;
-use md5;
 use std::ascii::escape_default;
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
