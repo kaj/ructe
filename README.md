@@ -32,7 +32,7 @@ and can be called from rust code.
 ### Template format
 
 A template consists of three basic parts:
-First a preamble of `use` statements, each prepended by an @ sign.
+First a preamble of `use` statements, each prepended by an `@` sign.
 Secondly a declaration of the parameters the template takes.
 And third, the template body.
 
@@ -41,7 +41,7 @@ Some examples can be seen in
 [examples/simple/templates](examples/simple/templates).
 A template may look something like this:
 
-```
+```html
 @use any::rust::Type;
 @use super::statics::style_css;
 
@@ -56,8 +56,8 @@ A template may look something like this:
      <h1>@name</h1>
      <dl>
      @for item in items {
-       <dt>@item.title()
-       <dd>@item.description()
+       <dt>@item.title()</dt>
+       <dd>@item.description()</dd>
      }
      </dl>
    <body>
