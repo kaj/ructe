@@ -73,6 +73,6 @@ There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
 frameworks [actix-web](examples/actix),
 [iron](examples/iron), [nickel](examples/nickel),
-[gotham](examples/gotham), and [warp](examples/warp02).
+[gotham](examples/gotham), and [warp](examples/warp03).
 There is also [a separate example of using ructe with warp and
 diesel](https://github.com/kaj/warp-diesel-ructe-sample).

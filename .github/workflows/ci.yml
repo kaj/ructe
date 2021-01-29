@@ -69,6 +69,7 @@ jobs:
           - static-sass
           - tide
           - warp02
+          - warp03
         rust:
           - stable
           - nightly

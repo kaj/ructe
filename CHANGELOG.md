@@ -13,6 +13,7 @@ project adheres to
 * Update nom to 6.1.0, which raises the MSRV to 0.44
 * Update base64 to 0.13 and itertools to 0.10.
 * Update optional rsass to 0.17.0.
+* Add warp 0.3 feature and example.
 * Testing is now done with github actions rather than Travis CI.
 * Minor clippy fixes, PR #99.
 
