@@ -10,7 +10,7 @@ project adheres to
 ## Unreleased
 
 * Improve formatting of README, PR #100.
-* Update base64 to 0.13 and itertools to 0.10.
+* Update nom to 6.1.0, base64 to 0.13 and itertools to 0.10.
 * Update optional rsass to 0.17.0.
 * Testing is now done with github actions rather than Travis CI.
 * Minor clippy fixes, PR #99.

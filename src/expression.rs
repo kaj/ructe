@@ -4,7 +4,7 @@ use nom::bytes::complete::{escaped, is_a, is_not, tag};
 use nom::character::complete::{alpha1, char, digit1, none_of, one_of};
 use nom::combinator::{map, map_res, not, opt, recognize, value};
 use nom::error::context; //, VerboseError};
-use nom::multi::{fold_many0, many0, separated_list};
+use nom::multi::{fold_many0, many0, separated_list0};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
 use std::str::{from_utf8, Utf8Error};
 
@@ -46,7 +46,7 @@ pub fn input_to_str(s: &[u8]) -> Result<&str, Utf8Error> {
 
 pub fn comma_expressions(input: &[u8]) -> PResult<String> {
     map(
-        separated_list(preceded(tag(","), many0(tag(" "))), expression),
+        separated_list0(preceded(tag(","), many0(tag(" "))), expression),
         |list: Vec<_>| list.join(", "),
     )(input)
 }

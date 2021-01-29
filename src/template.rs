@@ -1,5 +1,4 @@
 use crate::expression::{input_to_str, rust_name};
-use crate::nom_delimited_list::delimited_list;
 use crate::parseresult::PResult;
 use crate::spacelike::spacelike;
 use crate::templateexpression::{template_expression, TemplateExpression};
@@ -10,7 +9,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::{char, multispace0};
 use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
-use nom::multi::{many0, many_till, separated_list};
+use nom::multi::{many0, many_till, separated_list0};
 use nom::sequence::{delimited, preceded, terminated, tuple};
 use std::io::{self, Write};
 
@@ -71,16 +70,18 @@ pub fn template(input: &[u8]) -> PResult<Template> {
                 ),
                 String::from,
             )),
-            delimited_list(
+            delimited(
                 context(
                     "expected '@('...')' template declaration.",
                     terminated(tag("@("), multispace0),
                 ),
-                context(
-                    "expected formal argument",
-                    map(formal_argument, String::from),
+                separated_list0(
+                    terminated(tag(","), multispace0),
+                    context(
+                        "expected formal argument",
+                        map(formal_argument, String::from),
+                    ),
                 ),
-                terminated(tag(","), multispace0),
                 context(
                     "expected ',' or ')'.",
                     delimited(multispace0, tag(")"), spacelike),
@@ -158,7 +159,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     map(
         terminated(
-            separated_list(preceded(tag(","), multispace0), type_expression),
+            separated_list0(preceded(tag(","), multispace0), type_expression),
             opt(preceded(tag(","), multispace0)),
         ),
         |_| (),

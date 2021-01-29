@@ -11,7 +11,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::char;
 use nom::combinator::{map, map_res, opt, recognize, value};
 use nom::error::context;
-use nom::multi::{many0, many_till, separated_list};
+use nom::multi::{many0, many_till, separated_list0};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
 use std::fmt::{self, Display};
 
@@ -152,7 +152,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 rust_name,
                 delimited(
                     char('('),
-                    separated_list(
+                    separated_list0(
                         terminated(tag(","), spacelike),
                         template_argument,
                     ),

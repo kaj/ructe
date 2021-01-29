@@ -133,8 +133,6 @@ extern crate rsass;
 
 pub mod Template_syntax;
 mod expression;
-#[doc(hidden)] // public for doctest to work, but hide from docs.
-pub mod nom_delimited_list;
 mod parseresult;
 mod spacelike;
 mod staticfiles;
