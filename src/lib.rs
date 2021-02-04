@@ -94,12 +94,13 @@
 //!   simplify template rendering in the [warp] framework, versions 0.3.x.
 //! * `http-types` -- Static files know their mime types, compatible with
 //!   the [http-types] crate.
-//! * `tide013` -- Support for the [tide] framework version 0.13.x.
-//!   Implies the `http-types` feature (but does not require a direct
-//!   http-types requirement, as that is reexported by tide).
-//! * `tide014` -- Support for the [tide] framework version 0.14.x
-//!   (version 0.14.x is compatible with 0.13.x so the `tide014` feature
-//!   is actually just an alias for `tide013`.
+//! * `tide013`, `tide014`, `tide015`, `tide016` -- Support for the
+//!   [tide] framework version 0.13.x through 0.16.x.  Implies the
+//!   `http-types` feature (but does not require a direct http-types
+//!   requirement, as that is reexported by tide).
+//!   (these versions of tide is compatible enough that the features
+//!   are actually just aliases for the first one, but a future tide
+//!   version may require a modified feature.)
 //!
 //! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
