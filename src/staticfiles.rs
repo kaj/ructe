@@ -453,8 +453,8 @@ impl StaticFile {
         P: AsRef<Path>,
     {
         let src = self.path_for(src);
-        use rsass::*;
         use rsass::value::Quotes;
+        use rsass::*;
         use std::sync::Arc;
         let format = output::Format {
             style: output::Style::Compressed,
