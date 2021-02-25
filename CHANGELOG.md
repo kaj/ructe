@@ -12,7 +12,7 @@ project adheres to
 * Improve formatting of README, PR #100.
 * Update nom to 6.1.0, which raises the MSRV to 0.44
 * Update base64 to 0.13 and itertools to 0.10.
-* Update optional rsass to 0.17.0.
+* Update optional rsass to 0.18.0.
 * Add warp 0.3 feature and example.
 * Add tide 0.16 feaure and update example.
 * Testing is now done with github actions rather than Travis CI.

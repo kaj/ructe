@@ -454,20 +454,21 @@ impl StaticFile {
     {
         let src = self.path_for(src);
         use rsass::*;
+        use rsass::value::Quotes;
         use std::sync::Arc;
         let format = output::Format {
             style: output::Style::Compressed,
             precision: 4,
         };
-        let mut scope = GlobalScope::new(format);
+        let scope = ScopeRef::new_global(format);
 
         // TODO Find any referenced files!
         println!("cargo:rerun-if-changed={}", src.display());
 
         let existing_statics = Arc::new(self.get_names().clone());
         scope.define_function(
-            "static_name",
-            SassFunction::builtin(
+            "static_name".into(),
+            sass::Function::builtin(
                 vec![("name".into(), sass::Value::Null)],
                 false,
                 Arc::new(move |s| match s.get("name")? {
@@ -494,7 +495,7 @@ impl StaticFile {
         let file_context = FsFileContext::new();
         let (file_context, src) = file_context.file(&src);
         let scss = parse_scss_path(&src)?;
-        let css = format.write_root(&scss, &mut scope, &file_context)?;
+        let css = format.write_root(&scss, scope, &file_context)?;
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
