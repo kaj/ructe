@@ -7,7 +7,7 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Release 0.13.2 - 2021-03-14
 
 * Improve formatting of README, PR #100.
 * Update nom to 6.1.0, which raises the MSRV to 0.44
@@ -19,6 +19,13 @@ project adheres to
 * Minor clippy fixes, PR #99.
 
 Thanks to @ibraheemdev for PR #100.
+
+Tested with rustc 1.50.0 (cb75ad5db 2021-02-10),
+1.48.0 (7eac88abb 2020-11-16),
+1.46.0 (04488afe3 2020-08-24),
+1.44.1 (c7087fe00 2020-06-17),
+1.51.0-beta.6 (6a1835ad7 2021-03-12),
+1.52.0-nightly (acca81892 2021-03-13)
 
 
 ## Release 0.13.0 - 2020-11-15
