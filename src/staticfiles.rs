@@ -453,11 +453,13 @@ impl StaticFile {
         P: AsRef<Path>,
     {
         let src = self.path_for(src);
+        use rsass::output::{Format, Style};
+        use rsass::sass::FormalArgs;
         use rsass::value::Quotes;
         use rsass::*;
         use std::sync::Arc;
-        let format = output::Format {
-            style: output::Style::Compressed,
+        let format = Format {
+            style: Style::Compressed,
             precision: 4,
         };
         let scope = ScopeRef::new_global(format);
@@ -469,8 +471,9 @@ impl StaticFile {
         scope.define_function(
             "static_name".into(),
             sass::Function::builtin(
-                vec![("name".into(), sass::Value::Null)],
-                false,
+                &"".into(),
+                &"static_name".into(),
+                FormalArgs::new(vec![("name".into(), None)]),
                 Arc::new(move |s| match s.get("name")? {
                     css::Value::Literal(name, _) => {
                         let name = name.replace('-', "_").replace('.', "_");
@@ -487,7 +490,13 @@ impl StaticFile {
                             name,
                         )))
                     }
-                    name => Err(Error::badarg("string", &name)),
+                    name => Err(Error::BadArgument(
+                        "name".into(),
+                        format!(
+                            "{} is not a string",
+                            name.format(Format::introspect())
+                        ),
+                    )),
                 }),
             ),
         );
