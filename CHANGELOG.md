@@ -7,6 +7,11 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unrelesed
+
+* Update rsass to 0.20.0.
+
+
 ## Release 0.13.2 - 2021-03-14
 
 * Improve formatting of README, PR #100.
