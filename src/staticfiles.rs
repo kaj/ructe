@@ -471,7 +471,7 @@ impl StaticFile {
         scope.define_function(
             "static_name".into(),
             sass::Function::builtin(
-                &"".into(),
+                "",
                 &"static_name".into(),
                 FormalArgs::new(vec![("name".into(), None)]),
                 Arc::new(move |s| match s.get("name")? {
