@@ -10,6 +10,7 @@ project adheres to
 ## Unrelesed
 
 * Update rsass to 0.20.0.
+* Updated gotham example to 0.6.0.
 
 
 ## Release 0.13.2 - 2021-03-14
