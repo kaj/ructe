@@ -1,11 +1,4 @@
 //! An example web service using ructe with the gotham framework.
-extern crate gotham;
-#[macro_use]
-extern crate gotham_derive;
-extern crate mime;
-#[macro_use]
-extern crate serde_derive;
-
 mod ructe_response;
 
 use gotham::hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
@@ -14,8 +7,10 @@ use gotham::router::builder::{
     build_simple_router, DefineSingleRoute, DrawRoutes,
 };
 use gotham::state::{FromState, State};
+use gotham_derive::{StateData, StaticResponseExtender};
 use mime::TEXT_HTML;
 use ructe_response::RucteResponse;
+use serde::Deserialize;
 use std::io::{self, Write};
 use templates::*;
 
