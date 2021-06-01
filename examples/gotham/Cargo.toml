@@ -11,6 +11,6 @@ ructe = { path = "../..", features = ["sass", "mime03"] }
 
 [dependencies]
 gotham = "0.6.0"
-gotham_derive = "0.5.0"
+gotham_derive = "0.6.0"
 serde = { version="1.0", features = ["derive"] }
 mime = "0.3.8"
