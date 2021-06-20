@@ -9,7 +9,7 @@ project adheres to
 
 ## Unrelesed
 
-* Update rsass to 0.21.0.
+* Update optional rsass to 0.22.0.
 * Updated gotham example to 0.6.0.
 
 
