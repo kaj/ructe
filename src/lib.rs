@@ -328,10 +328,10 @@ impl Ructe {
     /// [`StaticFile`]: templates/struct.StaticFile.html
     pub fn statics(&mut self) -> Result<StaticFiles> {
         self.f.write_all(b"pub mod statics;")?;
-        Ok(StaticFiles::for_template_dir(
+        StaticFiles::for_template_dir(
             &self.outdir,
             &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
-        )?)
+        )
     }
 }
 
