@@ -9,6 +9,7 @@ project adheres to
 
 ## Unrelesed
 
+* Allow `else if` after an `@if` block in templates. PR #104, fixes #81.
 * Update optional rsass to 0.22.0.
 * Updated gotham example to 0.6.0.
 

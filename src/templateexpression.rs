@@ -102,10 +102,16 @@ impl TemplateExpression {
                 "if {} {{\n{}}}{}\n",
                 expr,
                 body.iter().map(|b| b.code()).format(""),
-                else_body.iter().format_with("", |body, f| f(&format_args!(
-                    " else {{\n{}}}",
-                    body.iter().map(|b| b.code()).format(""),
-                ))),
+                match else_body.as_deref() {
+                    Some([e @ TemplateExpression::IfBlock { .. }]) =>
+                        format!(" else {}", e.code()),
+
+                    Some(body) => format!(
+                        " else {{\n{}}}",
+                        body.iter().map(|b| b.code()).format(""),
+                    ),
+                    None => String::new(),
+                }
             ),
             TemplateExpression::MatchBlock { ref expr, ref arms } => format!(
                 "match {} {{{}}}\n",
@@ -170,24 +176,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
         (i, Some(b"*")) => {
             map(comment_tail, |()| TemplateExpression::Comment)(i)
         }
-        (i, Some(b"if")) => context(
-            "Error in conditional expression:",
-            map(
-                tuple((
-                    delimited(spacelike, cond_expression, spacelike),
-                    template_block,
-                    opt(preceded(
-                        delimited(spacelike, tag("else"), spacelike),
-                        template_block,
-                    )),
-                )),
-                |(expr, body, else_body)| TemplateExpression::IfBlock {
-                    expr,
-                    body,
-                    else_body,
-                },
-            ),
-        )(i),
+        (i, Some(b"if")) => if2(i),
         (i, Some(b"for")) => map(
             tuple((
                 for_variable,
@@ -261,6 +250,30 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             }
         })(i),
     }
+}
+
+fn if2(input: &[u8]) -> PResult<TemplateExpression> {
+    context(
+        "Error in conditional expression:",
+        map(
+            tuple((
+                delimited(spacelike, cond_expression, spacelike),
+                template_block,
+                opt(preceded(
+                    delimited(spacelike, tag("else"), spacelike),
+                    alt((
+                        preceded(tag("if"), map(if2, |e| vec![e])),
+                        template_block,
+                    )),
+                )),
+            )),
+            |(expr, body, else_body)| TemplateExpression::IfBlock {
+                expr,
+                body,
+                else_body,
+            },
+        ),
+    )(input)
 }
 
 fn for_variable(input: &[u8]) -> PResult<String> {
