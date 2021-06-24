@@ -80,6 +80,14 @@ fn test_if_let_destructure() {
 }
 
 #[test]
+fn test_if_else_if() {
+    let f = |n| r2s(|o| if_else_if(o, n));
+    assert_eq!(f(0), "There are none\n");
+    assert_eq!(f(1), "There is one\n");
+    assert_eq!(f(7), "There are 7\n");
+}
+
+#[test]
 fn test_list() {
     assert_eq!(
         r2s(|o| list_html(o, &["foo", "bar"])),
