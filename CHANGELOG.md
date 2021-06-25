@@ -7,7 +7,7 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unrelesed
+## Release 0.13.4 - 2021-06-25
 
 * Allow `else if` after an `@if` block in templates. PR #104, fixes #81.
 * Add a missing `}` in doc example.  PR #102.
@@ -15,6 +15,9 @@ project adheres to
 * Updated gotham example to 0.6.0.
 
 Thanks @bearfrieze for #102 and @Aunmag for #81.
+
+Tested with rustc 1.53.0, 1.48.0, 1.46.0, 1.44.1, 1.54.0-beta.1,
+and 1.55.0-nightly (7c3872e6b 2021-06-24).
 
 
 ## Release 0.13.2 - 2021-03-14
