@@ -46,8 +46,7 @@ fn show_error(
 ) {
     let mut line_start = buf[0..pos].rsplitn(2, |c| *c == b'\n');
     let _ = line_start.next();
-    let line_start =
-        line_start.next().map(|bytes| bytes.len() + 1).unwrap_or(0);
+    let line_start = line_start.next().map_or(0, |bytes| bytes.len() + 1);
     let line = buf[line_start..]
         .splitn(2, |c| *c == b'\n')
         .next()

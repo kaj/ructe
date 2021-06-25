@@ -372,7 +372,7 @@ impl StaticFile {
         url_name: &str,
     ) -> io::Result<()> {
         let path = &self.path_for(path);
-        let ext = name_and_ext(path).map(|(_, e)| e).unwrap_or("");
+        let ext = name_and_ext(path).map_or("", |(_, e)| e);
         println!("cargo:rerun-if-changed={}", path.display());
         self.add_static(path, url_name, url_name, &FileContent(path), ext)?;
         Ok(())

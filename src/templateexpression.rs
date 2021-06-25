@@ -294,9 +294,8 @@ fn for_variable(input: &[u8]) -> PResult<String> {
                         opt(char('&')),
                         delimited(char('('), comma_expressions, char(')')),
                     ),
-                    |(pre, args)| match pre {
-                        Some(_) => format!("&({})", args),
-                        None => format!("({})", args),
+                    |(pre, args)| {
+                        format!("{}({})", pre.map_or("", |_| "&"), args)
                     },
                 ),
             )),
