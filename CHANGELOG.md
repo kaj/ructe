@@ -7,6 +7,11 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* Current stable rust is 1.57, MSRV is now 1.46.0.
+
+
 ## Release 0.13.4 - 2021-06-25
 
 * Allow `else if` after an `@if` block in templates. PR #104, fixes #81.
