@@ -41,7 +41,7 @@ fn homepage(state: State) -> (State, Response<Body>) {
 
 /// This method can be used as a "template tag", that is a method that
 /// can be called directly from a template.
-fn footer(out: &mut dyn Write) -> io::Result<()> {
+fn footer(out: &mut impl Write) -> io::Result<()> {
     templates::footer(
         out,
         &[

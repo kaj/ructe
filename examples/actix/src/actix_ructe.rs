@@ -1,5 +1,3 @@
-use std::io::Write;
-
 macro_rules! render {
     ($template:path) => (Render(|o| $template(o)));
     ($template:path, $($arg:expr),*) => {{
@@ -12,9 +10,9 @@ macro_rules! render {
     }};
 }
 
-pub struct Render<T: FnOnce(&mut dyn Write) -> std::io::Result<()>>(pub T);
+pub struct Render<T: FnOnce(&mut Vec<u8>) -> std::io::Result<()>>(pub T);
 
-impl<T: FnOnce(&mut dyn Write) -> std::io::Result<()>> From<Render<T>>
+impl<T: FnOnce(&mut Vec<u8>) -> std::io::Result<()>> From<Render<T>>
     for actix_web::body::Body
 {
     fn from(t: Render<T>) -> Self {

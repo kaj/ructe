@@ -20,7 +20,7 @@ fn main() {
 mod test {
     use crate::templates::statics::{StaticFile, STATICS};
     use crate::templates::*;
-    use std::io::{self, Write};
+    use std::io;
 
     #[test]
     fn page_w_static() {
@@ -74,7 +74,7 @@ mod test {
 
     fn r2s<Call>(call: Call) -> String
     where
-        Call: FnOnce(&mut dyn Write) -> io::Result<()>,
+        Call: FnOnce(&mut Vec<u8>) -> io::Result<()>,
     {
         let mut buf = Vec::new();
         call(&mut buf).unwrap();

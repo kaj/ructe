@@ -44,7 +44,7 @@ async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
 /// interface to get a file by url path.
 async fn static_file(req: Request<()>) -> Result<Response, Error> {
     let path = req.param("path")?;
-    StaticFile::get(&path)
+    StaticFile::get(path)
         .ok_or_else(|| Error::from_str(StatusCode::NotFound, "not found"))
         .map(static_response)
 }
@@ -70,7 +70,7 @@ const DAY: Duration = Duration::from_secs(24 * 60 * 60);
 
 /// This method can be used as a "template tag", i.e. a method that
 /// can be called directly from a template.
-fn footer(out: &mut dyn Write) -> io::Result<()> {
+fn footer(out: &mut impl Write) -> io::Result<()> {
     templates::footer(
         out,
         &[

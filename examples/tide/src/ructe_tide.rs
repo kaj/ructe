@@ -34,7 +34,7 @@ pub trait Render {
     /// ```
     fn render<Call>(&mut self, call: Call) -> std::io::Result<()>
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>;
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>;
 
     /// Render a template to the html body of self.
     ///
@@ -44,13 +44,13 @@ pub trait Render {
     /// [`HTML`]: ../../tide/http/mime/constant.HTML.html
     fn render_html<Call>(&mut self, call: Call) -> std::io::Result<()>
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>;
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>;
 }
 
 impl Render for tide::Response {
     fn render<Call>(&mut self, call: Call) -> std::io::Result<()>
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>,
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>,
     {
         let mut buf = Vec::new();
         call(&mut buf)?;
@@ -60,7 +60,7 @@ impl Render for tide::Response {
 
     fn render_html<Call>(&mut self, call: Call) -> std::io::Result<()>
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>,
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>,
     {
         self.render(call)?;
         self.set_content_type(tide::http::mime::HTML);
@@ -97,7 +97,7 @@ pub trait RenderBuilder {
     /// ```
     fn render<Call>(self, call: Call) -> tide::ResponseBuilder
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>;
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>;
 
     /// Render a template to the html body of self.
     ///
@@ -107,13 +107,13 @@ pub trait RenderBuilder {
     /// [`HTML`]: ../../tide/http/mime/constant.HTML.html
     fn render_html<Call>(self, call: Call) -> tide::ResponseBuilder
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>;
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>;
 }
 
 impl RenderBuilder for tide::ResponseBuilder {
     fn render<Call>(self, call: Call) -> tide::ResponseBuilder
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>,
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>,
     {
         let mut buf = Vec::new();
         match call(&mut buf) {
@@ -131,7 +131,7 @@ impl RenderBuilder for tide::ResponseBuilder {
 
     fn render_html<Call>(self, call: Call) -> tide::ResponseBuilder
     where
-        Call: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>,
+        Call: FnOnce(&mut Vec<u8>) -> std::io::Result<()>,
     {
         self.content_type(tide::http::mime::HTML).render(call)
     }

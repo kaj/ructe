@@ -1,6 +1,6 @@
 #![allow(dead_code)] // Most templates here are only used in tests.
 
-use std::io::{self, Write};
+use std::io;
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 use crate::templates::*;
@@ -11,7 +11,7 @@ fn main() {
 
 fn r2s<Call>(call: Call) -> String
 where
-    Call: FnOnce(&mut dyn Write) -> io::Result<()>,
+    Call: FnOnce(&mut Vec<u8>) -> io::Result<()>,
 {
     let mut buf = Vec::new();
     call(&mut buf).unwrap();
