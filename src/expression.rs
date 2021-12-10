@@ -41,7 +41,7 @@ pub fn expression(input: &[u8]) -> PResult<&str> {
 }
 
 pub fn input_to_str(s: &[u8]) -> Result<&str, Utf8Error> {
-    from_utf8(&s)
+    from_utf8(s)
 }
 
 pub fn comma_expressions(input: &[u8]) -> PResult<String> {

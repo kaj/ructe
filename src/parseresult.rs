@@ -16,7 +16,7 @@ pub fn show_errors(
         Err::Failure(VerboseError { ref errors })
         | Err::Error(VerboseError { ref errors }) => {
             for (rest, err) in errors.iter().rev() {
-                if let Some(message) = get_message(&err) {
+                if let Some(message) = get_message(err) {
                     let pos = buf.len() - rest.len();
                     show_error(out, buf, pos, &message, prefix);
                 }
