@@ -31,7 +31,7 @@ pub fn expression(input: &[u8]) -> PResult<&str> {
                         preceded(tag("!"), expr_in_parens),
                         preceded(tag("!"), expr_in_brackets),
                     )),
-                    (),
+                    || (),
                     |_, _| (),
                 ),
             )),

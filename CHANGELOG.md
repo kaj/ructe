@@ -10,6 +10,7 @@ project adheres to
 ## Unreleased
 
 * Current stable rust is 1.57, MSRV is now 1.46.0.
+* Update nom dependency to 7.1.0.
 * Update optional rsass to 0.23.0.
 * Update env_logger to 0.9 and gotham to 0.7.1 in examples
 
