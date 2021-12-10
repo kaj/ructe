@@ -7,6 +7,7 @@ use gotham::router::builder::{
     build_simple_router, DefineSingleRoute, DrawRoutes,
 };
 use gotham::state::{FromState, State};
+use gotham::StartError;
 use gotham_derive::{StateData, StaticResponseExtender};
 use mime::TEXT_HTML;
 use ructe_response::RucteResponse;
@@ -16,7 +17,7 @@ use templates::*;
 
 /// The main routine starts a gotham server with a simple router
 /// calling different handlers for some urls.
-fn main() {
+fn main() -> Result<(), StartError> {
     let addr = "127.0.0.1:3000";
     println!("Starting server on http://{}/", addr);
     gotham::start(
@@ -64,7 +65,7 @@ pub struct FilePath {
 fn static_file(state: State) -> (State, Response<Body>) {
     let res = {
         let FilePath { ref name } = FilePath::borrow_from(&state);
-        if let Some(data) = statics::StaticFile::get(&name) {
+        if let Some(data) = statics::StaticFile::get(name) {
             Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, data.mime.as_ref())
