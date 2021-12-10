@@ -10,6 +10,7 @@ project adheres to
 ## Unreleased
 
 * Current stable rust is 1.57, MSRV is now 1.46.0.
+* Update optional rsass to 0.23.0.
 
 
 ## Release 0.13.4 - 2021-06-25

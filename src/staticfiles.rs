@@ -453,6 +453,7 @@ impl StaticFile {
         P: AsRef<Path>,
     {
         let src = self.path_for(src);
+        use rsass::css::CssString;
         use rsass::output::{Format, Style};
         use rsass::sass::FormalArgs;
         use rsass::value::Quotes;
@@ -475,14 +476,16 @@ impl StaticFile {
                 &"static_name".into(),
                 FormalArgs::new(vec![("name".into(), None)]),
                 Arc::new(move |s| match s.get("name")? {
-                    css::Value::Literal(name, _) => {
-                        let name = name.replace('-', "_").replace('.', "_");
+                    css::Value::Literal(name) => {
+                        let name =
+                            name.value().replace('-', "_").replace('.', "_");
                         for (n, v) in existing_statics.as_ref() {
                             if name == *n {
-                                return Ok(css::Value::Literal(
-                                    v.clone(),
+                                return Ok(CssString::new(
+                                    v.into(),
                                     Quotes::Double,
-                                ));
+                                )
+                                .into());
                             }
                         }
                         Err(Error::S(format!(
