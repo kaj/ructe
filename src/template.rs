@@ -32,7 +32,7 @@ impl Template {
              #[cfg_attr(feature=\"cargo-clippy\", \
              allow(useless_attribute))]\n\
              #[allow(unused)]\n\
-             use super::{Html,ToHtml};\n",
+             use ructe::templates::{Html,ToHtml};\n",
         )?;
         for l in &self.preamble {
             writeln!(out, "{};", l)?;
