@@ -89,8 +89,6 @@
 //!   version 0.3.x of the [mime] crate.
 //! * `mime02` -- Static files know their mime types, compatible with
 //!   version 0.2.x of the [mime] crate.
-//! * `warp02` -- Provide an extension to [`Response::Builder`] to
-//!   simplify template rendering in the [warp] framework, versions 0.2.x.
 //! * `warp03` -- Provide an extension to [`Response::Builder`] to
 //!   simplify template rendering in the [warp] framework, versions 0.3.x.
 //! * `http-types` -- Static files know their mime types, compatible with
@@ -249,19 +247,6 @@ impl Ructe {
             b"#[doc(hidden)]\nmod _utils;\n\
               #[doc(inline)]\npub use self::_utils::*;\n\n",
         )?;
-        if cfg!(feature = "warp02") {
-            write_if_changed(
-                &outdir.join("_utils_warp02.rs"),
-                include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/src/templates/utils_warp02.rs"
-                )),
-            )?;
-            f.write_all(
-                b"#[doc(hidden)]\nmod _utils_warp02;\n\
-                  #[doc(inline)]\npub use self::_utils_warp02::*;\n\n",
-            )?;
-        }
         if cfg!(feature = "warp03") {
             write_if_changed(
                 &outdir.join("_utils_warp03.rs"),

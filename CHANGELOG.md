@@ -14,6 +14,7 @@ project adheres to
 * Update nom dependency to 7.1.0.
 * Update optional rsass to 0.23.0.
 * Update env_logger to 0.9 and gotham to 0.7.1 in examples
+* Dropped support for warp 0.2 (the warp02 feature and example).
 
 
 ## Release 0.13.4 - 2021-06-25

@@ -15,7 +15,6 @@ edition = "2018"
 sass = ["rsass"]
 mime02 = []
 mime03 = ["mime"]
-warp02 = ["mime03"]
 warp03 = ["mime03"]
 http-types = []
 tide016 = ["tide013"]
