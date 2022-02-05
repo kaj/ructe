@@ -9,7 +9,7 @@ project adheres to
 
 ## Unreleased
 
-* Improve error handling in optional warp support.
+* Improve error handling in optional warp support, PR #109.
 * Current stable rust is 1.57, MSRV is now 1.46.0.
 * Update nom dependency to 7.1.0.
 * Update optional rsass to 0.23.0.
