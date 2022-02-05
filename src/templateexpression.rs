@@ -82,7 +82,7 @@ impl TemplateExpression {
                 format!("_ructe_out_.write_all({:?}.as_bytes())?;\n", text)
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("{}.to_html(&mut _ructe_out_)?;\n", expr)
+                format!("{}.to_html(_ructe_out_)?;\n", expr)
             }
             TemplateExpression::ForLoop {
                 ref name,
@@ -126,7 +126,7 @@ impl TemplateExpression {
             ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
-                    "{}(&mut _ructe_out_{})?;\n",
+                    "{}(_ructe_out_{})?;\n",
                     name,
                     args.iter().format_with("", |arg, f| f(&format_args!(
                         ", {}",

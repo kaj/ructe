@@ -9,6 +9,8 @@ project adheres to
 
 ## Unreleased
 
+* Breaking change: The generated template functions have a simpler
+  signature.
 * Improve error handling in optional warp support, PR #109.
 * Current stable rust is 1.57, MSRV is now 1.46.0.
 * Update nom dependency to 7.1.0.

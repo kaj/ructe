@@ -40,7 +40,7 @@ impl Template {
         writeln!(
             out,
             "\n\
-             pub fn {name}<W>(mut _ructe_out_: &mut W{args}) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write {{\n\
+             pub fn {name}<W>(_ructe_out_: &mut W{args}) -> io::Result<()> where W: Write {{\n\
              {body}\
              Ok(())\n\
              }}",
