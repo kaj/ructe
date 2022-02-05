@@ -2,7 +2,9 @@
 use std::io::{self, Write};
 use std::time::{Duration, SystemTime};
 use templates::{statics::StaticFile, RenderRucte};
-use warp::http::{Response, StatusCode};
+use warp::http::response::Builder;
+use warp::http::StatusCode;
+use warp::reply::Response;
 use warp::{path, Filter, Rejection, Reply};
 
 /// Main program: Set up routes and start server.
@@ -13,35 +15,60 @@ async fn main() {
     let routes = warp::get()
         .and(
             path::end()
-                .and_then(home_page)
-                .or(path("static").and(path::param()).and_then(static_file))
-                .or(path("bad").and_then(bad_handler)),
+                .then(home_page)
+                .map(wrap)
+                .or(path("static")
+                    .and(path::param())
+                    .then(static_file)
+                    .map(wrap))
+                .or(path("arg")
+                    .and(path::param())
+                    .then(arg_handler)
+                    .map(wrap)),
         )
         .recover(customize_error);
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
-/// Home page handler; just render a template with some arguments.
-async fn home_page() -> Result<impl Reply, Rejection> {
-    Response::builder().html(|o| {
-        templates::page(o, &[("first", 3), ("second", 7), ("third", 2)])
-    })
-}
+type Result<T, E = MyError> = std::result::Result<T, E>;
 
-#[derive(Debug)]
-struct SomeError;
-impl std::error::Error for SomeError {}
-impl warp::reject::Reject for SomeError {}
-
-impl std::fmt::Display for SomeError {
-    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
-        out.write_str("Some error")
+/// An error response is also a response.
+///
+/// Until <https://github.com/seanmonstar/warp/pull/909> is merged, we
+/// need to do this manually, with a `.map(wrap)` after the handlers
+/// above.
+fn wrap(result: Result<impl Reply, impl Reply>) -> Response {
+    match result {
+        Ok(reply) => reply.into_response(),
+        Err(err) => err.into_response(),
     }
 }
 
-/// A handler that always gives a server error.
-async fn bad_handler() -> Result<StatusCode, Rejection> {
-    Err(warp::reject::custom(SomeError))
+/// Home page handler; just render a template with some arguments.
+async fn home_page() -> Result<impl Reply> {
+    Ok(Builder::new().html(|o| {
+        templates::page(o, &[("first", 3), ("second", 7), ("third", 2)])
+    })?)
+}
+
+/// A handler with some error handling.
+///
+/// Depending on the argument, it either returns a result or an error
+/// (that may be NotFound or BadRequest).
+async fn arg_handler(what: String) -> Result<Response> {
+    // Note: This parsing could be done by typing `what` as usize in the
+    // function signature.  This is just an example for mapping an error.
+    let n: usize = what.parse().map_err(|_| MyError::NotFound)?;
+    let w = match n {
+        0 => return Err(MyError::BadRequest),
+        1 => "one",
+        2 | 3 | 5 | 7 | 11 | 13 => "prime",
+        4 | 6 | 8 | 10 | 12 | 14 => "even",
+        9 | 15 => "odd",
+        _ => return Err(MyError::BadRequest),
+    };
+    Ok(Builder::new()
+        .html(|o| templates::page(o, &[("first", 0), (w, n)]))?)
 }
 
 /// This method can be used as a "template tag", i.e. a method that
@@ -59,41 +86,87 @@ fn footer(out: &mut dyn Write) -> io::Result<()> {
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
-async fn static_file(name: String) -> Result<impl Reply, Rejection> {
+async fn static_file(name: String) -> Result<impl Reply> {
     if let Some(data) = StaticFile::get(&name) {
         let _far_expires = SystemTime::now() + FAR;
-        Ok(Response::builder()
+        Ok(Builder::new()
             .status(StatusCode::OK)
             .header("content-type", data.mime.as_ref())
             // TODO .header("expires", _far_expires)
             .body(data.content))
     } else {
-        println!("Static file {} not found", name);
-        Err(warp::reject::not_found())
+        Err(MyError::NotFound)
     }
 }
 
 /// A duration to add to current time for a far expires header.
 static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 
-/// Create custom error pages.
+/// Convert some rejections to MyError
+///
+/// This enables "nice" error responses.
 async fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
     if err.is_not_found() {
-        eprintln!("Got a 404: {:?}", err);
-        // We have a custom 404 page!
-        Response::builder().status(StatusCode::NOT_FOUND).html(|o| {
-            templates::error(
-                o,
-                StatusCode::NOT_FOUND,
-                "The resource you requested could not be located.",
-            )
-        })
+        Ok(MyError::NotFound)
     } else {
-        let code = StatusCode::INTERNAL_SERVER_ERROR; // FIXME
-        eprintln!("Got a {}: {:?}", code.as_u16(), err);
-        Response::builder()
-            .status(code)
-            .html(|o| templates::error(o, code, "Something went wrong."))
+        // Could identify some other errors and make nice messages here
+        // but warp makes that rather hard, so lets just keep the rejection here.
+        // that way we at least get the correct status code.
+        Err(err)
+    }
+}
+
+#[derive(Debug)]
+enum MyError {
+    NotFound,
+    BadRequest,
+    InternalError,
+}
+
+impl std::error::Error for MyError {}
+
+impl warp::reject::Reject for MyError {}
+
+impl Reply for MyError {
+    fn into_response(self) -> Response {
+        match self {
+            MyError::NotFound => {
+                wrap(Builder::new().status(StatusCode::NOT_FOUND).html(|o| {
+                    templates::error(
+                        o,
+                        StatusCode::NOT_FOUND,
+                        "The resource you requested could not be located.",
+                    )
+                }))
+            }
+            MyError::BadRequest => {
+                let code = StatusCode::BAD_REQUEST;
+                wrap(
+                    Builder::new().status(code).html(|o| {
+                        templates::error(o, code, "I won't do that.")
+                    }),
+                )
+            }
+            MyError::InternalError => {
+                let code = StatusCode::INTERNAL_SERVER_ERROR;
+                wrap(Builder::new().status(code).html(|o| {
+                    templates::error(o, code, "Something went wrong.")
+                }))
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for MyError {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        out.write_str("Some error")
+    }
+}
+
+impl From<templates::RenderError> for MyError {
+    fn from(err: templates::RenderError) -> MyError {
+        log::error!("Failed to render: {:?}", err);
+        MyError::InternalError
     }
 }
 

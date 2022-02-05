@@ -1,7 +1,8 @@
 use mime::TEXT_HTML_UTF_8;
+use std::error::Error;
 use std::io;
 use warp::http::{header::CONTENT_TYPE, response::Builder};
-use warp::{reject::custom, reject::Reject, reply::Response, Rejection};
+use warp::{reject::Reject, reply::Response, Reply};
 
 /// Extension trait for [`response::Builder`] to simplify template rendering.
 ///
@@ -47,29 +48,71 @@ pub trait RenderRucte {
     /// Render a template on the response builder.
     ///
     /// This is the main function of the trait.  Please see the trait documentation.
-    fn html<F>(self, f: F) -> Result<Response, Rejection>
+    fn html<F>(self, f: F) -> Result<Response, RenderError>
     where
         F: FnOnce(&mut Vec<u8>) -> io::Result<()>;
 }
 
 impl RenderRucte for Builder {
-    fn html<F>(self, f: F) -> Result<Response, Rejection>
+    fn html<F>(self, f: F) -> Result<Response, RenderError>
     where
         F: FnOnce(&mut Vec<u8>) -> io::Result<()>,
     {
         let mut buf = Vec::new();
-        f(&mut buf).map_err(RenderError::Write).map_err(custom)?;
+        f(&mut buf).map_err(RenderError::write)?;
         self.header(CONTENT_TYPE, TEXT_HTML_UTF_8.as_ref())
             .body(buf.into())
-            .map_err(RenderError::Build)
-            .map_err(custom)
+            .map_err(RenderError::build)
     }
 }
 
+/// Error type for [`RenderRucte::html`].
+///
+/// This type implements [`Error`] for common Rust error handling, but
+/// also both [`Reply`] and [`Reject`] to facilitate use in warp filters
+/// and handlers.
 #[derive(Debug)]
-enum RenderError {
+pub struct RenderError {
+    im: RenderErrorImpl,
+}
+impl RenderError {
+    fn build(e: warp::http::Error) -> Self {
+        RenderError { im: RenderErrorImpl::Build(e) }
+    }
+    fn write(e: std::io::Error) -> Self {
+        RenderError { im: RenderErrorImpl::Write(e) }
+    }
+}
+
+// make variants private
+#[derive(Debug)]
+enum RenderErrorImpl {
     Write(std::io::Error),
     Build(warp::http::Error),
 }
 
+impl Error for RenderError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.im {
+            RenderErrorImpl::Write(e) => Some(e),
+            RenderErrorImpl::Build(e) => Some(e),
+        }
+    }
+}
+
+impl std::fmt::Display for RenderError {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self.im {
+            RenderErrorImpl::Write(_) => "Failed to write template",
+            RenderErrorImpl::Build(_) => "Failed to build response",
+        }.fmt(out)
+    }
+}
+
 impl Reject for RenderError {}
+
+impl Reply for RenderError {
+    fn into_response(self) -> Response {
+        Response::new(self.to_string().into())
+    }
+}
