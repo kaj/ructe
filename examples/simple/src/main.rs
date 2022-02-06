@@ -338,3 +338,11 @@ fn lifetimes2() {
         "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
     );
 }
+
+#[test]
+fn test_list_join() {
+    assert_eq!(
+        r2s(|o| list_joins_html(o, &[2, 3, 7])),
+        "<p>Items: 2, 3, 7.</p>\n",
+    )
+}
