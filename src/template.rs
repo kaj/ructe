@@ -131,6 +131,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
     map(
         tuple((
             alt((tag("&"), tag(""))),
+            opt(delimited(spacelike, tag("'"), rust_name)),
             delimited(
                 spacelike,
                 alt((tag("impl"), tag("dyn"), tag(""))),
