@@ -1,0 +1,6 @@
+@* There can be lifetime annotations in argument types. *@
+@(arg: &[&'static str])
+
+@for x in arg {
+  <p>@x</p>
+}

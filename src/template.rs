@@ -9,13 +9,14 @@ use nom::bytes::complete::tag;
 use nom::character::complete::{char, multispace0};
 use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
-use nom::multi::{many0, many_till, separated_list0};
+use nom::multi::{many0, many_till, separated_list0, separated_list1};
 use nom::sequence::{delimited, preceded, terminated, tuple};
 use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
     preamble: Vec<String>,
+    type_args: String,
     args: Vec<String>,
     body: Vec<TemplateExpression>,
 }
@@ -40,11 +41,14 @@ impl Template {
         writeln!(
             out,
             "\n\
-             pub fn {name}<W>(_ructe_out_: &mut W{args}) -> io::Result<()> where W: Write {{\n\
+             pub fn {name}<{ta}{ta_sep}W>(_ructe_out_: &mut W{args}) -> io::Result<()>\n\
+             where W: Write {{\n\
              {body}\
              Ok(())\n\
              }}",
             name = name,
+            ta = self.type_args,
+            ta_sep = if self.type_args.is_empty() { "" } else { ", " },
             args =
                 self.args.iter().format_with("", |arg, f| f(&format_args!(
                     ", {}",
@@ -70,10 +74,28 @@ pub fn template(input: &[u8]) -> PResult<Template> {
                 ),
                 String::from,
             )),
+            context("expected '@('...')' template declaration.", tag("@")),
+            opt(delimited(
+                terminated(tag("<"), multispace0),
+                context(
+                    "expected type argument or '>'",
+                    map_res(
+                        recognize(separated_list1(
+                            terminated(tag(","), multispace0),
+                            context(
+                                "expected lifetime declaration",
+                                preceded(tag("'"), rust_name),
+                            ),
+                        )),
+                        input_to_str,
+                    ),
+                ),
+                tag(">"),
+            )),
             delimited(
                 context(
-                    "expected '@('...')' template declaration.",
-                    terminated(tag("@("), multispace0),
+                    "expected '('...')' template arguments declaration.",
+                    terminated(tag("("), multispace0),
                 ),
                 separated_list0(
                     terminated(tag(","), multispace0),
@@ -95,8 +117,9 @@ pub fn template(input: &[u8]) -> PResult<Template> {
                 end_of_file,
             ),
         )),
-        |((), preamble, args, body)| Template {
+        |((), preamble, _, type_args, args, body)| Template {
             preamble,
+            type_args: type_args.map(String::from).unwrap_or_default(),
             args,
             body: body.0,
         },
@@ -131,6 +154,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
     map(
         tuple((
             alt((tag("&"), tag(""))),
+            opt(delimited(spacelike, tag("'"), rust_name)),
             delimited(
                 spacelike,
                 alt((tag("impl"), tag("dyn"), tag(""))),

@@ -320,3 +320,21 @@ fn test_issue_68() {
         "Hello!\n\nThe 0 number.\n\nThe 1 number.\n\nThe 2 number.\n\nGood bye!\n",
     );
 }
+
+/// [Issue #106](https://github.com/kaj/ructe/issues/106)
+#[test]
+fn lifetimes() {
+    assert_eq!(
+        r2s(|o| with_lifetime(o, &["foo", "bar"])),
+        "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
+    );
+}
+
+/// [Issue #106](https://github.com/kaj/ructe/issues/106)
+#[test]
+fn lifetimes2() {
+    assert_eq!(
+        r2s(|o| with_lifetime2(o, &["foo", "bar"])),
+        "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
+    );
+}
