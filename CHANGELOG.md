@@ -7,7 +7,7 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Release 0.14.0 - 2022-02-06
 
 * Breaking change: The generated template functions have a simpler
   signature.
