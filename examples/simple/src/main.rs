@@ -329,3 +329,12 @@ fn lifetimes() {
         "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
     );
 }
+
+/// [Issue #106](https://github.com/kaj/ructe/issues/106)
+#[test]
+fn lifetimes2() {
+    assert_eq!(
+        r2s(|o| with_lifetime2(o, &["foo", "bar"])),
+        "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
+    );
+}

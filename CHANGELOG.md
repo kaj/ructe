@@ -11,7 +11,7 @@ project adheres to
 
 * Breaking change: The generated template functions have a simpler
   signature.
-* Allow litetimes in template argument types.  Issue #106.
+* Allow litetimes in template argument types.  Issue #106, PR #110.
 * Improve error handling in optional warp support, PR #109.
 * Current stable rust is 1.57, MSRV is now 1.46.0.
 * Update nom dependency to 7.1.0.
