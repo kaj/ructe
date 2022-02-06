@@ -7,6 +7,12 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* Improve error reporting.  The debug output for `RucteError` is now the
+  same as display, and the standard `Error::source` is implemented.
+
+
 ## Release 0.14.0 - 2022-02-06
 
 * Breaking change: The generated template functions have a simpler

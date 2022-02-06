@@ -144,7 +144,7 @@ mod templateexpression;
 use parseresult::show_errors;
 use std::env;
 use std::error::Error;
-use std::fmt::{self, Display};
+use std::fmt::{self, Debug, Display};
 use std::fs::{create_dir_all, read_dir, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
@@ -432,7 +432,6 @@ fn get_env(name: &str) -> Result<String> {
 }
 
 /// The build-time error type for Ructe.
-#[derive(Debug)]
 pub enum RucteError {
     /// A build-time IO error in Ructe
     Io(io::Error),
@@ -443,16 +442,30 @@ pub enum RucteError {
     Sass(rsass::Error),
 }
 
-impl Error for RucteError {}
+impl Error for RucteError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self {
+            RucteError::Io(e) => Some(e),
+            RucteError::Env(_, e) => Some(e),
+            #[cfg(feature = "sass")]
+            RucteError::Sass(e) => Some(e),
+        }
+    }
+}
 
 impl Display for RucteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RucteError::Io(err) => err.fmt(out),
+            RucteError::Io(err) => Display::fmt(err, out),
             RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
             #[cfg(feature = "sass")]
-            RucteError::Sass(err) => err.fmt(out),
+            RucteError::Sass(err) => Display::fmt(err, out),
         }
+    }
+}
+impl Debug for RucteError {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        Display::fmt(self, out)
     }
 }
 
