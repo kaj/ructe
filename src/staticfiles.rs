@@ -475,7 +475,7 @@ impl StaticFile {
                 "",
                 &"static_name".into(),
                 FormalArgs::new(vec![("name".into(), None)]),
-                Arc::new(move |s| match s.get("name")? {
+                Arc::new(move |s| match s.get(&"name".into())? {
                     css::Value::Literal(name) => {
                         let name =
                             name.value().replace('-', "_").replace('.', "_");
@@ -505,8 +505,7 @@ impl StaticFile {
         );
 
         let file_context = FsFileContext::new();
-        let (file_context, src) = file_context.file(&src);
-        let scss = parse_scss_path(&src)?;
+        let scss = file_context.file(&src)?.parse()?;
         let css = format.write_root(&scss, scope, &file_context)?;
         self.add_file_data(&src.with_extension("css"), &css)
     }

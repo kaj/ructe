@@ -11,6 +11,7 @@ project adheres to
 
 * Improve error reporting.  The debug output for `RucteError` is now the
   same as display, and the standard `Error::source` is implemented.
+* Update optional rsass to 0.24.0.
 
 
 ## Release 0.14.0 - 2022-02-06
