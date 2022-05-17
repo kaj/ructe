@@ -504,9 +504,8 @@ impl StaticFile {
             ),
         );
 
-        let file_context = FsFileContext::new();
-        let scss = file_context.file(&src)?.parse()?;
-        let css = format.write_root(&scss, scope, &file_context)?;
+        let (file_context, scss) = FsFileContext::for_path(&src)?;
+        let css = format.write_root(scss.parse()?, scope, &file_context)?;
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
