@@ -518,9 +518,9 @@ impl StaticFile {
         suffix: &str,
     ) -> io::Result<()> {
         let rust_name = rust_name
-            .replace("/", "_")
-            .replace("-", "_")
-            .replace(".", "_");
+            .replace('/', "_")
+            .replace('-', "_")
+            .replace('.', "_");
         writeln!(
             self.src,
             "\n/// From {path:?}\
