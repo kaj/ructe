@@ -125,7 +125,7 @@ impl<'a> ToHtmlEscapingWriter<'a> {
         out: &mut impl Write,
         data: &[u8],
     ) -> io::Result<usize> {
-        let next = data.get(0);
+        let next = data.first();
         out.write_all(match next {
             Some(b'"') => b"&quot;",
             Some(b'&') => b"&amp;",
