@@ -18,7 +18,7 @@ pub trait ToHtml {
     /// by the caller.
     ///
     /// # Examples
-    /// ```
+    /// ```ignore
     /// # fn main() -> std::io::Result<()> {
     /// # use ructe::templates;
     /// use templates::ToHtml;
