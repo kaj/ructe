@@ -456,17 +456,17 @@ impl Error for RucteError {
 
 impl Display for RucteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            RucteError::Io(err) => Display::fmt(err, out),
-            RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
-            #[cfg(feature = "sass")]
-            RucteError::Sass(err) => Display::fmt(err, out),
-        }
+        write!(out, "Error: {:?}", self)
     }
 }
 impl Debug for RucteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        Display::fmt(self, out)
+        match self {
+            RucteError::Io(err) => Display::fmt(err, out),
+            RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
+            #[cfg(feature = "sass")]
+            RucteError::Sass(err) => Debug::fmt(err, out),
+        }
     }
 }
 
