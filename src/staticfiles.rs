@@ -310,7 +310,7 @@ impl StaticFile {
     /// Note that some way of changing the url when the content
     /// changes is still needed if you serve the files with far
     /// expire, and using this method makes that your responsibility
-    /// rathr than ructes.
+    /// rather than ructes.
     /// Either the file may have hashed names as is, or you may use
     /// the version number of a 3:rd party package as part of the `to`
     /// parameter.
@@ -448,9 +448,17 @@ impl StaticFile {
     /// Compile a sass file and add the resulting css.
     ///
     /// If `src` is `"somefile.sass"`, then that file will be copiled
-    /// with rsass (using the `Comressed` output style).
-    /// The result will be addes as if if was an existing
+    /// with [rsass] (using the `Comressed` output style).
+    /// The result will be added as if if was an existing
     /// `"somefile.css"` file.
+    ///
+    /// While handling the scss input, rsass is extended with a
+    /// `static_name` sass function that takes a file name as given to
+    /// [`add_file()`][Self::add_file] (or simliar) and returns the
+    /// `name-hash.ext` filename that ructe creates for it.
+    /// Note that only files that are added to the `StaticFiles`
+    /// _before_ the call to `add_sass_files` are supported by the
+    /// `static_name` function.
     ///
     /// This method is only available when ructe is built with the
     /// "sass" feature.

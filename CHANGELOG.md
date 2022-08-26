@@ -12,6 +12,7 @@ project adheres to
 * Breaking change: Most methods of `StaticFiles` now supports method
   chaining, by returning `Result<&mut Self>`, making typical build scripts
   nicer (PR #115).
+* Some doc improvements.
 
 
 ## Release 0.14.2 - 2022-08-20
