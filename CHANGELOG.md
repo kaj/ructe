@@ -7,6 +7,13 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* Breaking change: Most methods of `StaticFiles` now supports method
+  chaining, by returning `Result<&mut Self>`, making typical build scripts
+  nicer (PR #115).
+
+
 ## Release 0.14.2 - 2022-08-20
 
 * Improve error reporting.  The debug output for `RucteError` is now the

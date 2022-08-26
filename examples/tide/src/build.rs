@@ -5,8 +5,9 @@ use ructe::{Ructe, RucteError};
 
 fn main() -> Result<(), RucteError> {
     let mut ructe = Ructe::from_env()?;
-    let mut statics = ructe.statics()?;
-    statics.add_files("statics")?;
-    statics.add_sass_file("style.scss")?;
+    ructe
+        .statics()?
+        .add_files("statics")?
+        .add_sass_file("style.scss")?;
     ructe.compile_templates("templates")
 }

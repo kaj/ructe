@@ -4,7 +4,7 @@ use std::ascii::escape_default;
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
 use std::fs::{read_dir, File};
-use std::io::{self, Read, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 /// Handler for static files.
@@ -285,7 +285,10 @@ impl StaticFile {
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
-    pub fn add_files(&mut self, indir: impl AsRef<Path>) -> Result<()> {
+    pub fn add_files(
+        &mut self,
+        indir: impl AsRef<Path>,
+    ) -> Result<&mut Self> {
         let indir = self.path_for(indir);
         println!("cargo:rerun-if-changed={}", indir.display());
         for entry in read_dir(indir)? {
@@ -294,7 +297,7 @@ impl StaticFile {
                 self.add_file(&entry.path())?;
             }
         }
-        Ok(())
+        Ok(self)
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
@@ -318,7 +321,7 @@ impl StaticFile {
         &mut self,
         indir: impl AsRef<Path>,
         to: &str,
-    ) -> Result<()> {
+    ) -> Result<&mut Self> {
         for entry in read_dir(self.path_for(indir))? {
             let entry = entry?;
             let file_type = entry.file_type()?;
@@ -333,7 +336,7 @@ impl StaticFile {
                 self.add_files_as(&entry.path(), &to)?;
             }
         }
-        Ok(())
+        Ok(self)
     }
 
     /// Add one specific file as a static file.
@@ -342,7 +345,7 @@ impl StaticFile {
     /// name and ext are the name and extension from `path` and has is
     /// a few url-friendly bytes from a hash of the file content.
     ///
-    pub fn add_file(&mut self, path: impl AsRef<Path>) -> io::Result<()> {
+    pub fn add_file(&mut self, path: impl AsRef<Path>) -> Result<&mut Self> {
         let path = self.path_for(path);
         if let Some((name, ext)) = name_and_ext(&path) {
             println!("cargo:rerun-if-changed={}", path.display());
@@ -360,7 +363,7 @@ impl StaticFile {
                 ext,
             )?;
         }
-        Ok(())
+        Ok(self)
     }
 
     /// Add one specific file as a static file.
@@ -370,12 +373,12 @@ impl StaticFile {
         &mut self,
         path: impl AsRef<Path>,
         url_name: &str,
-    ) -> io::Result<()> {
+    ) -> Result<&mut Self> {
         let path = &self.path_for(path);
         let ext = name_and_ext(path).map_or("", |(_, e)| e);
         println!("cargo:rerun-if-changed={}", path.display());
         self.add_static(path, url_name, url_name, &FileContent(path), ext)?;
-        Ok(())
+        Ok(self)
     }
 
     /// Add a resource by its name and content, without reading an actual file.
@@ -418,7 +421,11 @@ impl StaticFile {
     /// # }
     /// assert_eq!(statics::black_css.name, "black-r3rltVhW.css");
     /// ````
-    pub fn add_file_data<P>(&mut self, path: P, data: &[u8]) -> Result<()>
+    pub fn add_file_data<P>(
+        &mut self,
+        path: P,
+        data: &[u8],
+    ) -> Result<&mut Self>
     where
         P: AsRef<Path>,
     {
@@ -435,7 +442,7 @@ impl StaticFile {
                 ext,
             )?;
         }
-        Ok(())
+        Ok(self)
     }
 
     /// Compile a sass file and add the resulting css.
@@ -448,7 +455,7 @@ impl StaticFile {
     /// This method is only available when ructe is built with the
     /// "sass" feature.
     #[cfg(feature = "sass")]
-    pub fn add_sass_file<P>(&mut self, src: P) -> Result<()>
+    pub fn add_sass_file<P>(&mut self, src: P) -> Result<&mut Self>
     where
         P: AsRef<Path>,
     {
@@ -516,7 +523,7 @@ impl StaticFile {
         url_name: &str,
         content: &impl Display,
         suffix: &str,
-    ) -> io::Result<()> {
+    ) -> Result<&mut Self> {
         let rust_name = rust_name
             .replace('/', "_")
             .replace('-', "_")
@@ -538,7 +545,7 @@ impl StaticFile {
         )?;
         self.names.insert(rust_name.clone(), url_name.into());
         self.names_r.insert(url_name.into(), rust_name);
-        Ok(())
+        Ok(self)
     }
 
     /// Get a mapping of names, from without hash to with.
