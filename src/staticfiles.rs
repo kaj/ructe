@@ -467,10 +467,10 @@ impl StaticFile {
     where
         P: AsRef<Path>,
     {
-        let src = self.path_for(src);
         use rsass::css::CssString;
+        use rsass::input::CargoContext;
         use rsass::output::{Format, Style};
-        use rsass::sass::FormalArgs;
+        use rsass::sass::{CallError, FormalArgs};
         use rsass::value::Quotes;
         use rsass::*;
         use std::sync::Arc;
@@ -478,49 +478,37 @@ impl StaticFile {
             style: Style::Compressed,
             precision: 4,
         };
-        let scope = ScopeRef::new_global(format);
 
-        // TODO Find any referenced files!
-        println!("cargo:rerun-if-changed={}", src.display());
-
-        let existing_statics = Arc::new(self.get_names().clone());
-        scope.define_function(
+        let src = self.path_for(src);
+        let (context, scss) =
+            CargoContext::for_path(&src).map_err(rsass::Error::from)?;
+        let mut context = context.with_format(format);
+        let existing_statics = self.get_names().clone();
+        context.get_scope().define_function(
             "static_name".into(),
             sass::Function::builtin(
                 "",
                 &"static_name".into(),
                 FormalArgs::new(vec![("name".into(), None)]),
-                Arc::new(move |s| match s.get(&"name".into())? {
-                    css::Value::Literal(name) => {
-                        let name =
-                            name.value().replace('-', "_").replace('.', "_");
-                        for (n, v) in existing_statics.as_ref() {
-                            if name == *n {
-                                return Ok(CssString::new(
-                                    v.into(),
-                                    Quotes::Double,
-                                )
-                                .into());
-                            }
-                        }
-                        Err(Error::S(format!(
-                            "Static file {} not found",
-                            name,
-                        )))
-                    }
-                    name => Err(Error::BadArgument(
-                        "name".into(),
-                        format!(
-                            "{} is not a string",
-                            name.format(Format::introspect())
-                        ),
-                    )),
+                Arc::new(move |s| {
+                    let name: String = s.get("name".into())?;
+                    let rname = name.replace('-', "_").replace('.', "_");
+                    existing_statics
+                        .iter()
+                        .find(|(n, _v)| *n == &rname)
+                        .map(|(_n, v)| {
+                            CssString::new(v.into(), Quotes::Double).into()
+                        })
+                        .ok_or_else(|| {
+                            CallError::msg(format!(
+                                "Static file {name:?} not found",
+                            ))
+                        })
                 }),
             ),
         );
 
-        let (file_context, scss) = FsFileContext::for_path(&src)?;
-        let css = format.write_root(scss.parse()?, scope, &file_context)?;
+        let css = context.transform(scss)?;
         self.add_file_data(&src.with_extension("css"), &css)
     }
 
