@@ -7,11 +7,12 @@ The format is based on
 project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Releaase 0.15.0
 
 * Breaking change: Most methods of `StaticFiles` now supports method
   chaining, by returning `Result<&mut Self>`, making typical build scripts
   nicer (PR #115).
+* Update (optional) rsass to 0.26 (PR #116).
 * Some doc improvements.
 
 
