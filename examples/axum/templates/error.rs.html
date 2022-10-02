@@ -1,0 +1,25 @@
+@use super::statics::*;
+@use crate::footer;
+@use axum::http::StatusCode;
+
+@(code: StatusCode, message: &str)
+
+<!doctype html>
+<html lang="en" class="error">
+  <head>
+    <title>Error @code.as_u16(): @code.canonical_reason().unwrap_or("error")</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="/static/@style_css.name"/>
+  </head>
+  <body>
+    <main>
+      <h1>@code.canonical_reason().unwrap_or("error")</h1>
+
+      <p>@message</p>
+      <p>We are sorry about this.
+	In a real application, this would mention the incident having
+	been logged, and giving contact details for further reporting.</p>
+    </main>
+    @:footer()
+  </body>
+</html>
