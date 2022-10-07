@@ -1,4 +1,7 @@
-use axum::response::{Html, IntoResponse};
+use axum::{
+    http::StatusCode,
+    response::{Html, IntoResponse},
+};
 
 macro_rules! render {
     ($template:path) => {{
@@ -22,7 +25,8 @@ impl<T: FnOnce(&mut Vec<u8>) -> std::io::Result<()>> IntoResponse
             Ok(()) => Html(buf).into_response(),
             Err(_e) => {
                 // TODO: logging
-                "Render failed".into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, "Render failed")
+                    .into_response()
             }
         }
     }
