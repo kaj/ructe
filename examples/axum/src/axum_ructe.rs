@@ -5,11 +5,11 @@ use axum::{
 
 macro_rules! render {
     ($template:path) => {{
-        use axum_ructe::Render;
+        use $crate::axum_ructe::Render;
         Render(|o| $template(o))
     }};
     ($template:path, $($arg:expr),*) => {{
-        use axum_ructe::Render;
+        use $crate::axum_ructe::Render;
         Render(move |o| $template(o, $($arg),*))
     }}
 }
