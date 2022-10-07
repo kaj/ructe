@@ -8,7 +8,7 @@ macro_rules! render {
         use $crate::axum_ructe::Render;
         Render(|o| $template(o))
     }};
-    ($template:path, $($arg:expr),*) => {{
+    ($template:path, $($arg:expr),* $(,)*) => {{
         use $crate::axum_ructe::Render;
         Render(move |o| $template(o, $($arg),*))
     }}
