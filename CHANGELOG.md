@@ -10,7 +10,7 @@ project adheres to
 
 ## Unreleased
 
-* Nothing, yet.
+* Added axum example (PR #118, thanks @vbrandl).
 
 
 ## Releaase 0.15.0
