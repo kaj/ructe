@@ -1,0 +1,16 @@
+[package]
+name = "axum"
+version = "0.1.0"
+edition = "2021"
+
+build = "src/build.rs"
+
+[build-dependencies]
+ructe = { path = "../..", features = ["sass", "mime03"] }
+
+[dependencies]
+axum = { version = "0.5", features = ["headers"] }
+env_logger = "0.9.1"
+headers = "0.3.8"
+mime = "0.3"
+tokio = { version = "1.21.2", default-features = false, features = ["rt-multi-thread", "macros"] }

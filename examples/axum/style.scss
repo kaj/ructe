@@ -1,0 +1,74 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: left bottom / auto 9% repeat-x url(static-name(grass.svg)) fixed,
+                82% 96% / 5vh auto no-repeat url(static-name(btfl.svg)) fixed,
+                center bottom / auto 10% repeat-x url(static-name(grass.svg)) fixed,
+                right bottom / auto 11% repeat-x url(static-name(grass.svg)) fixed,
+                10% 90% / 8vh auto no-repeat url(static-name(btfl.svg)) fixed,
+                linear-gradient(#519dd2, #7ec0ec) fixed;
+}
+
+main {
+    padding: 2ex 3ex;
+    margin: 8vh auto 1em;
+    max-width: 37em;
+    background: white;
+    border-radius: 1em;
+    position: relative;
+
+    &:before, &:after {
+        content: url(static-name(cloud.svg));
+        display: block;
+        position: absolute;
+        z-index: -1;
+    }
+    &:before {
+        width: 52%;
+        top: -7vh;
+        left: -7%;
+    }
+    &:after {
+        width: 30%;
+        top: -6vh;
+        right: -4%;
+    }
+}
+
+footer {
+    background: #84ff5e;
+    border-radius: 1em 0 0;
+    bottom: 0;
+    padding: 0 1em;
+    position: fixed;
+    right: 0;
+}
+
+h1 {
+    margin: 0 0 1ex;
+}
+figure {
+    float: right;
+    margin: 0 0 1ex 1em;
+}
+p {
+    margin: 0 0 1em;
+}
+
+.error {
+    body {
+        background: left bottom / auto 9% repeat-x url(static-name(grass.svg)) fixed,
+                    82% 98% / 5vh auto no-repeat url(static-name(btfl.svg)) fixed,
+                    10% 97% / 6vh auto no-repeat url(static-name(btfl.svg)) fixed,
+                    right bottom / auto 11% repeat-x url(static-name(grass.svg)) fixed,
+                    linear-gradient(#89a, #568) fixed;
+    }
+    main {
+        background: linear-gradient(#fff, #fff, #eee, #ccc, #888) padding-box;
+        border: solid 1px rgba(white, 0.3);
+        border-width: 0 2px 2px 1px;
+    }
+}

@@ -1,12 +1,8 @@
 macro_rules! render {
     ($template:path) => (Render(|o| $template(o)));
-    ($template:path, $($arg:expr),*) => {{
-        use actix_ructe::Render;
-        Render(|o| $template(o, $($arg),*))
-    }};
-    ($template:path, $($arg:expr),* ,) => {{
-        use actix_ructe::Render;
-        Render(|o| $template(o, $($arg),*))
+    ($template:path, $($arg:expr),* $(,)*) => {{
+        use $crate::actix_ructe::Render;
+        Render(move |o| $template(o, $($arg),*))
     }};
 }
 

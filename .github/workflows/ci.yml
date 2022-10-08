@@ -60,12 +60,13 @@ jobs:
       matrix:
         example:
           - actix
+          - axum
           - gotham
           - iron
           - nickel
           - simple
-          - statics
           - static-sass
+          - statics
           - tide
           - warp03
         rust:
