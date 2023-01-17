@@ -1,4 +1,4 @@
-# Based on https://github.com/actions-rs/meta/blob/master/recipes/msrv.md
+# Define jobs for testing ructe
 
 on: [push, pull_request]
 
@@ -18,41 +18,22 @@ jobs:
           - beta
           - nightly
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - run: echo "::add-matcher::.github/workflows/rust-problem-matcher.json"
+      - run: cargo test
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-
-      - name: Install rustfmt
-        run: rustup component add rustfmt
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+          components: rustfmt
+      - run: cargo fmt --all -- --check
 
   examples:
     name: Test example
@@ -74,17 +55,12 @@ jobs:
           - stable
           - nightly
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Install rustfmt
-        run: rustup component add rustfmt
+          components: rustfmt
+      - run: echo "::add-matcher::.github/workflows/rust-problem-matcher.json"
 
       - name: Check format
         run: |
