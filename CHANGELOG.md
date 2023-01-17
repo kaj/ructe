@@ -11,6 +11,7 @@ project adheres to
 ## Unreleased
 
 * Added axum example (PR #118, thanks @vbrandl).
+* Updated base64 to 0.21.0.
 
 
 ## Releaase 0.15.0

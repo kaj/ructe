@@ -622,7 +622,8 @@ fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
 
 /// A short and url-safe checksum string from string data.
 fn checksum_slug(data: &[u8]) -> String {
-    base64::encode_config(&md5::compute(data)[..6], base64::URL_SAFE)
+    use base64::prelude::{Engine, BASE64_URL_SAFE_NO_PAD};
+    BASE64_URL_SAFE_NO_PAD.encode(&md5::compute(data)[..6])
 }
 #[cfg(not(feature = "mime02"))]
 #[cfg(not(feature = "mime03"))]
