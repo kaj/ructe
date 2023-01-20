@@ -1,6 +1,5 @@
 use axum::{
     extract::Path,
-    handler::Handler,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::get,
@@ -25,7 +24,7 @@ fn app() -> Router {
         .route("/static/:filename", get(static_files))
         .route("/int/:n", get(take_int))
         .route("/bad", get(make_error))
-        .fallback(handler_404.into_service())
+        .fallback(handler_404)
 }
 
 /// Home page handler; just render a template with some arguments.

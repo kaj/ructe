@@ -1,13 +1,11 @@
 //! An example web service using ructe with actix web.
-use actix_web::body::Body;
+use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::ServiceResponse;
 use actix_web::http::header::{ContentType, Expires};
 use actix_web::http::{header, StatusCode};
-use actix_web::middleware::errhandlers::{
-    ErrorHandlerResponse, ErrorHandlers,
-};
-use actix_web::web::Path;
-use actix_web::{web, App, HttpResponse, HttpServer, Result};
+use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
+use actix_web::web::{resource, Path};
+use actix_web::{App, HttpResponse, HttpServer, Result};
 use std::io::{self, Write};
 use std::time::{Duration, SystemTime};
 use templates::statics::StaticFile;
@@ -26,10 +24,10 @@ async fn main() {
                     .handler(StatusCode::NOT_FOUND, render_404)
                     .handler(StatusCode::INTERNAL_SERVER_ERROR, render_500),
             )
-            .service(web::resource("/").to(home_page))
-            .service(web::resource("/static/{filename}").to(static_file))
-            .service(web::resource("/int/{i}").to(take_int))
-            .service(web::resource("/bad").to(make_error))
+            .service(resource("/").to(home_page))
+            .service(resource("/static/{filename}").to(static_file))
+            .service(resource("/int/{i}").to(take_int))
+            .service(resource("/bad").to(make_error))
     })
     .bind("127.0.0.1:8088")
     .unwrap()
@@ -39,23 +37,26 @@ async fn main() {
 }
 
 /// Home page handler; just render a template with some arguments.
-fn home_page() -> HttpResponse {
-    HttpResponse::Ok().body(render!(
-        templates::page,
-        &[("first", 3), ("second", 7), ("third", 2)]
-    ))
+async fn home_page() -> HttpResponse {
+    HttpResponse::Ok().body(
+        render!(
+            templates::page,
+            &[("first", 3), ("second", 7), ("third", 2)]
+        )
+        .unwrap(),
+    )
 }
 
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
-fn static_file(path: Path<String>) -> HttpResponse {
-    let name = &path.0;
+async fn static_file(path: Path<String>) -> HttpResponse {
+    let name = &path.into_inner();
     if let Some(data) = StaticFile::get(name) {
         let far_expires = SystemTime::now() + FAR;
         HttpResponse::Ok()
-            .set(Expires(far_expires.into()))
-            .set(ContentType(data.mime.clone()))
+            .insert_header(Expires(far_expires.into()))
+            .insert_header(ContentType(data.mime.clone()))
             .body(data.content)
     } else {
         HttpResponse::NotFound()
@@ -67,16 +68,16 @@ fn static_file(path: Path<String>) -> HttpResponse {
 async fn take_int(
     args: Path<usize>,
 ) -> Result<HttpResponse, ExampleAppError> {
-    let i = args.0;
+    let i = args.into_inner();
     Ok(HttpResponse::Ok().body(render!(
         templates::page,
         &[(&format!("number {}", i), 1 + i % 7)],
-    )))
+    )?))
 }
 
 async fn make_error() -> Result<HttpResponse, ExampleAppError> {
     let i = "three".parse()?;
-    Ok(HttpResponse::Ok().body(render!(templates::page, &[("first", i)])))
+    Ok(HttpResponse::Ok().body(render!(templates::page, &[("first", i)])?))
 }
 
 /// The error type that can be returned from resource handlers.
@@ -86,6 +87,12 @@ async fn make_error() -> Result<HttpResponse, ExampleAppError> {
 #[derive(Debug)]
 enum ExampleAppError {
     ParseInt(std::num::ParseIntError),
+    InternalError,
+}
+impl actix_web::error::ResponseError for ExampleAppError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 impl std::fmt::Display for ExampleAppError {
     fn fmt(&self, o: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -99,9 +106,10 @@ impl From<std::num::ParseIntError> for ExampleAppError {
         ExampleAppError::ParseInt(e)
     }
 }
-impl actix_web::error::ResponseError for ExampleAppError {
-    fn error_response(&self) -> HttpResponse {
-        HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+impl From<std::io::Error> for ExampleAppError {
+    fn from(value: std::io::Error) -> Self {
+        println!("Internal error: {value}");
+        ExampleAppError::InternalError
     }
 }
 
@@ -117,9 +125,7 @@ fn footer(out: &mut impl Write) -> io::Result<()> {
     )
 }
 
-fn render_404(
-    res: ServiceResponse<Body>,
-) -> Result<ErrorHandlerResponse<Body>> {
+fn render_404(res: ServiceResponse) -> Result<ErrorHandlerResponse<BoxBody>> {
     error_response(
         res,
         StatusCode::NOT_FOUND,
@@ -127,9 +133,7 @@ fn render_404(
     )
 }
 
-fn render_500(
-    res: ServiceResponse<Body>,
-) -> Result<ErrorHandlerResponse<Body>> {
+fn render_500(res: ServiceResponse) -> Result<ErrorHandlerResponse<BoxBody>> {
     error_response(
         res,
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -138,20 +142,19 @@ fn render_500(
 }
 
 fn error_response(
-    mut res: ServiceResponse<Body>,
+    mut res: ServiceResponse,
     status_code: StatusCode,
     message: &str,
-) -> Result<ErrorHandlerResponse<Body>> {
+) -> Result<ErrorHandlerResponse<BoxBody>> {
     res.headers_mut().insert(
         header::CONTENT_TYPE,
-        header::HeaderValue::from_str(mime::TEXT_HTML_UTF_8.as_ref())
-            .unwrap(),
+        header::HeaderValue::from_static(mime::TEXT_HTML_UTF_8.as_ref()),
     );
     Ok(ErrorHandlerResponse::Response(res.map_body(
         |_head, _body| {
-            actix_web::dev::ResponseBody::Body(
-                render!(templates::error, status_code, message).into(),
-            )
+            EitherBody::right(MessageBody::boxed(
+                render!(templates::error, status_code, message).unwrap(),
+            ))
         },
     )))
 }

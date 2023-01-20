@@ -12,6 +12,6 @@ ructe = { path = "../..", features = ["warp03", "sass"] }
 [dependencies]
 warp = "0.3.0"
 mime = "0.3.0"
-env_logger = "0.9"
+env_logger = "0.10.0"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 log = "0.4.14"
