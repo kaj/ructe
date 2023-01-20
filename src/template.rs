@@ -154,7 +154,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
     map(
         tuple((
             alt((tag("&"), tag(""))),
-            opt(delimited(spacelike, tag("'"), rust_name)),
+            opt(lifetime),
             delimited(
                 spacelike,
                 alt((tag("impl"), tag("dyn"), tag(""))),
@@ -183,11 +183,18 @@ fn type_expression(input: &[u8]) -> PResult<()> {
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     map(
         terminated(
-            separated_list0(preceded(tag(","), multispace0), type_expression),
+            separated_list0(
+                preceded(tag(","), multispace0),
+                alt((type_expression, lifetime)),
+            ),
             opt(preceded(tag(","), multispace0)),
         ),
         |_| (),
     )(input)
+}
+
+fn lifetime(input: &[u8]) -> PResult<()> {
+    map(delimited(spacelike, tag("'"), rust_name), |_| ())(input)
 }
 
 #[cfg(test)]
@@ -222,6 +229,16 @@ mod test {
     #[test]
     fn generic_with_trailing() {
         check_type_expr("Vec<Foo,>");
+    }
+
+    #[test]
+    fn generic_with_lifetime() {
+        check_type_expr("SomeTypeWithRef<'a>");
+    }
+
+    #[test]
+    fn generic_with_anonymous_lifetime() {
+        check_type_expr("SomeTypeWithRef<'_>");
     }
 
     fn check_type_expr(expr: &str) {
