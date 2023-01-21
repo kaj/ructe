@@ -10,6 +10,15 @@ project adheres to
 
 ## Unreleased
 
+* Removed backwards compatible aliases for template functions.
+  In ructe 0.7.2 and earlier, a template file `page.rs.html` resulted
+  in a rust function `templates::page(...)`.
+  In 0.7.2, that was changed to `templates::page_html(...)` and the
+  old name was kept as a deprecated alias.
+  However, since the template functions are usually defined within the
+  same crate that defines them, the deprecation warning has usually
+  not been shown, and this removal may still be a surprise to some
+  users (it was even used in examples up to this change).
 * Allow more lifetime arguments to templates in template arguments (PR
   #122, fixes #121). Thanks to @wezm!
 * Added axum example (PR #118). Thanks to @vbrandl!

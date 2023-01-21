@@ -380,18 +380,6 @@ fn handle_entries(
                              pub use self::template_{name}::{name};\n",
                             name = name,
                         )?;
-                        // Backwards compatibility to 0.7.2 and earlier.
-                        if suffix == &".rs.html" {
-                            writeln!(
-                                f,
-                                "#[deprecated(since=\"0.7.4\", \
-                                 note=\"please use `{name}` instead\")]\n\
-                                 #[doc(hidden)]\n\
-                                 pub use self::{name} as {alias};\n",
-                                alias = prename,
-                                name = name,
-                            )?;
-                        }
                     }
                 }
             }

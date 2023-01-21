@@ -45,8 +45,8 @@ fn page<'mw>(
     _req: &mut Request,
     res: Response<'mw>,
 ) -> MiddlewareResult<'mw> {
-    use templates::page;
-    render(res, |o| page(o, &[("silly", 4), ("long", 7), ("final", 3)]))
+    use templates::page_html;
+    render(res, |o| page_html(o, &[("silly", 4), ("long", 7), ("final", 3)]))
 }
 
 fn render<F>(res: Response, do_render: F) -> MiddlewareResult
@@ -63,7 +63,7 @@ where
 /// This method can be used as a "template tag", that is a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),

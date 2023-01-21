@@ -36,13 +36,13 @@ fn main() -> Result<(), StartError> {
 /// Simply render the page tempate with some arguments.
 fn homepage(state: State) -> (State, Response<Body>) {
     // See the trait RucteResponse in ructe_response.rs for the html method.
-    state.html(|o| page(o, &[("first", 3), ("second", 7), ("third", 2)]))
+    state.html(|o| page_html(o, &[("first", 3), ("second", 7), ("third", 2)]))
 }
 
 /// This method can be used as a "template tag", that is a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),

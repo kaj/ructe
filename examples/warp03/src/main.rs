@@ -47,7 +47,7 @@ fn wrap(result: Result<impl Reply, impl Reply>) -> Response {
 /// Home page handler; just render a template with some arguments.
 async fn home_page() -> Result<impl Reply> {
     Ok(Builder::new().html(|o| {
-        templates::page(o, &[("first", 3), ("second", 7), ("third", 2)])
+        templates::page_html(o, &[("first", 3), ("second", 7), ("third", 2)])
     })?)
 }
 
@@ -68,13 +68,13 @@ async fn arg_handler(what: String) -> Result<Response> {
         _ => return Err(MyError::BadRequest),
     };
     Ok(Builder::new()
-        .html(|o| templates::page(o, &[("first", 0), (w, n)]))?)
+        .html(|o| templates::page_html(o, &[("first", 0), (w, n)]))?)
 }
 
 /// This method can be used as a "template tag", i.e. a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),
@@ -132,7 +132,7 @@ impl Reply for MyError {
         match self {
             MyError::NotFound => {
                 wrap(Builder::new().status(StatusCode::NOT_FOUND).html(|o| {
-                    templates::error(
+                    templates::error_html(
                         o,
                         StatusCode::NOT_FOUND,
                         "The resource you requested could not be located.",
@@ -141,16 +141,14 @@ impl Reply for MyError {
             }
             MyError::BadRequest => {
                 let code = StatusCode::BAD_REQUEST;
-                wrap(
-                    Builder::new().status(code).html(|o| {
-                        templates::error(o, code, "I won't do that.")
-                    }),
-                )
+                wrap(Builder::new().status(code).html(|o| {
+                    templates::error_html(o, code, "I won't do that.")
+                }))
             }
             MyError::InternalError => {
                 let code = StatusCode::INTERNAL_SERVER_ERROR;
                 wrap(Builder::new().status(code).html(|o| {
-                    templates::error(o, code, "Something went wrong.")
+                    templates::error_html(o, code, "Something went wrong.")
                 }))
             }
         }

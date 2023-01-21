@@ -81,7 +81,7 @@ fn test_if_let_destructure() {
 
 #[test]
 fn test_if_else_if() {
-    let f = |n| r2s(|o| if_else_if(o, n));
+    let f = |n| r2s(|o| if_else_if_html(o, n));
     assert_eq!(f(0), "There are none\n");
     assert_eq!(f(1), "There is one\n");
     assert_eq!(f(7), "There are 7\n");
@@ -298,7 +298,7 @@ fn test_page_two() {
 #[test]
 fn test_some_expressions() {
     assert_eq!(
-        r2s(|o| some_expressions(o, "name")),
+        r2s(|o| some_expressions_html(o, "name")),
         "<p>name</p>\
          \n<p>name.name</p>\
          \n<p>4</p>\
@@ -310,13 +310,13 @@ fn test_some_expressions() {
 
 #[test]
 fn test_issue_66() {
-    assert_eq!(r2s(|o| issue_66(o)), "ABC\n");
+    assert_eq!(r2s(|o| issue_66_html(o)), "ABC\n");
 }
 
 #[test]
 fn test_issue_68() {
     assert_eq!(
-        r2s(|o| issue_68(o)),
+        r2s(|o| issue_68_html(o)),
         "Hello!\n\nThe 0 number.\n\nThe 1 number.\n\nThe 2 number.\n\nGood bye!\n",
     );
 }
@@ -325,7 +325,7 @@ fn test_issue_68() {
 #[test]
 fn lifetimes() {
     assert_eq!(
-        r2s(|o| with_lifetime(o, &["foo", "bar"])),
+        r2s(|o| with_lifetime_html(o, &["foo", "bar"])),
         "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
     );
 }
@@ -334,7 +334,7 @@ fn lifetimes() {
 #[test]
 fn lifetimes2() {
     assert_eq!(
-        r2s(|o| with_lifetime2(o, &["foo", "bar"])),
+        r2s(|o| with_lifetime2_html(o, &["foo", "bar"])),
         "\n  <p>foo</p>\n\n  <p>bar</p>\n\n",
     );
 }

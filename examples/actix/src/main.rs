@@ -40,7 +40,7 @@ async fn main() {
 async fn home_page() -> HttpResponse {
     HttpResponse::Ok().body(
         render!(
-            templates::page,
+            templates::page_html,
             &[("first", 3), ("second", 7), ("third", 2)]
         )
         .unwrap(),
@@ -70,14 +70,15 @@ async fn take_int(
 ) -> Result<HttpResponse, ExampleAppError> {
     let i = args.into_inner();
     Ok(HttpResponse::Ok().body(render!(
-        templates::page,
+        templates::page_html,
         &[(&format!("number {}", i), 1 + i % 7)],
     )?))
 }
 
 async fn make_error() -> Result<HttpResponse, ExampleAppError> {
     let i = "three".parse()?;
-    Ok(HttpResponse::Ok().body(render!(templates::page, &[("first", i)])?))
+    Ok(HttpResponse::Ok()
+        .body(render!(templates::page_html, &[("first", i)])?))
 }
 
 /// The error type that can be returned from resource handlers.
@@ -116,7 +117,7 @@ impl From<std::io::Error> for ExampleAppError {
 /// This method can be used as a "template tag", i.e. a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),
@@ -153,7 +154,7 @@ fn error_response(
     Ok(ErrorHandlerResponse::Response(res.map_body(
         |_head, _body| {
             EitherBody::right(MessageBody::boxed(
-                render!(templates::error, status_code, message).unwrap(),
+                render!(templates::error_html, status_code, message).unwrap(),
             ))
         },
     )))

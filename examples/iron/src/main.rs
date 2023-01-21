@@ -25,8 +25,11 @@ fn main() {
 /// with the resulting html.
 fn frontpage(_: &mut Request) -> IronResult<Response> {
     let mut buf = Vec::new();
-    templates::page(&mut buf, &[("serious", 3), ("hard", 7), ("final", 3)])
-        .expect("render template");
+    templates::page_html(
+        &mut buf,
+        &[("serious", 3), ("hard", 7), ("final", 3)],
+    )
+    .expect("render template");
     Ok(Response::with((
         status::Ok,
         mime!(Text / Html; Charset=Utf8),
@@ -37,7 +40,7 @@ fn frontpage(_: &mut Request) -> IronResult<Response> {
 /// This method can be used as a "template tag", that is a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),

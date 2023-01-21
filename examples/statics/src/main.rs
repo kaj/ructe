@@ -5,7 +5,7 @@ use templates::*;
 
 fn main() {
     println!("### Page:");
-    page(&mut io::stdout()).unwrap();
+    page_html(&mut io::stdout()).unwrap();
     for s in statics::STATICS {
         println!("### /static/{} is {}:", s.name, s.mime);
         io::stdout().write_all(s.content).unwrap();
@@ -15,7 +15,7 @@ fn main() {
 #[test]
 fn test_page_w_static() {
     assert_eq!(
-        r2s(|o| page(o)),
+        r2s(|o| page_html(o)),
         "<html>\n  \
          <head>\n    \
          <title>Example with stylesheet</title>\n    \

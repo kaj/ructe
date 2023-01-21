@@ -34,7 +34,7 @@ async fn main() -> Result<(), std::io::Error> {
 async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
     // A real site would probably have some business logic here.
     Ok(Response::builder(StatusCode::Ok)
-        .render_html(|o| templates::page(o, &[("world", 5), ("tide", 7)]))
+        .render_html(|o| templates::page_html(o, &[("world", 5), ("tide", 7)]))
         .build())
 }
 
@@ -71,7 +71,7 @@ const DAY: Duration = Duration::from_secs(24 * 60 * 60);
 /// This method can be used as a "template tag", i.e. a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),
@@ -100,7 +100,7 @@ fn handle_error<'a>(
                 // so the builder patern cannot be used here.
                 // The Render trait is provided for Response.
                 res.render_html(|o| {
-                    templates::error(o, status, status.canonical_reason())
+                    templates::error_html(o, status, status.canonical_reason())
                 })?
             }
         }

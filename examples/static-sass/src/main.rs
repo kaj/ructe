@@ -6,7 +6,7 @@ use crate::templates::*;
 
 fn main() {
     println!("### Page:");
-    page(&mut io::stdout()).unwrap();
+    page_html(&mut io::stdout()).unwrap();
     for s in statics::STATICS {
         println!(
             "### /static/{}:\n{}",
@@ -25,7 +25,7 @@ mod test {
     #[test]
     fn page_w_static() {
         assert_eq!(
-            r2s(|o| page(o)),
+            r2s(|o| page_html(o)),
             "<html>\n  \
              <head>\n    \
              <title>Example with stylesheet</title>\n    \

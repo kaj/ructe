@@ -30,7 +30,7 @@ fn app() -> Router {
 /// Home page handler; just render a template with some arguments.
 async fn home_page() -> impl IntoResponse {
     render!(
-        templates::page,
+        templates::page_html,
         &[("first", 3), ("second", 7), ("third", 2)]
     )
 }
@@ -57,7 +57,7 @@ async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
 
 async fn take_int(payload: Option<Path<usize>>) -> Response {
     if let Some(Path(n)) = payload {
-        render!(templates::page, &[(&format!("number {}", n), 1 + n % 7)])
+        render!(templates::page_html, &[(&format!("number {}", n), 1 + n % 7)])
             .into_response()
     } else {
         error_response(
@@ -70,7 +70,7 @@ async fn take_int(payload: Option<Path<usize>>) -> Response {
 
 async fn make_error() -> Result<impl IntoResponse, ExampleAppError> {
     let i = "three".parse()?;
-    Ok(render!(templates::page, &[("first", i)]))
+    Ok(render!(templates::page_html, &[("first", i)]))
 }
 
 /// The error type that can be returned from resource handlers.
@@ -106,7 +106,7 @@ impl IntoResponse for ExampleAppError {
 /// This method can be used as a "template tag", i.e. a method that
 /// can be called directly from a template.
 fn footer(out: &mut impl Write) -> io::Result<()> {
-    templates::footer(
+    templates::footer_html(
         out,
         &[
             ("ructe", "https://crates.io/crates/ructe"),
@@ -126,7 +126,7 @@ fn error_response(
     status_code: StatusCode,
     message: &str,
 ) -> impl IntoResponse + '_ {
-    (status_code, render!(templates::error, status_code, message))
+    (status_code, render!(templates::error_html, status_code, message))
 }
 
 /// Start server
