@@ -10,7 +10,9 @@ project adheres to
 
 ## Unreleased
 
-* Added axum example (PR #118, thanks @vbrandl).
+* Allow more lifetime arguments to templates in template arguments (PR
+  #122, fixes #121). Thanks to @wezm!
+* Added axum example (PR #118). Thanks to @vbrandl!
 * Updated rsass to 0.27.0 and base64 to 0.21.0.
 * Updated dependencies in examples: actix-web 4.2.1, axum 0.6.2,
   env_logger 0.10.0,
