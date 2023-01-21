@@ -46,7 +46,9 @@ fn page<'mw>(
     res: Response<'mw>,
 ) -> MiddlewareResult<'mw> {
     use templates::page_html;
-    render(res, |o| page_html(o, &[("silly", 4), ("long", 7), ("final", 3)]))
+    render(res, |o| {
+        page_html(o, &[("silly", 4), ("long", 7), ("final", 3)])
+    })
 }
 
 fn render<F>(res: Response, do_render: F) -> MiddlewareResult

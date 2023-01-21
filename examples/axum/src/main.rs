@@ -57,8 +57,11 @@ async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
 
 async fn take_int(payload: Option<Path<usize>>) -> Response {
     if let Some(Path(n)) = payload {
-        render!(templates::page_html, &[(&format!("number {}", n), 1 + n % 7)])
-            .into_response()
+        render!(
+            templates::page_html,
+            &[(&format!("number {}", n), 1 + n % 7)]
+        )
+        .into_response()
     } else {
         error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -126,7 +129,10 @@ fn error_response(
     status_code: StatusCode,
     message: &str,
 ) -> impl IntoResponse + '_ {
-    (status_code, render!(templates::error_html, status_code, message))
+    (
+        status_code,
+        render!(templates::error_html, status_code, message),
+    )
 }
 
 /// Start server
