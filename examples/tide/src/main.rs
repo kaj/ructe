@@ -34,7 +34,9 @@ async fn main() -> Result<(), std::io::Error> {
 async fn frontpage(_req: Request<()>) -> Result<Response, Error> {
     // A real site would probably have some business logic here.
     Ok(Response::builder(StatusCode::Ok)
-        .render_html(|o| templates::page_html(o, &[("world", 5), ("tide", 7)]))
+        .render_html(|o| {
+            templates::page_html(o, &[("world", 5), ("tide", 7)])
+        })
         .build())
 }
 
@@ -100,7 +102,11 @@ fn handle_error<'a>(
                 // so the builder patern cannot be used here.
                 // The Render trait is provided for Response.
                 res.render_html(|o| {
-                    templates::error_html(o, status, status.canonical_reason())
+                    templates::error_html(
+                        o,
+                        status,
+                        status.canonical_reason(),
+                    )
                 })?
             }
         }
