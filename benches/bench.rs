@@ -2,7 +2,7 @@
 extern crate test;
 use ructe::templates::{Html, ToHtml};
 use std::io::Write;
-use test::bench::{Bencher, black_box};
+use test::bench::{black_box, Bencher};
 
 #[bench]
 fn raw(b: &mut Bencher) {
