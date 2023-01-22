@@ -8,7 +8,7 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## Release 0.16.0 -- 2023-01-22
 
 * Removed backwards compatible aliases for template functions.
   In ructe 0.7.2 and earlier, a template file `page.rs.html` resulted
