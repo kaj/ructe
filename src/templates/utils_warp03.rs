@@ -17,7 +17,6 @@ use warp::{reject::Reject, reply::Response, Reply};
 /// render the template to a response.
 ///
 /// ```
-/// # extern crate warp;
 /// # use std::io::{self, Write};
 /// # use warp::http::Response;
 /// # use ructe::templates::RenderRucte;
@@ -31,7 +30,6 @@ use warp::{reject::Reject, reply::Response, Reply};
 /// Here is an example that sets a cookie in the Response.
 ///
 /// ```
-/// # extern crate warp;
 /// # use std::io::{self, Write};
 /// # use warp::http::{header::SET_COOKIE, Response};
 /// # use ructe::templates::RenderRucte;

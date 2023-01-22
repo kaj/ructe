@@ -1,7 +1,5 @@
 //! This job builds rust source from static files and templates,
 //! which can then be `include!`d in `main.rs`.
-extern crate ructe;
-
 use ructe::{Result, Ructe};
 
 fn main() -> Result<()> {

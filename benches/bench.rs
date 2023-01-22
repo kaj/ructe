@@ -1,12 +1,8 @@
 #![feature(test)]
-extern crate ructe;
 extern crate test;
-use std::fmt::Display;
-use std::io;
+use ructe::templates::{Html, ToHtml};
 use std::io::Write;
 use test::Bencher;
-
-include!("../src/template_utils.rs");
 
 #[bench]
 fn raw(b: &mut Bencher) {

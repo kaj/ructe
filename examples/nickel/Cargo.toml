@@ -2,6 +2,7 @@
 name = "nickel-ructe"
 version = "0.4.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
+edition = "2018"
 
 build = "src/build.rs"
 

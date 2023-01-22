@@ -123,15 +123,6 @@
 //! ```
 #![forbid(unsafe_code, missing_docs)]
 #![allow(clippy::manual_strip)] // Until MSR is 1.45.0
-extern crate base64;
-extern crate bytecount;
-extern crate itertools;
-extern crate md5;
-#[cfg(feature = "mime")]
-extern crate mime;
-extern crate nom;
-#[cfg(feature = "sass")]
-extern crate rsass;
 
 pub mod Template_syntax;
 mod expression;
@@ -295,7 +286,6 @@ impl Ructe {
     /// This code goes into the `build.rs`:
     ///
     /// ```no_run
-    /// # extern crate ructe;
     /// # use ructe::{Ructe, RucteError};
     /// # fn main() -> Result<(), RucteError> {
     /// let mut ructe = Ructe::from_env()?;

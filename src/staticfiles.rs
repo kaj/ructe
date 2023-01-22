@@ -48,7 +48,6 @@ use std::path::{Path, PathBuf};
 /// ructe to find and transpile your static files:
 ///
 /// ```no_run
-/// # extern crate ructe;
 /// # use ructe::{Ructe, RucteError};
 /// # fn main() -> Result<(), RucteError> {
 /// let mut ructe = Ructe::from_env()?;
@@ -206,7 +205,7 @@ impl StaticFiles {
     ) -> Result<Self> {
         let mut src = Vec::with_capacity(512);
         if cfg!(feature = "mime03") {
-            src.write_all(b"extern crate mime;\nuse self::mime::Mime;\n\n")?;
+            src.write_all(b"use mime::Mime;\n\n")?;
         }
         if cfg!(feature = "tide013") {
             src.write_all(b"use tide::http::mime::{self, Mime};\n\n")?;
@@ -249,8 +248,7 @@ impl StaticFile {
         )?;
         if cfg!(feature = "mime02") {
             src.write_all(
-                b"extern crate mime;
-use self::mime::Mime;
+                b"use mime::Mime;
 impl StaticFile {
     /// Get the mime type of this static file.
     ///

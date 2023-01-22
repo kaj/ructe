@@ -1,8 +1,6 @@
 //! An example web service using ructe with the iron framework.
 #[macro_use]
 extern crate mime;
-extern crate iron;
-extern crate router;
 
 use iron::prelude::*;
 use iron::status;
