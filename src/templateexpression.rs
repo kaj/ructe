@@ -76,22 +76,20 @@ impl TemplateExpression {
         match *self {
             TemplateExpression::Comment => String::new(),
             TemplateExpression::Text { ref text } if text.is_ascii() => {
-                format!("_ructe_out_.write_all(b{:?})?;\n", text)
+                format!("_ructe_out_.write_all(b{text:?})?;\n")
             }
             TemplateExpression::Text { ref text } => {
-                format!("_ructe_out_.write_all({:?}.as_bytes())?;\n", text)
+                format!("_ructe_out_.write_all({text:?}.as_bytes())?;\n")
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("{}.to_html(_ructe_out_)?;\n", expr)
+                format!("{expr}.to_html(_ructe_out_)?;\n")
             }
             TemplateExpression::ForLoop {
                 ref name,
                 ref expr,
                 ref body,
             } => format!(
-                "for {} in {} {{\n{}}}\n",
-                name,
-                expr,
+                "for {name} in {expr} {{\n{}}}\n",
                 body.iter().map(|b| b.code()).format(""),
             ),
             TemplateExpression::IfBlock {
@@ -99,8 +97,7 @@ impl TemplateExpression {
                 ref body,
                 ref else_body,
             } => format!(
-                "if {} {{\n{}}}{}\n",
-                expr,
+                "if {expr} {{\n{}}}{}\n",
                 body.iter().map(|b| b.code()).format(""),
                 match else_body.as_deref() {
                     Some([e @ TemplateExpression::IfBlock { .. }]) =>
@@ -114,8 +111,7 @@ impl TemplateExpression {
                 }
             ),
             TemplateExpression::MatchBlock { ref expr, ref arms } => format!(
-                "match {} {{{}}}\n",
-                expr,
+                "match {expr} {{{}}}\n",
                 arms.iter().format_with("", |(expr, body), f| {
                     f(&format_args!(
                         "\n  {} => {{\n{}}}",
@@ -126,11 +122,9 @@ impl TemplateExpression {
             ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
-                    "{}(_ructe_out_{})?;\n",
-                    name,
+                    "{name}(_ructe_out_{})?;\n",
                     args.iter().format_with("", |arg, f| f(&format_args!(
-                        ", {}",
-                        arg
+                        ", {arg}",
                     ))),
                 )
             }
@@ -234,7 +228,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
         (i, Some(b"(")) => {
             map(terminated(expr_inside_parens, tag(")")), |expr| {
                 TemplateExpression::Expression {
-                    expr: format!("({})", expr),
+                    expr: format!("({expr})"),
                 }
             })(i)
         }
@@ -353,7 +347,7 @@ fn cond_expression(input: &[u8]) -> PResult<String> {
                     ),
                 ),
             ),
-            |(lhs, rhs)| format!("let {} = {}", lhs, rhs),
+            |(lhs, rhs)| format!("let {lhs} = {rhs}"),
         )(i),
         (_i, Some(_)) => unreachable!(),
         (i, None) => map(

@@ -352,7 +352,7 @@ fn handle_entries(
                 )?;
                 handle_entries(&mut modrs, &path, &outdir)?;
                 write_if_changed(&outdir.join("mod.rs"), &modrs)?;
-                writeln!(f, "pub mod {name};\n", name = filename)?;
+                writeln!(f, "pub mod {filename};\n")?;
             }
         } else if let Some(filename) = entry.file_name().to_str() {
             for suffix in &[".rs.html", ".rs.svg", ".rs.xml"] {
@@ -360,7 +360,7 @@ fn handle_entries(
                     println!("cargo:rerun-if-changed={}", path.display());
                     let prename = &filename[..filename.len() - suffix.len()];
                     let name =
-                        format!("{}_{}", prename, &suffix[".rs.".len()..]);
+                        format!("{prename}_{}", &suffix[".rs.".len()..]);
                     if handle_template(&name, &path, outdir)? {
                         writeln!(
                             f,
@@ -368,7 +368,6 @@ fn handle_entries(
                              mod template_{name};\n\
                              #[doc(inline)]\n\
                              pub use self::template_{name}::{name};\n",
-                            name = name,
                         )?;
                     }
                 }
@@ -391,13 +390,13 @@ fn handle_template(
             let mut data = Vec::new();
             t.write_rust(&mut data, name)?;
             write_if_changed(
-                &outdir.join(format!("template_{}.rs", name)),
+                &outdir.join(format!("template_{name}.rs")),
                 &data,
             )?;
             Ok(true)
         }
         Err(error) => {
-            println!("cargo:warning=Template parse error in {:?}:", path);
+            println!("cargo:warning=Template parse error in {path:?}:");
             show_errors(&mut io::stdout(), &buf, &error, "cargo:warning=");
             Ok(false)
         }
@@ -434,14 +433,14 @@ impl Error for RucteError {
 
 impl Display for RucteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
-        write!(out, "Error: {:?}", self)
+        write!(out, "Error: {self:?}")
     }
 }
 impl Debug for RucteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RucteError::Io(err) => Display::fmt(err, out),
-            RucteError::Env(var, err) => write!(out, "{:?}: {}", var, err),
+            RucteError::Env(var, err) => write!(out, "{var:?}: {err}"),
             #[cfg(feature = "sass")]
             RucteError::Sass(err) => Debug::fmt(err, out),
         }
