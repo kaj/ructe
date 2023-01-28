@@ -8,7 +8,7 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## Release 0.16.1 -- 2023-01-28
 
 * Msrv is 1.58.1, so let ructe itself use rust edition 2021.
 * Use format strings with inline captures (in ructe itself and
