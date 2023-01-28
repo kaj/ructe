@@ -124,7 +124,7 @@ impl TemplateExpression {
                 format!(
                     "{name}(_ructe_out_{})?;\n",
                     args.iter().format_with("", |arg, f| f(&format_args!(
-                        ", {arg}",
+                        ", {arg}"
                     ))),
                 )
             }
