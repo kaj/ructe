@@ -8,6 +8,11 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+* Msrv is 1.58.1, so let ructe itself use rust edition 2021.
+
+
 ## Release 0.16.0 -- 2023-01-22
 
 * Removed backwards compatible aliases for template functions.
