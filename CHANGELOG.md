@@ -10,7 +10,7 @@ project adheres to
 
 ## Unreleased
 
-* Nothing yet.
+* Fixed more clippy lint (PR #123).  Thanks @vbrandl!
 
 
 ## Release 0.16.1 -- 2023-01-28
