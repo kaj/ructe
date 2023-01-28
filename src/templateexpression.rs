@@ -89,9 +89,7 @@ impl TemplateExpression {
                 ref expr,
                 ref body,
             } => format!(
-                "for {} in {} {{\n{}}}\n",
-                name,
-                expr,
+                "for {name} in {expr} {{\n{}}}\n",
                 body.iter().map(|b| b.code()).format(""),
             ),
             TemplateExpression::IfBlock {
@@ -99,8 +97,7 @@ impl TemplateExpression {
                 ref body,
                 ref else_body,
             } => format!(
-                "if {} {{\n{}}}{}\n",
-                expr,
+                "if {expr} {{\n{}}}{}\n",
                 body.iter().map(|b| b.code()).format(""),
                 match else_body.as_deref() {
                     Some([e @ TemplateExpression::IfBlock { .. }]) =>
@@ -114,8 +111,7 @@ impl TemplateExpression {
                 }
             ),
             TemplateExpression::MatchBlock { ref expr, ref arms } => format!(
-                "match {} {{{}}}\n",
-                expr,
+                "match {expr} {{{}}}\n",
                 arms.iter().format_with("", |(expr, body), f| {
                     f(&format_args!(
                         "\n  {} => {{\n{}}}",
@@ -126,8 +122,7 @@ impl TemplateExpression {
             ),
             TemplateExpression::CallTemplate { ref name, ref args } => {
                 format!(
-                    "{}(_ructe_out_{})?;\n",
-                    name,
+                    "{name}(_ructe_out_{})?;\n",
                     args.iter().format_with("", |arg, f| f(&format_args!(
                         ", {arg}"
                     ))),

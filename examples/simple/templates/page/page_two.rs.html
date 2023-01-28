@@ -1,7 +1,7 @@
 @use super::base_two_html;
 
 @(year: u16)
-@:base_two_html(&format!("Year {}", year), {
+@:base_two_html(&format!("Year {year}"), {
   <p>Welcome to this page about the year @year.</p>
 },
 {

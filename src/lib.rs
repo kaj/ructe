@@ -360,7 +360,7 @@ fn handle_entries(
                     println!("cargo:rerun-if-changed={}", path.display());
                     let prename = &filename[..filename.len() - suffix.len()];
                     let name =
-                        format!("{}_{}", prename, &suffix[".rs.".len()..]);
+                        format!("{prename}_{}", &suffix[".rs.".len()..]);
                     if handle_template(&name, &path, outdir)? {
                         writeln!(
                             f,
