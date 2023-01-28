@@ -36,7 +36,7 @@ impl Template {
              use super::{Html,ToHtml};\n",
         )?;
         for l in &self.preamble {
-            writeln!(out, "{};", l)?;
+            writeln!(out, "{l};")?;
         }
         writeln!(
             out,

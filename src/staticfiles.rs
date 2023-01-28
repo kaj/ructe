@@ -350,7 +350,7 @@ impl StaticFile {
             let mut input = File::open(&path)?;
             let mut buf = Vec::new();
             input.read_to_end(&mut buf)?;
-            let rust_name = format!("{}_{}", name, ext);
+            let rust_name = format!("{name}_{ext}");
             let url_name =
                 format!("{}-{}.{}", name, checksum_slug(&buf), &ext);
             self.add_static(
@@ -429,7 +429,7 @@ impl StaticFile {
     {
         let path = &self.path_for(path);
         if let Some((name, ext)) = name_and_ext(path) {
-            let rust_name = format!("{}_{}", name, ext);
+            let rust_name = format!("{name}_{ext}");
             let url_name =
                 format!("{}-{}.{}", name, checksum_slug(data), &ext);
             self.add_static(

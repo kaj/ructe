@@ -23,7 +23,7 @@ pub fn show_errors(
             }
         }
         Err::Incomplete(needed) => {
-            let msg = format!("Incomplete: {:?}", needed);
+            let msg = format!("Incomplete: {needed:?}");
             show_error(out, buf, 0, &msg, prefix);
         }
     }
@@ -32,7 +32,7 @@ pub fn show_errors(
 fn get_message(err: &VerboseErrorKind) -> Option<String> {
     match err {
         VerboseErrorKind::Context(msg) => Some((*msg).into()),
-        VerboseErrorKind::Char(ch) => Some(format!("Expected {:?}", ch)),
+        VerboseErrorKind::Char(ch) => Some(format!("Expected {ch:?}")),
         VerboseErrorKind::Nom(_err) => None,
     }
 }

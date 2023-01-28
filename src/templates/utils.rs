@@ -87,7 +87,7 @@ impl<T: Display> ToHtml for Html<T> {
 impl<T: Display> ToHtml for T {
     #[inline]
     fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
-        write!(ToHtmlEscapingWriter(out), "{}", self)
+        write!(ToHtmlEscapingWriter(out), "{self}")
     }
 }
 
