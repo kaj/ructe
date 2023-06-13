@@ -238,6 +238,7 @@ pub struct StaticFile {
 #[allow(dead_code)]
 impl StaticFile {
     /// Get a single `StaticFile` by name, if it exists.
+    #[must_use]
     pub fn get(name: &str) -> Option<&'static Self> {
         if let Ok(pos) = STATICS.binary_search_by_key(&name, |s| s.name) {
             Some(STATICS[pos])
