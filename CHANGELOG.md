@@ -11,7 +11,7 @@ project adheres to
 ## Unreleased
 
 * Fixed more clippy lint (PR #123).  Thanks @vbrandl!
-* Updated `rsass` to 0.28.0.
+* Updated `rsass` to 0.28.0 and `itertools` to 0.11.0.
 
 
 ## Release 0.16.1 -- 2023-01-28
