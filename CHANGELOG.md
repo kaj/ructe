@@ -10,6 +10,8 @@ project adheres to
 
 ## Unreleased
 
+* Added a check that no more than one of the http-types, mime02, or
+  mime03 features are enabled (PR #124).  Thanks @rustafarian-dev.
 * Fixed more clippy lint (PR #123).  Thanks @vbrandl!
 * Updated `rsass` to 0.28.0 and `itertools` to 0.11.0.
 
