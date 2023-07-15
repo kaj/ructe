@@ -614,6 +614,15 @@ fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
     None
 }
 
+#[cfg(any(
+    all(feature = "mime03", feature = "http-types"),
+    all(feature = "mime02", feature = "http-types"),
+    all(feature = "mime02", feature = "mime03"),
+))]
+compile_error!(
+    r#"Only one of these features "http-types", "mime02" or "mime03" must be enabled at a time."#
+);
+
 /// A short and url-safe checksum string from string data.
 fn checksum_slug(data: &[u8]) -> String {
     use base64::prelude::{Engine, BASE64_URL_SAFE_NO_PAD};
