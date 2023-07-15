@@ -41,7 +41,8 @@ impl Template {
         writeln!(
             out,
             "\n\
-             pub fn {name}<{ta}{ta_sep}W>(#[allow(unused_mut, clippy::used_underscore_binding)] mut _ructe_out_: W{args}) -> io::Result<()>\n\
+             #[allow(clippy::used_underscore_binding)]\n
+             pub fn {name}<{ta}{ta_sep}W>(#[allow(unused_mut)] mut _ructe_out_: W{args}) -> io::Result<()>\n\
              where W: Write {{\n\
              {body}\
              Ok(())\n\
