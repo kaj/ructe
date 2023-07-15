@@ -12,6 +12,8 @@ project adheres to
 
 * Added a check that no more than one of the http-types, mime02, or
   mime03 features are enabled (PR #124).  Thanks @rustafarian-dev.
+* Changed the writer type from `W: &mut Write` to just `W: Write` (PR #125).
+  Thanks @kornelski!
 * Fixed more clippy lint (PR #123).  Thanks @vbrandl!
 * Updated `rsass` to 0.28.0 and `itertools` to 0.11.0.
 
