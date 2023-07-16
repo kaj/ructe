@@ -1,7 +1,7 @@
 use mime::TEXT_HTML_UTF_8;
 use std::error::Error;
 use std::io;
-use warp::http::{header::CONTENT_TYPE, response::Builder};
+use warp::http::{header::CONTENT_TYPE, response};
 use warp::{reject::Reject, reply::Response, Reply};
 
 /// Extension trait for [`response::Builder`] to simplify template rendering.
@@ -18,10 +18,12 @@ use warp::{reject::Reject, reply::Response, Reply};
 ///
 /// ```
 /// # use std::io::{self, Write};
-/// # use warp::http::Response;
-/// # use ructe::templates::RenderRucte;
+/// use warp::http::Response;
+/// use ructe::templates::RenderRucte;
+///
 /// # fn page(o: &mut Write, _: u8, _: u8) -> io::Result<()> { Ok(()) }
 /// # let (title, body) = (47, 11);
+/// // ... at the end of a handler:
 /// Response::builder().html(|o| page(o, title, body))
 /// # ;
 /// ```
@@ -41,7 +43,8 @@ use warp::{reject::Reject, reply::Response, Reply};
 /// # ;
 /// ```
 ///
-/// [`response::Builder`]: ../../http/response/struct.Builder.html
+/// Note that the `.html` method _finalizes_ the builder, that is, on
+/// success it returns a [`Response`] rather than a [`response::Builder`].
 pub trait RenderRucte {
     /// Render a template on the response builder.
     ///
@@ -51,7 +54,7 @@ pub trait RenderRucte {
         F: FnOnce(&mut Vec<u8>) -> io::Result<()>;
 }
 
-impl RenderRucte for Builder {
+impl RenderRucte for response::Builder {
     fn html<F>(self, f: F) -> Result<Response, RenderError>
     where
         F: FnOnce(&mut Vec<u8>) -> io::Result<()>,

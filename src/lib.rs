@@ -14,7 +14,7 @@
 //!
 //! The template syntax, which is inspired by [Twirl], the Scala-based
 //! template engine in [Play framework], is documented in
-//! [the _Template syntax_ module].
+//! the [Template_syntax] module.
 //! A sample template may look like this:
 //!
 //! ```html
@@ -45,7 +45,6 @@
 //!
 //! [Twirl]: https://github.com/playframework/twirl
 //! [Play framework]: https://www.playframework.com/
-//! [the _Template syntax_ module]: Template_syntax/index.html
 //! [examples in the repository]: https://github.com/kaj/ructe/tree/master/examples
 //! [using ructe with warp and diesel]: https://github.com/kaj/warp-diesel-ructe-sample
 //!
@@ -53,8 +52,6 @@
 //! `build.rs` that transpiles the template to rust code.
 //! A minimal such build script looks like the following.
 //! See the [`Ructe`] struct documentation for details.
-//!
-//! [`Ructe`]: struct.Ructe.html
 //!
 //! ```rust,no_run
 //! use ructe::{Result, Ructe};
@@ -89,8 +86,8 @@
 //!   version 0.3.x of the [mime] crate.
 //! * `mime02` -- Static files know their mime types, compatible with
 //!   version 0.2.x of the [mime] crate.
-//! * `warp03` -- Provide an extension to [`Response::Builder`] to
-//!   simplify template rendering in the [warp] framework, versions 0.3.x.
+//! * `warp03` -- Provide an extension to `Response::Builder` of the [warp]
+//!   framework (versions 0.3.x) to simplify template rendering.
 //! * `http-types` -- Static files know their mime types, compatible with
 //!   the [http-types] crate.
 //! * `tide013`, `tide014`, `tide015`, `tide016` -- Support for the
@@ -101,7 +98,6 @@
 //!   are actually just aliases for the first one, but a future tide
 //!   version may require a modified feature.)
 //!
-//! [`response::Builder`]: ../http/response/struct.Builder.html
 //! [mime]: https://crates.rs/crates/mime
 //! [warp]: https://crates.rs/crates/warp
 //! [tide]: https://crates.rs/crates/tide
@@ -218,10 +214,9 @@ impl Ructe {
     /// `out_dir`.
     ///
     /// If you are using Ructe in a project that uses [cargo],
-    /// you should probably use [`from_env`] instead.
+    /// you should probably use [`Ructe::from_env`] instead.
     ///
     /// [cargo]: https://doc.rust-lang.org/cargo/
-    /// [`from_env`]: #method.from_env
     pub fn new(outdir: PathBuf) -> Result<Ructe> {
         let mut f = Vec::with_capacity(512);
         let outdir = outdir.join("templates");
@@ -300,8 +295,7 @@ impl Ructe {
     /// `templates::statics::logo_png` as a [`StaticFile`] in your
     /// project.
     ///
-    /// [`StaticFiles`]: struct.StaticFiles.html
-    /// [`StaticFile`]: templates/struct.StaticFile.html
+    /// [`StaticFile`]: templates::StaticFile
     pub fn statics(&mut self) -> Result<StaticFiles> {
         self.f.write_all(b"pub mod statics;")?;
         StaticFiles::for_template_dir(
@@ -461,6 +455,4 @@ impl From<rsass::Error> for RucteError {
 }
 
 /// A result where the error type is a [`RucteError`].
-///
-/// [`RucteError`]: enum.RucteError.html
 pub type Result<T> = std::result::Result<T, RucteError>;
