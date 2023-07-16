@@ -59,7 +59,7 @@ impl Display for TemplateArgument {
             }
             TemplateArgument::Body(ref v) => writeln!(
                 out,
-                "|mut _ructe_out_| {{\n{}\nOk(())\n}}",
+                "#[allow(clippy::used_underscore_binding)] |mut _ructe_out_| {{\n{}\nOk(())\n}}",
                 v.iter().map(|b| b.code()).format(""),
             ),
         }
