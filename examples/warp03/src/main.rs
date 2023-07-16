@@ -54,13 +54,12 @@ async fn home_page() -> Result<impl Reply> {
 /// A handler with some error handling.
 ///
 /// Depending on the argument, it either returns a result or an error
-/// (that may be NotFound or BadRequest).
+/// (that may be `NotFound` or `BadRequest`).
 async fn arg_handler(what: String) -> Result<Response> {
     // Note: This parsing could be done by typing `what` as usize in the
     // function signature.  This is just an example for mapping an error.
     let n: usize = what.parse().map_err(|_| MyError::NotFound)?;
     let w = match n {
-        0 => return Err(MyError::BadRequest),
         1 => "one",
         2 | 3 | 5 | 7 | 11 | 13 => "prime",
         4 | 6 | 8 | 10 | 12 | 14 => "even",
@@ -102,7 +101,7 @@ async fn static_file(name: String) -> Result<impl Reply> {
 /// A duration to add to current time for a far expires header.
 static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
 
-/// Convert some rejections to MyError
+/// Convert some rejections to `MyError`
 ///
 /// This enables "nice" error responses.
 async fn customize_error(err: Rejection) -> Result<impl Reply, Rejection> {
