@@ -241,6 +241,11 @@ mod test {
         check_type_expr("SomeTypeWithRef<'_>");
     }
 
+    #[test]
+    fn multiword_constant() {
+        check_type_expr("ONE_TWO_THREE");
+    }
+
     fn check_type_expr(expr: &str) {
         assert_eq!(type_expression(expr.as_bytes()), Ok((&b""[..], ())));
     }

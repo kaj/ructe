@@ -55,7 +55,7 @@ pub fn rust_name(input: &[u8]) -> PResult<&str> {
     map_res(
         recognize(pair(
             alt((tag("_"), alpha1)),
-            opt(is_a("_0123456789abcdefghijklmnopqrstuvwxyz")),
+            opt(is_a("_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")),
         )),
         input_to_str,
     )(input)
