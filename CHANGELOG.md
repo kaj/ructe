@@ -15,7 +15,7 @@ project adheres to
 * Changed the writer type from `W: &mut Write` to just `W: Write` (PR #125).
   Thanks @kornelski!
 * Fixed handling of `MULTI_WORD_CONSTANTS` in templates (Issue #129, PR #130).
-  Thanks @wesm!
+  Thanks @wezm!
 * Fixed more clippy lints (PR #123, #127).  Thanks @vbrandl!
 * Updated `rsass` to 0.28.0 and `itertools` to 0.11.0.
 
