@@ -59,8 +59,22 @@ fn test_all_statics_known() {
     use templates::statics::STATICS;
     assert_eq!(
         STATICS.iter().map(|s| s.name).collect::<Vec<_>>(),
-        ["foo-JckCHvyv.css", "foo-R-7hhHLr.js", "style-o2rFo1lI.css"]
+        [
+            "17-C0lZWdZX.css",
+            "foo-JckCHvyv.css",
+            "foo-R-7hhHLr.js",
+            "style-o2rFo1lI.css"
+        ]
     );
+}
+
+/// Test for issue #82.
+#[test]
+fn test_num_gets_prefixed() {
+    // The rust name is usable in rust.
+    let style = &templates::statics::n17_css;
+    // Url name is not prefixed (but has a content hash).
+    assert_eq!(style.name, "17-C0lZWdZX.css");
 }
 
 #[cfg(test)]

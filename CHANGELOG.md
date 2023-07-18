@@ -16,6 +16,10 @@ project adheres to
   Thanks @kornelski!
 * Fixed handling of `MULTI_WORD_CONSTANTS` in templates (Issue #129, PR #130).
   Thanks @wezm!
+* More ways to create a working rust symbol name from a "strange"
+  static file name.  Illegal characters are replaced by `_`, and if
+  the file name starts with a number it is prefixed with `n` (Issue
+  #82, PR #132).  Thanks @Aedius for reporting!
 * Fixed more clippy lints (PR #123, #127).  Thanks @vbrandl!
 * Updated `rsass` to 0.28.0 and `itertools` to 0.11.0.
 

@@ -517,7 +517,16 @@ impl StaticFile {
         content: &impl Display,
         suffix: &str,
     ) -> Result<&mut Self> {
-        let rust_name = rust_name.replace(['/', '-', '.'], "_");
+        let mut rust_name =
+            rust_name.replace(|c: char| !c.is_alphanumeric(), "_");
+        if rust_name
+            .as_bytes()
+            .first()
+            .map(|c| c.is_ascii_digit())
+            .unwrap_or(true)
+        {
+            rust_name.insert(0, 'n');
+        }
         writeln!(
             self.src,
             "\n/// From {path:?}\
