@@ -8,6 +8,11 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+* Update itertools dependency to 0.12.0.
+
+
 ## Release 0.17.0 -- 2023-07-22
 
 * Added a check that no more than one of the http-types, mime02, or
