@@ -139,3 +139,210 @@ impl<'a> ToHtmlEscapingWriter<'a> {
         Ok(1)
     }
 }
+
+/// Adapter interface providing `join_html` method.
+pub trait JoinHtml<I: Iterator> {
+    /// Format the items of the given iterator, separated by `sep`.
+    ///
+    /// The formatting is done by a given template (or template-like function).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ructe::templates::{JoinHtml, Html};
+    /// # fn main() -> std::io::Result<()> {
+    /// assert_eq!(
+    ///     [("Rasmus", "kaj"), ("Kalle", "karl")]
+    ///         .iter()
+    ///         .join_html(
+    ///             |o, (name, user)| {
+    ///                 write!(o, "<a href=\"/profile/{}\">{}</a>", user, name)
+    ///             },
+    ///             Html("<br/>\n"),
+    ///         )
+    ///         .to_buffer()?,
+    ///     "<a href=\"/profile/kaj\">Rasmus</a><br/>\
+    ///      \n<a href=\"/profile/karl\">Kalle</a>"
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Note that the callback function is responsible for any html
+    /// escaping of the argument.
+    /// The closure with the write function above don't do any
+    /// escaping, it worked fine only because the names and user-names
+    /// in the example did not contain any characters requireing escaping.
+    ///
+    /// One nice way to get a function that handles escaping is to use
+    /// a template function as the formatting callback.
+    ///
+    /// If the the following template is `link.rs.html`:
+    /// ```ructe
+    /// @((title, slug): &(&str, &str))
+    /// <a href=\"/album/@slug\">@title</a>
+    /// ```
+    ///
+    /// It can be used like this in rust code:
+    /// ```
+    /// # // Mock the above template
+    /// # use std::io;
+    /// # use ructe::templates::ToHtml;
+    /// # fn link(o: &mut dyn io::Write, (title, slug): &(&str, &str)) -> io::Result<()> {
+    /// #     o.write_all(b"<a href=\"/album/")?;
+    /// #     slug.to_html(o)?;
+    /// #     o.write_all(b"\">")?;
+    /// #     title.to_html(o)?;
+    /// #     o.write_all(b"</a>")
+    /// # }
+    /// use ructe::templates::{Html, JoinHtml};
+    /// # fn main() -> std::io::Result<()> {
+    /// assert_eq!(
+    ///     [("Spirou & Fantasio", "spirou"), ("Tom & Jerry", "tom_jerry")]
+    ///         .iter()
+    ///         .join_html(link, Html("<br/>\n"))
+    ///         .to_buffer()?,
+    ///     "<a href=\"/album/spirou\">Spirou &amp; Fantasio</a><br/>\
+    ///      \n<a href=\"/album/tom_jerry\">Tom &amp; Jerry</a>"
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Or like this in a template, giving similar result:
+    /// ```ructe
+    /// @use super::{link, Html, JoinHtml};
+    ///
+    /// @(comics: &[(&str, &str)])
+    /// <div class="containing markup">
+    ///   @comics.iter().to_html(link, Html("<br/>"))
+    /// </div>
+    /// ```
+    fn join_html<
+        F: 'static + Fn(&mut dyn Write, I::Item) -> io::Result<()>,
+        Sep: 'static + ToHtml,
+    >(
+        self,
+        item_template: F,
+        sep: Sep,
+    ) -> Box<dyn ToHtml>;
+}
+
+/// Adapter interface providing `join_to_html` method.
+pub trait JoinToHtml<Item: ToHtml, I: Iterator<Item = Item>> {
+    /// Format the items of the given iterator, separated by `sep`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ructe::templates::JoinToHtml;
+    /// # fn main() -> std::io::Result<()> {
+    /// assert_eq!(
+    ///     ["foo", "b<a", "baz"]
+    ///         .iter()
+    ///         .join_to_html(" & ")
+    ///         .to_buffer()?,
+    ///     "foo &amp; b&lt;a &amp; baz"
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    fn join_to_html<Sep: 'static + ToHtml>(self, sep: Sep)
+        -> Box<dyn ToHtml>;
+}
+
+impl<I: 'static + Iterator + Clone> JoinHtml<I> for I {
+    fn join_html<
+        F: 'static + Fn(&mut dyn Write, I::Item) -> io::Result<()>,
+        Sep: 'static + ToHtml,
+    >(
+        self,
+        item_template: F,
+        sep: Sep,
+    ) -> Box<dyn ToHtml> {
+        Box::new(HtmlJoiner {
+            items: self,
+            f: item_template,
+            sep,
+        })
+    }
+}
+
+impl<Item: ToHtml, Iter: 'static + Iterator<Item = Item> + Clone>
+    JoinToHtml<Item, Iter> for Iter
+{
+    fn join_to_html<Sep: 'static + ToHtml>(
+        self,
+        sep: Sep,
+    ) -> Box<dyn ToHtml> {
+        Box::new(HtmlJoiner {
+            items: self,
+            f: |o, i| i.to_html(o),
+            sep,
+        })
+    }
+}
+
+struct HtmlJoiner<
+    Items: Iterator + Clone,
+    F: Fn(&mut dyn Write, Items::Item) -> io::Result<()>,
+    Sep: ToHtml,
+> {
+    items: Items,
+    f: F,
+    sep: Sep,
+}
+
+impl<
+        Items: Iterator + Clone,
+        F: Fn(&mut dyn Write, Items::Item) -> io::Result<()>,
+        Sep: ToHtml,
+    > ToHtml for HtmlJoiner<Items, F, Sep>
+{
+    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+        let mut iter = self.items.clone();
+        if let Some(first) = iter.next() {
+            (self.f)(out, first)?;
+        } else {
+            return Ok(());
+        }
+        for item in iter {
+            self.sep.to_html(out)?;
+            (self.f)(out, item)?;
+        }
+        Ok(())
+    }
+}
+
+#[test]
+fn test_join_to_html() {
+    assert_eq!(
+        ["foo", "b<a", "baz"]
+            .iter()
+            .join_to_html(", ")
+            .to_buffer()
+            .unwrap(),
+        "foo, b&lt;a, baz"
+    )
+}
+
+#[test]
+fn test_join_to_html_empty() {
+    use std::iter::empty;
+    assert_eq!(empty::<&str>().join_to_html(", ").to_buffer().unwrap(), "")
+}
+
+#[test]
+fn test_join_html_empty() {
+    use std::iter::empty;
+    assert_eq!(
+        empty::<&str>()
+            .join_html(
+                |_o, _s| panic!("The callback should never be called"),
+                ", ",
+            )
+            .to_buffer()
+            .unwrap(),
+        ""
+    )
+}
