@@ -339,7 +339,7 @@ fn handle_entries(
                 let mut modrs = Vec::with_capacity(512);
                 modrs.write_all(
                     b"#[allow(renamed_and_removed_lints)]\n\
-                      #[cfg_attr(feature=\"cargo-clippy\", \
+                      #[cfg_attr(feature=\"clippy\", \
                       allow(useless_attribute))]\n\
                       #[allow(unused)]\n\
                       use super::{Html,ToHtml};\n",
