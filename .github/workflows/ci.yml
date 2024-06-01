@@ -12,9 +12,9 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.64.0
-          - 1.60.0
-          - 1.58.1
+          - 1.75.0
+          - 1.67.1
+          - 1.61.0
           - beta
           - nightly
     steps:
