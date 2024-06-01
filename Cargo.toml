@@ -1,6 +1,6 @@
 [package]
 name = "ructe"
-version = "0.17.0"
+version = "0.17.1-PRE"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 description = "Rust Compiled Templates, efficient type-safe web page templates."
 documentation = "https://docs.rs/ructe"
@@ -10,7 +10,7 @@ keywords = ["web", "templating", "template", "html"]
 categories = ["template-engine", "web-programming"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
-rust-version = "1.58.1"
+rust-version = "1.61.0"
 
 [features]
 sass = ["rsass"]
