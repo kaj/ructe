@@ -29,8 +29,7 @@ impl Template {
     ) -> io::Result<()> {
         out.write_all(
             b"use std::io::{self, Write};\n\
-             #[allow(clippy::useless_attribute)]\n\
-             #[allow(unused)]\n\
+             #[allow(clippy::useless_attribute, unused)]\n\
              use super::{Html,ToHtml};\n",
         )?;
         for line in &self.preamble {
