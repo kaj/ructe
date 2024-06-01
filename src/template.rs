@@ -29,9 +29,7 @@ impl Template {
     ) -> io::Result<()> {
         out.write_all(
             b"use std::io::{self, Write};\n\
-             #[allow(renamed_and_removed_lints)]\n\
-             #[cfg_attr(feature=\"clippy\", \
-             allow(useless_attribute))]\n\
+             #[allow(clippy::useless_attribute)]\n\
              #[allow(unused)]\n\
              use super::{Html,ToHtml};\n",
         )?;
