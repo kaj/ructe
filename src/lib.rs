@@ -338,8 +338,7 @@ fn handle_entries(
                 create_dir_all(&outdir)?;
                 let mut modrs = Vec::with_capacity(512);
                 modrs.write_all(
-                    b"#[allow(clippy::useless_attribute))]\n\
-                      #[allow(unused)]\n\
+                    b"#[allow(clippy::useless_attribute, unused)]\n\
                       use super::{Html,ToHtml};\n",
                 )?;
                 handle_entries(&mut modrs, &path, &outdir)?;
