@@ -1,16 +1,12 @@
 use axum::{
     extract::Path,
-    http::StatusCode,
+    http::{header, StatusCode},
     response::{IntoResponse, Response},
     routing::get,
-    Router, Server, TypedHeader,
+    Router,
 };
-use headers::{ContentType, Expires};
 
-use std::{
-    io::{self, Write},
-    time::{Duration, SystemTime},
-};
+use std::io::{self, Write};
 
 use templates::statics::StaticFile;
 
@@ -38,15 +34,18 @@ async fn home_page() -> impl IntoResponse {
 /// Handler for static files.
 /// Create a response from the file data with a correct content type
 /// and a far expires header (or a 404 if the file does not exist).
-async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
-    /// A duration to add to current time for a far expires header.
-    static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
+async fn static_files(Path(filename): Path<String>) -> Response {
     match StaticFile::get(&filename) {
         Some(data) => {
-            let far_expires = SystemTime::now() + FAR;
             (
-                TypedHeader(ContentType::from(data.mime.clone())),
-                TypedHeader(Expires::from(far_expires)),
+                [
+                    (header::CONTENT_TYPE, data.mime.as_ref()),
+                    (
+                        header::CACHE_CONTROL,
+                        // max age is 180 days (given in seconds)
+                        "public, max_age=15552000, immutable",
+                    ),
+                ],
                 data.content,
             )
                 .into_response()
@@ -79,7 +78,7 @@ async fn make_error() -> Result<impl IntoResponse, ExampleAppError> {
 /// The error type that can be returned from resource handlers.
 ///
 /// This needs to be convertible from any error types used with `?` in
-/// handlers, and implement the actix ResponseError type.
+/// handlers, and implement the axum [IntoResponse] trait.
 #[derive(Debug)]
 enum ExampleAppError {
     ParseInt(std::num::ParseIntError),
@@ -139,8 +138,11 @@ fn error_response(
 #[tokio::main]
 async fn main() {
     env_logger::init();
-    Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app().into_make_service())
+
+    let listener =
+        tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    log::info!("Listening on {}.", listener.local_addr().unwrap());
+    axum::serve(listener, app().into_make_service())
         .await
         .unwrap()
 }

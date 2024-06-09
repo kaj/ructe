@@ -9,8 +9,8 @@ build = "src/build.rs"
 ructe = { path = "../..", features = ["sass", "mime03"] }
 
 [dependencies]
-axum = { version = "0.6.2", features = ["headers"] }
-env_logger = "0.10.0"
-headers = "0.3.8"
+axum = "0.7.5"
+env_logger = "0.11.3"
+log = "0.4.21"
 mime = "0.3"
 tokio = { version = "1.21.2", default-features = false, features = ["rt-multi-thread", "macros"] }

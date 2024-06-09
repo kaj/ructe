@@ -12,4 +12,4 @@ ructe = { path = "../..", features = ["sass", "mime03"] }
 [dependencies]
 actix-web = "4.2.1"
 mime = "0.3"
-env_logger = "0.10.0"
+env_logger = "0.11.3"
