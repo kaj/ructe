@@ -10,6 +10,8 @@ project adheres to
 
 ## Unreleased
 
+* Update clippy lint usage to get rid of a warning (PR #137).
+  Thanks @vbradl!
 * Update itertools dependency to 0.12.0.
 
 
