@@ -10,6 +10,7 @@ project adheres to
 
 ## Unreleased
 
+* The main branch in git is now `main` rather than `master`.
 * Update clippy lint usage to get rid of a warning (PR #137).
   Thanks @vbradl!
 * Update itertools dependency to 0.12.0.
