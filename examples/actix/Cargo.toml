@@ -1,5 +1,5 @@
 [package]
-name = "actix-web"
+name = "actix"
 version = "0.6.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 edition = "2018"
@@ -13,3 +13,4 @@ ructe = { path = "../..", features = ["sass", "mime03"] }
 actix-web = "4.2.1"
 mime = "0.3"
 env_logger = "0.11.3"
+tracing = "0.1.40"

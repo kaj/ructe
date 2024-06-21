@@ -19,11 +19,7 @@ async fn main() {
     env_logger::init();
     HttpServer::new(|| {
         App::new()
-            .wrap(
-                ErrorHandlers::new()
-                    .handler(StatusCode::NOT_FOUND, render_404)
-                    .handler(StatusCode::INTERNAL_SERVER_ERROR, render_500),
-            )
+            .wrap(ErrorHandlers::new().default_handler(render_error))
             .service(resource("/").to(home_page))
             .service(resource("/static/{filename}").to(static_file))
             .service(resource("/int/{i}").to(take_int))
@@ -126,35 +122,27 @@ fn footer(out: &mut impl Write) -> io::Result<()> {
     )
 }
 
-fn render_404(res: ServiceResponse) -> Result<ErrorHandlerResponse<BoxBody>> {
-    error_response(
-        res,
-        StatusCode::NOT_FOUND,
-        "The resource you requested can't be found.",
-    )
-}
-
-fn render_500(res: ServiceResponse) -> Result<ErrorHandlerResponse<BoxBody>> {
-    error_response(
-        res,
-        StatusCode::INTERNAL_SERVER_ERROR,
-        "Sorry, Something went wrong.  This is probably not your fault.",
-    )
-}
-
-fn error_response(
-    mut res: ServiceResponse,
-    status_code: StatusCode,
-    message: &str,
+fn render_error(
+    res: ServiceResponse,
 ) -> Result<ErrorHandlerResponse<BoxBody>> {
-    res.headers_mut().insert(
-        header::CONTENT_TYPE,
-        header::HeaderValue::from_static(mime::TEXT_HTML_UTF_8.as_ref()),
-    );
+    let req = res.request();
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+    let code = res.status();
     Ok(ErrorHandlerResponse::Response(res.map_body(
-        |_head, _body| {
+        move |head, body| {
+            let body = body.try_into_bytes().unwrap_or_default();
+            let body = String::from_utf8_lossy(&body);
+            tracing::info!("Error {code} on '{method} {uri}': {body}");
+            head.headers.insert(
+                header::CONTENT_TYPE,
+                header::HeaderValue::from_static(
+                    mime::TEXT_HTML_UTF_8.as_ref(),
+                ),
+            );
             EitherBody::right(MessageBody::boxed(
-                render!(templates::error_html, status_code, message).unwrap(),
+                render!(templates::error_html, code, &body)
+                    .unwrap_or(b"Error".into()),
             ))
         },
     )))
