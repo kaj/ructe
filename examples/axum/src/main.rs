@@ -54,22 +54,14 @@ async fn static_files(Path(filename): Path<String>) -> Response {
     }
 }
 
-async fn take_int(payload: Option<Path<usize>>) -> Response {
-    if let Some(Path(n)) = payload {
-        render!(
-            templates::page_html,
-            &[(&format!("number {}", n), 1 + n % 7)]
-        )
-        .into_response()
-    } else {
-        error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Sorry, Something went wrong. This is probably not your fault.",
-        )
-        .into_response()
-    }
+async fn take_int(Path(n): Path<usize>) -> impl IntoResponse {
+    render!(
+        templates::page_html,
+        &[(&format!("number {}", n), 1 + n % 7)]
+    )
 }
 
+/// This function always fail, to show an example of error handling.
 async fn make_error() -> Result<impl IntoResponse, ExampleAppError> {
     let i = "three".parse()?;
     Ok(render!(templates::page_html, &[("first", i)]))
@@ -85,7 +77,9 @@ enum ExampleAppError {
 }
 impl std::fmt::Display for ExampleAppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            Self::ParseInt(e) => write!(f, "Bad integer: {e}"),
+        }
     }
 }
 impl std::error::Error for ExampleAppError {}
@@ -96,7 +90,12 @@ impl From<std::num::ParseIntError> for ExampleAppError {
     }
 }
 impl IntoResponse for ExampleAppError {
+    /// Handle the error by creating a response for it.
+    ///
+    /// This is also where the error is logged.  A real service may
+    /// use `tracing` to add context to the logged error message.
     fn into_response(self) -> Response {
+        log::error!("ISE: {self:?}");
         error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             "Sorry, Something went wrong. This is probably not your fault.",
