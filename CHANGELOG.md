@@ -13,6 +13,8 @@ project adheres to
 * The main branch in git is now `main` rather than `master`.
 * Update clippy lint usage to get rid of a warning (PR #137).
   Thanks @vbradl!
+* The `axum` test is mentioned in [`README.md`] (PR #138).
+  Thanks @abd0-omar!
 * Update itertools dependency to 0.12.0.
 
 
