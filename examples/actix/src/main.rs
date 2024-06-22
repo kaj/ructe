@@ -83,7 +83,7 @@ async fn make_error() -> Result<HttpResponse, ExampleAppError> {
 /// handlers, and implement the actix ResponseError type.
 #[derive(Debug)]
 enum ExampleAppError {
-    ParseInt(std::num::ParseIntError),
+    // May have other cases, for e.g. a backend not responding.
     InternalError,
 }
 impl actix_web::error::ResponseError for ExampleAppError {
@@ -96,16 +96,9 @@ impl std::fmt::Display for ExampleAppError {
         write!(o, "{:?}", self)
     }
 }
-impl std::error::Error for ExampleAppError {}
-
-impl From<std::num::ParseIntError> for ExampleAppError {
-    fn from(e: std::num::ParseIntError) -> Self {
-        ExampleAppError::ParseInt(e)
-    }
-}
-impl From<std::io::Error> for ExampleAppError {
-    fn from(value: std::io::Error) -> Self {
-        println!("Internal error: {value}");
+impl<E: std::error::Error> From<E> for ExampleAppError {
+    fn from(value: E) -> Self {
+        tracing::error!("Internal error: {value}");
         ExampleAppError::InternalError
     }
 }
