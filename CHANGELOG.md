@@ -8,7 +8,7 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## Release 0.17.2 -- 2024-06-30
 
 * The main branch in git is now `main` rather than `master`.
 * Update clippy lint usage to get rid of warnings in all code using
