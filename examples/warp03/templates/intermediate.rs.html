@@ -1,7 +1,7 @@
 @use super::base_html;
 
 @(title: &str, htmlargs: Content, content: Content)
-@:base_html(title, htmlargs, {
+@:base_html(title, {@:htmlargs()}, {
   @:content()
   <p>This whole site is an example.</p>
 })
