@@ -11,8 +11,11 @@ project adheres to
 ## Unreleased
 
 * The main branch in git is now `main` rather than `master`.
-* Update clippy lint usage to get rid of a warning (PR #137).
-  Thanks @vbradl!
+* Update clippy lint usage to get rid of warnings in all code using
+  ructe (PR #137).  Thanks @vbradl!
+* Identified a problem with `Content` parameters sent through
+  intermediate templates, and documented a workaround for it (Issue
+  #134, PR #141).  Thanks @drehren and @kornelski.
 * The `axum` test is mentioned in [`README.md`] (PR #138).
   Thanks @abd0-omar!
 * Update itertools dependency to 0.12.0.
