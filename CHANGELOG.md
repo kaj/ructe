@@ -18,7 +18,8 @@ project adheres to
   #134, PR #141).  Thanks @drehren and @kornelski.
 * The `axum` test is mentioned in [`README.md`] (PR #138).
   Thanks @abd0-omar!
-* Update itertools dependency to 0.12.0.
+* Update `base64` to 0.22.1 and `itertools` dependency to 0.13.0.
+* MSRV is now 1.61.0.
 
 
 ## Release 0.17.0 -- 2023-07-22
