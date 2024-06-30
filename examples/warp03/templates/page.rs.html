@@ -1,19 +1,8 @@
 @use super::statics::*;
-@use crate::footer;
+@use super::intermediate_html;
 
 @(paras: &[(&str, usize)])
-
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>Example</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link rel="stylesheet" type="text/css" href="/static/@style_css.name"/>
-  </head>
-  <body>
-    <main>
-      <h1>Example</h1>
-
+@:intermediate_html("Example", {}, {
       <figure>
         <img src="/static/@squirrel_jpg.name" alt="Squirrel!"
              width="240" height="160"/>
@@ -30,7 +19,4 @@
 	This is a @order paragraph.
 	}
       }
-    </main>
-    @:footer()
-  </body>
-</html>
+})

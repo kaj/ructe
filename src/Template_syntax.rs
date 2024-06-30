@@ -301,4 +301,26 @@ pub mod d_Calling_other_templates {
     //!     <p>page content ...</p>
     //! })
     //! ```
+    //!
+    //! ## Intermediate templates with block parameters
+    //!
+    //! Due to a limitation in Ructe, it is currently not possible to
+    //! take a block parameter and send directly along to further
+    //! templates.
+    //! The following will not work:
+    //!
+    //! ```compile_fail
+    //! @(title: &str, body: Content) {{
+    //!   @:base_page_html(title, body)
+    //! }}
+    //! ```
+    //!
+    //! Instead, the parameter needs to be a block, even if only to
+    //! call the existing one:
+    //!
+    //! ```text
+    //! @(title: &str, body: Content) {{
+    //!   @:base_page_html(title, {@:body()})
+    //! }}
+    //! ```
 }

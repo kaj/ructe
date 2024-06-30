@@ -1,0 +1,12 @@
+@use super::base_html;
+
+@(title: &str, content: Content, meta: Content)
+
+@:base_html(title, {
+<div>
+  @:content()
+</div>
+<footer>A footer common to some pages.</footer>
+}, {
+@:meta()
+})

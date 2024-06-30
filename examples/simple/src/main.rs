@@ -257,16 +257,17 @@ fn test_page_with_base() {
         r2s(|o| page::page_html(o, "World")),
         "<!doctype html>\
          \n<html>\
-         \n  <head><title>Hello World!</title>\
-         \n  <meta property=\"og:description\" content=\"A simple example\"/>\
+         \n  <head><title>Hello World!</title>\n\
+         \n  <meta property=\"og:description\" content=\"A simple example\"/>\n\
          \n</head>\
          \n  <body>\
          \n    <h1>Hello World!</h1>\
-         \n    \
-         \n  <p>This is page content for World</p>\
-         \n\
-         \n  </body>\
-         \n</html>\n\n"
+         \n    \n<div>\
+         \n  \
+         \n  <p>This is page content for World</p>\n\
+         \n</div>\n<footer>A footer common to some pages.</footer>\
+         \n\n  </body>\
+         \n</html>\n\n\n"
     );
 }
 

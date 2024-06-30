@@ -1,0 +1,21 @@
+@use super::statics::*;
+@use crate::footer;
+
+@(title: &str, htmlargs: Content, content: Content)
+
+<!doctype html>
+<html lang="en"@:htmlargs()>
+  <head>
+    <title>@title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" type="text/css" href="/static/@style_css.name"/>
+  </head>
+  <body>
+    <main>
+      <h1>@title</h1>
+
+      @:content()
+    </main>
+    @:footer()
+  </body>
+</html>
