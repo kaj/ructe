@@ -292,8 +292,11 @@ impl StaticFile {
         println!("cargo:rerun-if-changed={}", indir.display());
         for entry in read_dir(indir)? {
             let entry = entry?;
-            if entry.file_type()?.is_file() {
+            let file_type = entry.file_type()?;
+            if file_type.is_file() {
                 self.add_file(&entry.path())?;
+            } else if file_type.is_dir() {
+                self.add_files(&entry.path())?;
             }
         }
         Ok(self)
