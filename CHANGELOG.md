@@ -12,6 +12,7 @@ project adheres to
 
 * Fixed clippy lints in generated code (PR #143).  Thanks @vbrandl!
 * Fixed some clippy lints in ructe itself.
+* Update axum in example to 0.8.1.
 
 
 ## Release 0.17.2 -- 2024-06-30
