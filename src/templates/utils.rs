@@ -93,7 +93,7 @@ impl<T: Display> ToHtml for T {
 
 struct ToHtmlEscapingWriter<'a>(&'a mut dyn Write);
 
-impl<'a> Write for ToHtmlEscapingWriter<'a> {
+impl Write for ToHtmlEscapingWriter<'_> {
     #[inline]
     // This takes advantage of the fact that `write` doesn't have to write everything,
     // and the call will be retried with the rest of the data
@@ -119,7 +119,7 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
     }
 }
 
-impl<'a> ToHtmlEscapingWriter<'a> {
+impl ToHtmlEscapingWriter<'_> {
     #[inline(never)]
     fn write_one_byte_escaped(
         out: &mut impl Write,
