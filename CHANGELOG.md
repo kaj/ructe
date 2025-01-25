@@ -8,6 +8,11 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+* Fix clippy lints in generated code (PR #143).  Thanks @vbrandl!
+
+
 ## Release 0.17.2 -- 2024-06-30
 
 * The main branch in git is now `main` rather than `master`.
