@@ -293,7 +293,7 @@ impl StaticFile {
         for entry in read_dir(indir)? {
             let entry = entry?;
             if entry.file_type()?.is_file() {
-                self.add_file(&entry.path())?;
+                self.add_file(entry.path())?;
             }
         }
         Ok(self)
@@ -330,9 +330,9 @@ impl StaticFile {
                 format!("{}/{}", to, entry.file_name().to_string_lossy())
             };
             if file_type.is_file() {
-                self.add_file_as(&entry.path(), &to)?;
+                self.add_file_as(entry.path(), &to)?;
             } else if file_type.is_dir() {
-                self.add_files_as(&entry.path(), &to)?;
+                self.add_files_as(entry.path(), &to)?;
             }
         }
         Ok(self)
@@ -596,7 +596,7 @@ impl Drop for StaticFiles {
 
 struct FileContent<'a>(&'a Path);
 
-impl<'a> Display for FileContent<'a> {
+impl Display for FileContent<'_> {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         write!(out, "include_bytes!({:?})", self.0)
     }
@@ -604,7 +604,7 @@ impl<'a> Display for FileContent<'a> {
 
 struct ByteString<'a>(&'a [u8]);
 
-impl<'a> Display for ByteString<'a> {
+impl Display for ByteString<'_> {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         out.write_str("b\"")?;
         for byte in self.0 {

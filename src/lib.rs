@@ -5,12 +5,12 @@
 //! This has the benefits that:
 //!
 //! 1. Many syntactical and logical errors in templates are caught
-//! compile-time, rather than in a running server.
+//!    compile-time, rather than in a running server.
 //! 2. No extra latency on the first request, since the templates are
-//! fully compiled before starting the program.
+//!    fully compiled before starting the program.
 //! 3. The template files does not have to be distributed / installed.
-//! Templates (and static assets) are included in the compiled
-//! program, which can be a single binary.
+//!    Templates (and static assets) are included in the compiled
+//!    program, which can be a single binary.
 //!
 //! The template syntax, which is inspired by [Twirl], the Scala-based
 //! template engine in [Play framework], is documented in
@@ -69,12 +69,16 @@
 //! `Ok(())` unless writing to the destination fails.
 //!
 //! ```
-//! #[test]
-//! fn test_hello() {
-//!     let mut buf = Vec::new();
-//!     templates::hello_html(&mut buf, "World").unwrap();
-//!     assert_eq!(buf, b"<h1>Hello World!</h1>\n");
-//! }
+//! # // mock
+//! # mod templates {
+//! #   use std::io::{Write, Result};
+//! #   pub fn hello_html(buf: &mut impl Write, arg: &str) -> Result<()> {
+//! #     writeln!(buf, "<h1>Hello {arg}!</h1>")
+//! #   }
+//! # }
+//! let mut buf = Vec::new();
+//! templates::hello_html(&mut buf, "World").unwrap();
+//! assert_eq!(buf, b"<h1>Hello World!</h1>\n");
 //! ```
 //!
 //! # Optional features

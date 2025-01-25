@@ -10,7 +10,8 @@ project adheres to
 
 ## Unreleased
 
-* Fix clippy lints in generated code (PR #143).  Thanks @vbrandl!
+* Fixed clippy lints in generated code (PR #143).  Thanks @vbrandl!
+* Fixed some clippy lints in ructe itself.
 
 
 ## Release 0.17.2 -- 2024-06-30
