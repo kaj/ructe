@@ -116,45 +116,6 @@ use std::path::{Path, PathBuf};
 /// Ructe has support for making the content-type of each static
 /// file availiable using the
 /// [mime](https://crates.io/crates/mime) crate.
-/// Since mime version 0.3.0 was a breaking change of how the
-/// `mime::Mime` type was implemented, and both Nickel and Iron
-/// currently require the old version (0.2.x), ructe provides
-/// support for both mime 0.2.x and mime 0.3.x with separate
-/// feature flags.
-///
-/// # Mime 0.2.x
-///
-/// To use the mime 0.2.x support, enable the `mime02` feature and
-/// add mime 0.2.x as a dependency:
-///
-/// ```toml
-/// [build-dependencies]
-/// ructe = { version = "^0.3.2", features = ["mime02"] }
-///
-/// [dependencies]
-/// mime = "~0.2"
-/// ```
-///
-/// A `Mime` as implemented in `mime` version 0.2.x cannot be
-/// created statically, so instead a `StaticFile` provides
-/// `pub fn mime(&self) -> Mime`.
-///
-/// ```
-/// # // Test and doc even without the feature, so mock functionality.
-/// # pub mod templates { pub mod statics {
-/// # pub struct FakeFile;
-/// # impl FakeFile { pub fn mime(&self) -> &'static str { "image/png" } }
-/// # pub static image_png: FakeFile = FakeFile;
-/// # }}
-/// use templates::statics::image_png;
-///
-/// # fn main() {
-/// assert_eq!(format!("Type is {}", image_png.mime()),
-///            "Type is image/png");
-/// # }
-/// ```
-///
-/// # Mime 0.3.x
 ///
 /// To use the mime 0.3.x support, enable the `mime3` feature and
 /// add mime 0.3.x as a dependency:
@@ -223,9 +184,6 @@ pub struct StaticFile {
     pub content: &'static [u8],
     pub name: &'static str,
 ")?;
-        if cfg!(feature = "mime02") {
-            src.write_all(b"    _mime: &'static str,\n")?;
-        }
         if cfg!(feature = "mime03") {
             src.write_all(b"    pub mime: &'static Mime,\n")?;
         }
@@ -246,23 +204,6 @@ impl StaticFile {
 }
 ",
         )?;
-        if cfg!(feature = "mime02") {
-            src.write_all(
-                b"use mime::Mime;
-impl StaticFile {
-    /// Get the mime type of this static file.
-    ///
-    /// Currently, this method parses a (static) string every time.
-    /// A future release of `mime` may support statically created
-    /// `Mime` structs, which will make this nicer.
-    #[allow(unused)]
-    pub fn mime(&self) -> Mime {
-        self._mime.parse().unwrap()
-    }
-}
-",
-            )?;
-        }
         Ok(StaticFiles {
             src,
             src_path: outdir.join("statics.rs"),
@@ -622,13 +563,9 @@ fn name_and_ext(path: &Path) -> Option<(&str, &str)> {
     None
 }
 
-#[cfg(any(
-    all(feature = "mime03", feature = "http-types"),
-    all(feature = "mime02", feature = "http-types"),
-    all(feature = "mime02", feature = "mime03"),
-))]
+#[cfg(all(feature = "mime03", feature = "http-types"))]
 compile_error!(
-    r#"Only one of these features "http-types", "mime02" or "mime03" must be enabled at a time."#
+    r#"Only one of the features "http-types" or "mime03" can be enabled at a time."#
 );
 
 /// A short and url-safe checksum string from string data.
@@ -636,38 +573,12 @@ fn checksum_slug(data: &[u8]) -> String {
     use base64::prelude::{Engine, BASE64_URL_SAFE_NO_PAD};
     BASE64_URL_SAFE_NO_PAD.encode(&md5::compute(data)[..6])
 }
-#[cfg(not(feature = "mime02"))]
-#[cfg(not(feature = "mime03"))]
-#[cfg(not(feature = "http-types"))]
-fn mime_arg(_: &str) -> String {
-    "".to_string()
-}
-#[cfg(feature = "mime02")]
-fn mime_arg(suffix: &str) -> String {
-    format!("  _mime: {:?},\n", mime_from_suffix(suffix))
-}
-
-#[cfg(feature = "mime02")]
-fn mime_from_suffix(suffix: &str) -> &'static str {
-    match suffix.to_lowercase().as_ref() {
-        "bmp" => "image/bmp",
-        "css" => "text/css",
-        "eot" => "application/vnd.ms-fontobject",
-        "gif" => "image/gif",
-        "jpg" | "jpeg" => "image/jpeg",
-        "js" | "jsonp" => "application/javascript",
-        "json" => "application/json",
-        "png" => "image/png",
-        "svg" => "image/svg+xml",
-        "woff" => "font/woff",
-        "woff2" => "font/woff2",
-        _ => "application/octet-stream",
-    }
-}
-
-#[cfg(any(feature = "mime03", feature = "http-types"))]
-fn mime_arg(suffix: &str) -> String {
-    format!("  mime: &mime::{},\n", mime_from_suffix(suffix))
+fn mime_arg(#[allow(unused)] suffix: &str) -> String {
+    #[cfg(not(any(feature = "mime03", feature = "http-types")))]
+    let result = String::new();
+    #[cfg(any(feature = "mime03", feature = "http-types"))]
+    let result = format!("  mime: &mime::{},\n", mime_from_suffix(suffix));
+    result
 }
 
 #[cfg(feature = "mime03")]

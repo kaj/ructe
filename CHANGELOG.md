@@ -13,7 +13,7 @@ project adheres to
 * Fixed clippy lints in generated code (PR #143).  Thanks @vbrandl!
 * Fixed some clippy lints in ructe itself.
 * Updated optional `rsass` dependency to 0.29.0.
-* Removed historic `iron` and `nickel` examples.
+* Removed historic `mime02` feature and `iron` and `nickel` examples.
 * Update axum in example to 0.8.1.
 
 

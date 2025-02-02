@@ -88,8 +88,6 @@
 //! * `sass` -- Compile sass and include the compiled css as static assets.
 //! * `mime03` -- Static files know their mime types, compatible with
 //!   version 0.3.x of the [mime] crate.
-//! * `mime02` -- Static files know their mime types, compatible with
-//!   version 0.2.x of the [mime] crate.
 //! * `warp03` -- Provide an extension to `Response::Builder` of the [warp]
 //!   framework (versions 0.3.x) to simplify template rendering.
 //! * `http-types` -- Static files know their mime types, compatible with
@@ -107,7 +105,7 @@
 //! [tide]: https://crates.rs/crates/tide
 //! [http-types]: https://crates.rs/crates/http-types
 //!
-//! The `mime02`, `mime03`, and `http-types` features are mutually
+//! The `mime03`, and `http-types` features are mutually
 //! exclusive and requires a dependency on a matching version of
 //! `mime` or `http-types`.
 //! Any of them can be combined with the `sass` feature.
