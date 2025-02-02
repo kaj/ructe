@@ -12,6 +12,60 @@
 //!    Templates (and static assets) are included in the compiled
 //!    program, which can be a single binary.
 //!
+//! # Getting started
+//!
+//! The aim of ructe is to have your templates and static files accessible to
+//! your rust code as a module.
+//! Since this module will be generated code it will live outside of
+//! your `src` directory, so instead of just `use templates`, you will
+//! need to include it like this:
+//! ```rust,ignore
+//! include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+//! ```
+//!
+//! For this to work, you need to tell cargo to build the code.
+//! First, specify a build script and ructe as a build dependency in
+//! `Cargo.toml`:
+//!
+//! ```toml
+//! build = "src/build.rs"
+//!
+//! [build-dependencies]
+//! ructe = "0.6.0"
+//! ```
+//!
+//! Then, in `build.rs`, compile all templates found in the templates
+//! directory and put the output where cargo tells it to:
+//!
+//! ```rust,no_run
+//! use ructe::{Result, Ructe};
+//!
+//! fn main() -> Result<()> {
+//!     Ructe::from_env()?.compile_templates("templates")
+//! }
+//! ```
+//!
+//! See the docs of the struct [`Ructe`] for details about e.g. adding
+//! static files.
+//!
+//! Now, after putting templates (see below for template syntax) in
+//! the `templates` directory, you should be able to render them:
+//!
+//! ```
+//! # // mock
+//! # mod templates {
+//! #   use std::io::{Write, Result};
+//! #   pub fn hello_html(buf: &mut impl Write, arg: &str) -> Result<()> {
+//! #     writeln!(buf, "<h1>Hello {arg}!</h1>")
+//! #   }
+//! # }
+//! let mut buf = Vec::new();
+//! templates::hello_html(&mut buf, "World").unwrap();
+//! assert_eq!(buf, b"<h1>Hello World!</h1>\n");
+//! ```
+//!
+//! # Template syntax
+//!
 //! The template syntax, which is inspired by [Twirl], the Scala-based
 //! template engine in [Play framework], is documented in
 //! the [Template_syntax] module.
@@ -48,39 +102,6 @@
 //! [examples in the repository]: https://github.com/kaj/ructe/tree/master/examples
 //! [using ructe with warp and diesel]: https://github.com/kaj/warp-diesel-ructe-sample
 //!
-//! To be able to use this template in your rust code, you need a
-//! `build.rs` that transpiles the template to rust code.
-//! A minimal such build script looks like the following.
-//! See the [`Ructe`] struct documentation for details.
-//!
-//! ```rust,no_run
-//! use ructe::{Result, Ructe};
-//!
-//! fn main() -> Result<()> {
-//!     Ructe::from_env()?.compile_templates("templates")
-//! }
-//! ```
-//!
-//! When calling a template, the arguments declared in the template will be
-//! prepended by a `Write` argument to write the output to.
-//! It can be a `Vec<u8>` as a buffer or for testing, or an actual output
-//! destination.
-//! The return value of a template is `std::io::Result<()>`, which should be
-//! `Ok(())` unless writing to the destination fails.
-//!
-//! ```
-//! # // mock
-//! # mod templates {
-//! #   use std::io::{Write, Result};
-//! #   pub fn hello_html(buf: &mut impl Write, arg: &str) -> Result<()> {
-//! #     writeln!(buf, "<h1>Hello {arg}!</h1>")
-//! #   }
-//! # }
-//! let mut buf = Vec::new();
-//! templates::hello_html(&mut buf, "World").unwrap();
-//! assert_eq!(buf, b"<h1>Hello World!</h1>\n");
-//! ```
-//!
 //! # Optional features
 //!
 //! Ructe has some options that can be enabled from `Cargo.toml`.
@@ -95,7 +116,7 @@
 //! * `tide013`, `tide014`, `tide015`, `tide016` -- Support for the
 //!   [tide] framework version 0.13.x through 0.16.x.  Implies the
 //!   `http-types` feature (but does not require a direct http-types
-//!   requirement, as that is reexported by tide).
+//!   dependency, as that is reexported by tide).
 //!   (these versions of tide is compatible enough that the features
 //!   are actually just aliases for the first one, but a future tide
 //!   version may require a modified feature.)

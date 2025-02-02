@@ -11,6 +11,8 @@ project adheres to
 ## Unreleased
 
 * Fixed clippy lints in generated code (PR #143).  Thanks @vbrandl!
+* Added a clearer "Getting started" section in the docs (PR #145).
+  Thanks @j-n-f for the suggestion.
 * Fixed some clippy lints in ructe itself.
 * Updated `itertools` depenendency to 0.14.0.
 * Updated optional `rsass` dependency to 0.29.0.
