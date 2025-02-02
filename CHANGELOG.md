@@ -16,6 +16,7 @@ project adheres to
 * Updated optional `rsass` dependency to 0.29.0.
 * Removed historic `mime02` feature and `iron` and `nickel` examples.
 * Updated axum in example to 0.8.1.
+* MSRV is now 1.63.0.
 
 
 ## Release 0.17.2 -- 2024-06-30
