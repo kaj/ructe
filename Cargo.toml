@@ -25,7 +25,7 @@ tide013 = ["http-types"]
 [dependencies]
 base64 = "0.22.1"
 bytecount = "0.6.0"
-itertools = "0.13.0"
+itertools = "0.14.0"
 md5 = "0.7"
 nom = "7.1.0"
 
