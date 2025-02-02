@@ -33,8 +33,8 @@ use std::path::{Path, PathBuf};
 /// reference to each of those instances.
 ///
 /// Actually serving the file is a job for a web framework like
-/// [iron](https://github.com/iron/iron),
-/// [nickel](https://github.com/nickel-org/nickel.rs) or
+/// [axum](https://lib.rs/crates/axum),
+/// [warp](https://lib.rs/crates/warp), or
 /// [rocket](https://rocket.rs/), but ructe helps by packing the file
 /// contents into a constant struct that you can access from rust
 /// code.
@@ -80,13 +80,12 @@ use std::path::{Path, PathBuf};
 /// `/static/image-SomeHash.png` and your server needs to deliver it.
 /// Here, things depend on your web framework, so we start with some
 /// pseudo code.
-/// Full examples for [warp], [gotham], [nickel], and [iron] is
+/// Full examples for [axum], [warp], and [gotham] is
 /// available [in the ructe repository].
 ///
+/// [axum]: https://lib.rs/crates/axum
 /// [warp]: https://crates.rs/crates/warp
 /// [gotham]: https://crates.rs/crates/gotham
-/// [nickel]: https://crates.rs/crates/nickel
-/// [iron]: https://crates.rs/crates/iron
 /// [in the ructe repository]: https://github.com/kaj/ructe/tree/master/examples
 ///
 /// ```ignore
