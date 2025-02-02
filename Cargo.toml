@@ -13,8 +13,8 @@ edition = "2021"
 rust-version = "1.61.0"
 
 [features]
-sass = ["rsass"]
-mime03 = ["mime"]
+sass = ["dep:rsass"]
+mime03 = ["dep:mime"]
 warp03 = ["mime03"]
 http-types = []
 tide016 = ["tide013"]
