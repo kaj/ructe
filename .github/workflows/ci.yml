@@ -44,8 +44,6 @@ jobs:
           - actix
           - axum
           - gotham
-          - iron
-          - nickel
           - simple
           - static-sass
           - statics

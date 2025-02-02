@@ -71,8 +71,8 @@ your other rust code, so it needs to be called before compiling,
 as described [in the documentation](https://docs.rs/ructe/).
 There are also [examples](examples),
 both for ructe itself and its futures and for using it with the web
-frameworks [axum](examples/axum), [actix-web](examples/actix), [gotham](examples/gotham),
-[iron](examples/iron), [nickel](examples/nickel), [tide](examples/tide),
+frameworks [axum](examples/axum), [actix-web](examples/actix),
+[gotham](examples/gotham), [tide](examples/tide),
 and [warp](examples/warp03).
 There is also [a separate example of using ructe with warp and
 diesel](https://github.com/kaj/warp-diesel-ructe-sample).

@@ -14,7 +14,6 @@ rust-version = "1.61.0"
 
 [features]
 sass = ["rsass"]
-mime02 = []
 mime03 = ["mime"]
 warp03 = ["mime03"]
 http-types = []
