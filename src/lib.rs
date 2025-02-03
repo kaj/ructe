@@ -12,6 +12,33 @@
 //!    Templates (and static assets) are included in the compiled
 //!    program, which can be a single binary.
 //!
+//! The template syntax, which is inspired by [Twirl], the Scala-based
+//! template engine in [Play framework], is documented in
+//! the [Template_syntax] module.
+//! A sample template may look like this:
+//!
+//! ```html
+//! @use any::rust::Type;
+//!
+//! @(name: &str, items: &[Type])
+//!
+//! <html>
+//!   <head><title>@name</title></head>
+//!   <body>
+//!     @if items.is_empty() {
+//!       <p>There are no items.</p>
+//!     } else {
+//!       <p>There are @items.len() items.</p>
+//!       <ul>
+//!       @for item in items {
+//!         <li>@item</li>
+//!       }
+//!       </ul>
+//!     }
+//!   <body>
+//! </html>
+//! ```
+//!
 //! # Getting started
 //!
 //! The aim of ructe is to have your templates and static files accessible to
@@ -48,8 +75,10 @@
 //! See the docs of the struct [`Ructe`] for details about e.g. adding
 //! static files.
 //!
-//! Now, after putting templates (see below for template syntax) in
-//! the `templates` directory, you should be able to render them:
+//! Now, after putting templates in the `templates` directory, you
+//! should be able to render them.
+//! A template file named `hello.rs.html` becomes a function called
+//! `hello_html` in the `templates` module.
 //!
 //! ```
 //! # // mock
@@ -62,35 +91,6 @@
 //! let mut buf = Vec::new();
 //! templates::hello_html(&mut buf, "World").unwrap();
 //! assert_eq!(buf, b"<h1>Hello World!</h1>\n");
-//! ```
-//!
-//! # Template syntax
-//!
-//! The template syntax, which is inspired by [Twirl], the Scala-based
-//! template engine in [Play framework], is documented in
-//! the [Template_syntax] module.
-//! A sample template may look like this:
-//!
-//! ```html
-//! @use any::rust::Type;
-//!
-//! @(name: &str, items: &[Type])
-//!
-//! <html>
-//!   <head><title>@name</title></head>
-//!   <body>
-//!     @if items.is_empty() {
-//!       <p>There are no items.</p>
-//!     } else {
-//!       <p>There are @items.len() items.</p>
-//!       <ul>
-//!       @for item in items {
-//!         <li>@item</li>
-//!       }
-//!       </ul>
-//!     }
-//!   <body>
-//! </html>
 //! ```
 //!
 //! There are some [examples in the repository].
