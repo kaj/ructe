@@ -12,7 +12,8 @@ use nom::character::complete::char;
 use nom::combinator::{map, map_res, opt, recognize, value};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, terminated, tuple};
+use nom::sequence::{delimited, pair, preceded, terminated};
+use nom::Parser as _;
 use std::fmt::{self, Display};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -145,7 +146,8 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
             terminated(alt((tag("if"), tag("for"), tag("match"))), tag(" ")),
             value(&b""[..], tag("")),
         )),
-    ))(input)?
+    ))
+    .parse(input)?
     {
         (i, Some(b":")) => map(
             pair(
@@ -163,16 +165,17 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                 name: name.to_string(),
                 args,
             },
-        )(i),
+        )
+        .parse(i),
         (i, Some(b"@")) => Ok((i, TemplateExpression::text("@"))),
         (i, Some(b"{")) => Ok((i, TemplateExpression::text("{"))),
         (i, Some(b"}")) => Ok((i, TemplateExpression::text("}"))),
         (i, Some(b"*")) => {
-            map(comment_tail, |()| TemplateExpression::Comment)(i)
+            map(comment_tail, |()| TemplateExpression::Comment).parse(i)
         }
         (i, Some(b"if")) => if2(i),
         (i, Some(b"for")) => map(
-            tuple((
+            (
                 for_variable,
                 delimited(
                     terminated(
@@ -183,17 +186,18 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                     spacelike,
                 ),
                 context("Error in loop block:", template_block),
-            )),
+            ),
             |(name, expr, body)| TemplateExpression::ForLoop {
                 name,
                 expr,
                 body,
             },
-        )(i),
+        )
+        .parse(i),
         (i, Some(b"match")) => context(
             "Error in match expression:",
             map(
-                tuple((
+                (
                     delimited(spacelike, expression, spacelike),
                     preceded(
                         char('{'),
@@ -218,31 +222,35 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
                             |(arms, _end)| arms,
                         ),
                     ),
-                )),
+                ),
                 |(expr, arms)| TemplateExpression::MatchBlock {
                     expr: expr.to_string(),
                     arms,
                 },
             ),
-        )(i),
+        )
+        .parse(i),
         (i, Some(b"(")) => {
             map(terminated(expr_inside_parens, tag(")")), |expr| {
                 TemplateExpression::Expression {
                     expr: format!("({expr})"),
                 }
-            })(i)
+            })
+            .parse(i)
         }
         (i, Some(b"")) => {
             map(expression, |expr| TemplateExpression::Expression {
                 expr: expr.to_string(),
-            })(i)
+            })
+            .parse(i)
         }
         (_i, Some(_)) => unreachable!(),
         (i, None) => map(map_res(is_not("@{}"), input_to_str), |text| {
             TemplateExpression::Text {
                 text: text.to_string(),
             }
-        })(i),
+        })
+        .parse(i),
     }
 }
 
@@ -250,7 +258,7 @@ fn if2(input: &[u8]) -> PResult<TemplateExpression> {
     context(
         "Error in conditional expression:",
         map(
-            tuple((
+            (
                 delimited(spacelike, cond_expression, spacelike),
                 template_block,
                 opt(preceded(
@@ -260,14 +268,15 @@ fn if2(input: &[u8]) -> PResult<TemplateExpression> {
                         template_block,
                     )),
                 )),
-            )),
+            ),
             |(expr, body, else_body)| TemplateExpression::IfBlock {
                 expr,
                 body,
                 else_body,
             },
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn for_variable(input: &[u8]) -> PResult<String> {
@@ -295,7 +304,8 @@ fn for_variable(input: &[u8]) -> PResult<String> {
             )),
         ),
         spacelike,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn template_block(input: &[u8]) -> PResult<Vec<TemplateExpression>> {
@@ -311,7 +321,8 @@ fn template_block(input: &[u8]) -> PResult<Vec<TemplateExpression>> {
             ),
             |(block, _end)| block,
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn template_argument(input: &[u8]) -> PResult<TemplateArgument> {
@@ -325,11 +336,12 @@ fn template_argument(input: &[u8]) -> PResult<TemplateArgument> {
             TemplateArgument::Body,
         ),
         map(map(expression, String::from), TemplateArgument::Rust),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 fn cond_expression(input: &[u8]) -> PResult<String> {
-    match opt(tag("let"))(input)? {
+    match opt(tag("let")).parse(input)? {
         (i, Some(b"let")) => map(
             pair(
                 preceded(
@@ -348,12 +360,14 @@ fn cond_expression(input: &[u8]) -> PResult<String> {
                 ),
             ),
             |(lhs, rhs)| format!("let {lhs} = {rhs}"),
-        )(i),
+        )
+        .parse(i),
         (_i, Some(_)) => unreachable!(),
         (i, None) => map(
             context("Expected expression", logic_expression),
             String::from,
-        )(i),
+        )
+        .parse(i),
     }
 }
 
@@ -370,21 +384,23 @@ fn loop_expression(input: &[u8]) -> PResult<String> {
             input_to_str,
         ),
         String::from,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn logic_expression(input: &[u8]) -> PResult<&str> {
     map_res(
-        recognize(tuple((
+        recognize((
             opt(terminated(char('!'), spacelike)),
             expression,
             opt(pair(
                 rel_operator,
                 context("Expected expression", logic_expression),
             )),
-        ))),
+        )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn rel_operator(input: &[u8]) -> PResult<&str> {
@@ -407,7 +423,8 @@ fn rel_operator(input: &[u8]) -> PResult<&str> {
             spacelike,
         ),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 #[cfg(test)]

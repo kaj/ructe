@@ -10,7 +10,8 @@ project adheres to
 
 ## Unreleased
 
-(Nothing yet)
+* Updated `nom` to 8.0.0, and added `nom-language`.
+* MSRV is now 1.65.0, as required by `nom` 8.0.
 
 
 ## Release 0.18.0 -- 2025-02-03

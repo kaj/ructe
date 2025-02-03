@@ -1,5 +1,5 @@
-use nom::error::{VerboseError, VerboseErrorKind};
 use nom::{Err, IResult};
+use nom_language::error::{VerboseError, VerboseErrorKind};
 use std::io::Write;
 use std::str::from_utf8;
 

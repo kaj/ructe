@@ -10,7 +10,8 @@ use nom::character::complete::{char, multispace0};
 use nom::combinator::{map, map_res, opt, recognize};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list0, separated_list1};
-use nom::sequence::{delimited, preceded, terminated, tuple};
+use nom::sequence::{delimited, preceded, terminated};
+use nom::Parser as _;
 use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -62,7 +63,7 @@ impl Template {
 
 pub fn template(input: &[u8]) -> PResult<Template> {
     map(
-        tuple((
+        (
             spacelike,
             many0(map(
                 delimited(
@@ -114,21 +115,22 @@ pub fn template(input: &[u8]) -> PResult<Template> {
                 ),
                 end_of_file,
             ),
-        )),
+        ),
         |((), preamble, _, type_args, args, body)| Template {
             preamble,
             type_args: type_args.map(String::from).unwrap_or_default(),
             args,
             body: body.0,
         },
-    )(input)
+    )
+    .parse(input)
 }
 
 fn end_of_file(input: &[u8]) -> PResult<()> {
     if input.is_empty() {
         Ok((input, ()))
     } else {
-        use nom::error::{VerboseError, VerboseErrorKind};
+        use nom_language::error::{VerboseError, VerboseErrorKind};
         Err(nom::Err::Error(VerboseError {
             errors: vec![(input, VerboseErrorKind::Context("end of file"))],
         }))
@@ -137,20 +139,21 @@ fn end_of_file(input: &[u8]) -> PResult<()> {
 
 fn formal_argument(input: &[u8]) -> PResult<&str> {
     map_res(
-        recognize(tuple((
+        recognize((
             rust_name,
             spacelike,
             char(':'),
             spacelike,
             type_expression,
-        ))),
+        )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn type_expression(input: &[u8]) -> PResult<()> {
     map(
-        tuple((
+        (
             alt((tag("&"), tag(""))),
             opt(lifetime),
             delimited(
@@ -173,9 +176,10 @@ fn type_expression(input: &[u8]) -> PResult<()> {
                 )),
             ),
             opt(delimited(tag("<"), comma_type_expressions, tag(">"))),
-        )),
+        ),
         |_| (),
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
@@ -188,11 +192,12 @@ pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
             opt(preceded(tag(","), multispace0)),
         ),
         |_| (),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn lifetime(input: &[u8]) -> PResult<()> {
-    map(delimited(spacelike, tag("'"), rust_name), |_| ())(input)
+    map(delimited(spacelike, tag("'"), rust_name), |_| ()).parse(input)
 }
 
 #[cfg(test)]

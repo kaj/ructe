@@ -5,13 +5,14 @@ use nom::character::complete::{multispace1, none_of};
 use nom::combinator::{map, value};
 use nom::multi::many0;
 use nom::sequence::preceded;
+use nom::Parser as _;
 
 pub fn spacelike(input: &[u8]) -> PResult<()> {
-    map(many0(alt((comment, map(multispace1, |_| ())))), |_| ())(input)
+    map(many0(alt((comment, map(multispace1, |_| ())))), |_| ()).parse(input)
 }
 
 pub fn comment(input: &[u8]) -> PResult<()> {
-    preceded(tag("@*"), comment_tail)(input)
+    preceded(tag("@*"), comment_tail).parse(input)
 }
 
 pub fn comment_tail(input: &[u8]) -> PResult<()> {
@@ -21,14 +22,15 @@ pub fn comment_tail(input: &[u8]) -> PResult<()> {
             value((), preceded(tag("*"), none_of("@"))),
         ))),
         value((), tag("*@")),
-    )(input)
+    )
+    .parse(input)
 }
 
 #[cfg(test)]
 mod test {
     use super::{comment, spacelike};
-    use nom::error::{ErrorKind, VerboseError, VerboseErrorKind};
-    use nom::Err;
+    use nom::{error::ErrorKind, Err};
+    use nom_language::error::{VerboseError, VerboseErrorKind};
 
     #[test]
     fn comment1() {
