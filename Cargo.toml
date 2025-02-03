@@ -1,6 +1,6 @@
 [package]
 name = "ructe"
-version = "0.17.2"
+version = "0.18.0"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
 description = "Rust Compiled Templates, efficient type-safe web page templates."
 documentation = "https://docs.rs/ructe"
