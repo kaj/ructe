@@ -39,19 +39,30 @@
 //! </html>
 //! ```
 //!
-//! There are some [examples in the repository].
-//! There is also a separate example of
-//! [using ructe with warp and diesel].
+//! # Getting started
 //!
-//! [Twirl]: https://github.com/playframework/twirl
-//! [Play framework]: https://www.playframework.com/
-//! [examples in the repository]: https://github.com/kaj/ructe/tree/master/examples
-//! [using ructe with warp and diesel]: https://github.com/kaj/warp-diesel-ructe-sample
+//! The aim of ructe is to have your templates and static files accessible to
+//! your rust code as a module.
+//! Since this module will be generated code it will live outside of
+//! your `src` directory, so instead of just `use templates`, you will
+//! need to include it like this:
+//! ```rust,ignore
+//! include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+//! ```
 //!
-//! To be able to use this template in your rust code, you need a
-//! `build.rs` that transpiles the template to rust code.
-//! A minimal such build script looks like the following.
-//! See the [`Ructe`] struct documentation for details.
+//! For this to work, you need to tell cargo to build the code.
+//! First, specify a build script and ructe as a build dependency in
+//! `Cargo.toml`:
+//!
+//! ```toml
+//! build = "src/build.rs"
+//!
+//! [build-dependencies]
+//! ructe = "0.6.0"
+//! ```
+//!
+//! Then, in `build.rs`, compile all templates found in the templates
+//! directory and put the output where cargo tells it to:
 //!
 //! ```rust,no_run
 //! use ructe::{Result, Ructe};
@@ -61,12 +72,13 @@
 //! }
 //! ```
 //!
-//! When calling a template, the arguments declared in the template will be
-//! prepended by a `Write` argument to write the output to.
-//! It can be a `Vec<u8>` as a buffer or for testing, or an actual output
-//! destination.
-//! The return value of a template is `std::io::Result<()>`, which should be
-//! `Ok(())` unless writing to the destination fails.
+//! See the docs of the struct [`Ructe`] for details about e.g. adding
+//! static files.
+//!
+//! Now, after putting templates in the `templates` directory, you
+//! should be able to render them.
+//! A template file named `hello.rs.html` becomes a function called
+//! `hello_html` in the `templates` module.
 //!
 //! ```
 //! # // mock
@@ -80,6 +92,15 @@
 //! templates::hello_html(&mut buf, "World").unwrap();
 //! assert_eq!(buf, b"<h1>Hello World!</h1>\n");
 //! ```
+//!
+//! There are some [examples in the repository].
+//! There is also a separate example of
+//! [using ructe with warp and diesel].
+//!
+//! [Twirl]: https://github.com/playframework/twirl
+//! [Play framework]: https://www.playframework.com/
+//! [examples in the repository]: https://github.com/kaj/ructe/tree/master/examples
+//! [using ructe with warp and diesel]: https://github.com/kaj/warp-diesel-ructe-sample
 //!
 //! # Optional features
 //!
@@ -95,7 +116,7 @@
 //! * `tide013`, `tide014`, `tide015`, `tide016` -- Support for the
 //!   [tide] framework version 0.13.x through 0.16.x.  Implies the
 //!   `http-types` feature (but does not require a direct http-types
-//!   requirement, as that is reexported by tide).
+//!   dependency, as that is reexported by tide).
 //!   (these versions of tide is compatible enough that the features
 //!   are actually just aliases for the first one, but a future tide
 //!   version may require a modified feature.)
