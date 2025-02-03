@@ -14,7 +14,7 @@ pub fn expression(input: &[u8]) -> PResult<&str> {
         recognize(context(
             "Expected rust expression",
             (
-                map_res(alt((tag("&"), tag("*"), tag(""))), input_to_str),
+                alt((tag("&"), tag("*"), tag(""))),
                 alt((
                     rust_name,
                     map_res(digit1, input_to_str),

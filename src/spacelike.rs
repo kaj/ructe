@@ -2,13 +2,13 @@ use crate::parseresult::PResult;
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag};
 use nom::character::complete::{multispace1, none_of};
-use nom::combinator::{map, value};
+use nom::combinator::value;
 use nom::multi::many0;
 use nom::sequence::preceded;
 use nom::Parser as _;
 
 pub fn spacelike(input: &[u8]) -> PResult<()> {
-    map(many0(alt((comment, map(multispace1, |_| ())))), |_| ()).parse(input)
+    value((), many0(alt((comment, value((), multispace1))))).parse(input)
 }
 
 pub fn comment(input: &[u8]) -> PResult<()> {

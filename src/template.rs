@@ -7,7 +7,7 @@ use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, multispace0};
-use nom::combinator::{map, map_res, opt, recognize};
+use nom::combinator::{map, map_res, opt, recognize, value};
 use nom::error::context;
 use nom::multi::{many0, many_till, separated_list0, separated_list1};
 use nom::sequence::{delimited, preceded, terminated};
@@ -152,7 +152,8 @@ fn formal_argument(input: &[u8]) -> PResult<&str> {
 }
 
 fn type_expression(input: &[u8]) -> PResult<()> {
-    map(
+    value(
+        (),
         (
             alt((tag("&"), tag(""))),
             opt(lifetime),
@@ -164,26 +165,24 @@ fn type_expression(input: &[u8]) -> PResult<()> {
             context(
                 "Expected rust type expression",
                 alt((
-                    map(rust_name, |_| ()),
-                    map(
-                        delimited(tag("["), type_expression, tag("]")),
-                        |_| (),
-                    ),
-                    map(
-                        delimited(tag("("), comma_type_expressions, tag(")")),
-                        |_| (),
+                    value((), rust_name),
+                    delimited(tag("["), value((), type_expression), tag("]")),
+                    delimited(
+                        tag("("),
+                        value((), comma_type_expressions),
+                        tag(")"),
                     ),
                 )),
             ),
             opt(delimited(tag("<"), comma_type_expressions, tag(">"))),
         ),
-        |_| (),
     )
     .parse(input)
 }
 
 pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
-    map(
+    value(
+        (),
         terminated(
             separated_list0(
                 preceded(tag(","), multispace0),
@@ -191,13 +190,12 @@ pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
             ),
             opt(preceded(tag(","), multispace0)),
         ),
-        |_| (),
     )
     .parse(input)
 }
 
 fn lifetime(input: &[u8]) -> PResult<()> {
-    map(delimited(spacelike, tag("'"), rust_name), |_| ()).parse(input)
+    delimited(spacelike, value((), tag("'")), rust_name).parse(input)
 }
 
 #[cfg(test)]
