@@ -8,6 +8,11 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+(Nothing yet)
+
+
 ## Release 0.18.0 -- 2025-02-03
 
 * Fixed clippy lints in generated code (PR #143).  Thanks @vbrandl!
