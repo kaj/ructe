@@ -429,7 +429,7 @@ impl StaticFile {
                 FormalArgs::new(vec![("name".into(), None)]),
                 Arc::new(move |s| {
                     let name: String = s.get("name".into())?;
-                    let rname = name.replace('-', "_").replace('.', "_");
+                    let rname = name.replace(['-', '.'], "_");
                     existing_statics
                         .iter()
                         .find(|(n, _v)| *n == &rname)
@@ -446,7 +446,7 @@ impl StaticFile {
         );
 
         let css = context.transform(scss)?;
-        self.add_file_data(&src.with_extension("css"), &css)
+        self.add_file_data(src.with_extension("css"), &css)
     }
 
     fn add_static(

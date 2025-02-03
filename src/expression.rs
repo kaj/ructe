@@ -3,17 +3,18 @@ use nom::branch::alt;
 use nom::bytes::complete::{escaped, is_a, is_not, tag};
 use nom::character::complete::{alpha1, char, digit1, none_of, one_of};
 use nom::combinator::{map, map_res, not, opt, recognize, value};
-use nom::error::context; //, VerboseError};
+use nom::error::context;
 use nom::multi::{fold_many0, many0, separated_list0};
-use nom::sequence::{delimited, pair, preceded, terminated, tuple};
+use nom::sequence::{delimited, pair, preceded, terminated};
+use nom::Parser as _;
 use std::str::{from_utf8, Utf8Error};
 
 pub fn expression(input: &[u8]) -> PResult<&str> {
     map_res(
         recognize(context(
             "Expected rust expression",
-            tuple((
-                map_res(alt((tag("&"), tag("*"), tag(""))), input_to_str),
+            (
+                alt((tag("&"), tag("*"), tag(""))),
                 alt((
                     rust_name,
                     map_res(digit1, input_to_str),
@@ -34,10 +35,11 @@ pub fn expression(input: &[u8]) -> PResult<&str> {
                     || (),
                     |_, _| (),
                 ),
-            )),
+            ),
         )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn input_to_str(s: &[u8]) -> Result<&str, Utf8Error> {
@@ -48,7 +50,8 @@ pub fn comma_expressions(input: &[u8]) -> PResult<String> {
     map(
         separated_list0(preceded(tag(","), many0(tag(" "))), expression),
         |list: Vec<_>| list.join(", "),
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn rust_name(input: &[u8]) -> PResult<&str> {
@@ -58,14 +61,15 @@ pub fn rust_name(input: &[u8]) -> PResult<&str> {
             opt(is_a("_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")),
         )),
         input_to_str,
-    )(input)
+    ).parse(input)
 }
 
 fn expr_in_parens(input: &[u8]) -> PResult<&str> {
     map_res(
         recognize(delimited(tag("("), expr_inside_parens, tag(")"))),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn expr_in_brackets(input: &[u8]) -> PResult<&str> {
@@ -84,7 +88,8 @@ fn expr_in_brackets(input: &[u8]) -> PResult<&str> {
             tag("]"),
         )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
@@ -103,7 +108,8 @@ pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
             tag("}"),
         )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn expr_inside_parens(input: &[u8]) -> PResult<&str> {
@@ -118,7 +124,8 @@ pub fn expr_inside_parens(input: &[u8]) -> PResult<&str> {
             value((), terminated(tag("/"), none_of("*"))),
         )))),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn quoted_string(input: &[u8]) -> PResult<&str> {
@@ -129,7 +136,8 @@ pub fn quoted_string(input: &[u8]) -> PResult<&str> {
             char('"'),
         )),
         input_to_str,
-    )(input)
+    )
+    .parse(input)
 }
 
 pub fn rust_comment(input: &[u8]) -> PResult<&[u8]> {
@@ -140,7 +148,8 @@ pub fn rust_comment(input: &[u8]) -> PResult<&[u8]> {
             terminated(tag("*"), not(tag("/"))),
         )))),
         tag("*/"),
-    )(input)
+    )
+    .parse(input)
 }
 
 #[cfg(test)]

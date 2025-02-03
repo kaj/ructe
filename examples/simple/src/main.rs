@@ -158,12 +158,12 @@ mod models {
         pub name: &'a str,
         pub email: &'a str,
     }
-    impl<'a> User<'a> {
+    impl User<'_> {
         pub fn mailto(&self) -> Html<String> {
             Html(format!("<a href=\"mailto:{0}\">{0}</a>", self.email))
         }
     }
-    impl<'a> fmt::Display for User<'a> {
+    impl fmt::Display for User<'_> {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             f.write_str(self.name)
         }
