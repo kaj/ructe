@@ -11,6 +11,7 @@ project adheres to
 ## Unreleased
 
 * Updated `nom` to 8.0.0, and added `nom-language`.
+* Removed `itertools` depenendency (PR #147).
 * MSRV is now 1.65.0, as required by `nom` 8.0.
 
 

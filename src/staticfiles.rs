@@ -1,10 +1,9 @@
 use super::Result;
-use itertools::Itertools;
 use std::ascii::escape_default;
 use std::collections::BTreeMap;
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Write};
 use std::fs::{read_dir, File};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 /// Handler for static files.
@@ -147,7 +146,7 @@ use std::path::{Path, PathBuf};
 /// ```
 pub struct StaticFiles {
     /// Rust source file `statics.rs` beeing written.
-    src: Vec<u8>,
+    src: String,
     /// Path for writing the file `statics.rs`.
     src_path: PathBuf,
     /// Base path for finding static files with relative paths
@@ -163,17 +162,17 @@ impl StaticFiles {
         outdir: &Path,
         base_path: &Path,
     ) -> Result<Self> {
-        let mut src = Vec::with_capacity(512);
+        let mut src = String::with_capacity(512);
         if cfg!(feature = "mime03") {
-            src.write_all(b"use mime::Mime;\n\n")?;
+            src.write_str("use mime::Mime;\n\n")?;
         }
         if cfg!(feature = "tide013") {
-            src.write_all(b"use tide::http::mime::{self, Mime};\n\n")?;
+            src.write_str("use tide::http::mime::{self, Mime};\n\n")?;
         } else if cfg!(feature = "http-types") {
-            src.write_all(b"use http_types::mime::{self, Mime};\n\n")?;
+            src.write_str("use http_types::mime::{self, Mime};\n\n")?;
         }
-        src.write_all(
-b"/// A static file has a name (so its url can be recognized) and the
+        src.write_str(
+"/// A static file has a name (so its url can be recognized) and the
 /// actual file contents.
 ///
 /// The name includes a short (48 bits as 8 base64 characters) hash of
@@ -185,13 +184,13 @@ pub struct StaticFile {
     pub name: &'static str,
 ")?;
         if cfg!(feature = "mime03") {
-            src.write_all(b"    pub mime: &'static Mime,\n")?;
+            src.write_str("    pub mime: &'static Mime,\n")?;
         }
         if cfg!(feature = "http-types") {
-            src.write_all(b"    pub mime: &'static Mime,\n")?;
+            src.write_str("    pub mime: &'static Mime,\n")?;
         }
-        src.write_all(
-            b"}
+        src.write_str(
+            "}
 #[allow(dead_code)]
 impl StaticFile {
     /// Get a single `StaticFile` by name, if it exists.
@@ -520,17 +519,21 @@ impl Drop for StaticFiles {
     /// Write the ending of the statics source code, declaring the
     /// `STATICS` variable.
     fn drop(&mut self) {
+        fn do_write(s: &mut StaticFiles) -> Result<()> {
+            write!(s.src, "\npub static STATICS: &[&StaticFile] = &[")?;
+            let mut q = s.names_r.values();
+            if let Some(a) = q.next() {
+                write!(s.src, "&{a}")?;
+            }
+            for a in q {
+                write!(s.src, ", &{a}")?;
+            }
+            writeln!(s.src, "];")?;
+            super::write_if_changed(&s.src_path, &s.src)?;
+            Ok(())
+        }
         // Ignore a possible write failure, rather than a panic in drop.
-        let _ = writeln!(
-            self.src,
-            "\npub static STATICS: &[&StaticFile] \
-             = &[{}];",
-            self.names_r
-                .iter()
-                .map(|s| format!("&{}", s.1))
-                .format(", "),
-        );
-        let _ = super::write_if_changed(&self.src_path, &self.src);
+        let _ = do_write(self);
     }
 }
 

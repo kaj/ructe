@@ -2,7 +2,6 @@ use crate::expression::{input_to_str, rust_name};
 use crate::parseresult::PResult;
 use crate::spacelike::spacelike;
 use crate::templateexpression::{template_expression, TemplateExpression};
-use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::bytes::complete::tag;
@@ -12,7 +11,7 @@ use nom::error::context;
 use nom::multi::{many0, many_till, separated_list0, separated_list1};
 use nom::sequence::{delimited, preceded, terminated};
 use nom::Parser as _;
-use std::io::{self, Write};
+use std::fmt::Write;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Template {
@@ -27,9 +26,9 @@ impl Template {
         &self,
         out: &mut impl Write,
         name: &str,
-    ) -> io::Result<()> {
-        out.write_all(
-            b"use std::io::{self, Write};\n\
+    ) -> std::fmt::Result {
+        out.write_str(
+            "use std::io::{self, Write};\n\
              #[allow(clippy::useless_attribute, unused)]\n\
              use super::{Html,ToHtml};\n",
         )?;
@@ -40,24 +39,32 @@ impl Template {
             out,
             "\n\
              #[allow(clippy::used_underscore_binding)]\n\
-             pub fn {name}<{ta}{ta_sep}W>(#[allow(unused_mut)] mut _ructe_out_: W{args}) -> io::Result<()>\n\
-             where W: Write {{\n\
-             {body}\
-             Ok(())\n\
-             }}",
+             pub fn {name}<{ta}{ta_sep}W>(\
+             \n  #[allow(unused_mut)] mut _ructe_out_: W,",
             name = name,
             ta = self.type_args,
             ta_sep = if self.type_args.is_empty() { "" } else { ", " },
-            args =
-                self.args.iter().format_with("", |arg, f| f(&format_args!(
-                    ", {}",
-                    arg.replace(
-                        " Content",
-                        " impl FnOnce(&mut W) -> io::Result<()>"
-                    )
-                ))),
-            body = self.body.iter().map(|b| b.code()).format(""),
-        )
+        )?;
+        for arg in &self.args {
+            writeln!(
+                out,
+                "  {},",
+                arg.replace(
+                    " Content",
+                    " impl FnOnce(&mut W) -> io::Result<()>"
+                )
+            )?;
+        }
+        writeln!(
+            out,
+            ") -> io::Result<()>\n\
+             where W: Write {{",
+        )?;
+        for b in &self.body {
+            b.write_code(out)?;
+        }
+        writeln!(out, "Ok(())\n}}")?;
+        Ok(())
     }
 }
 

@@ -4,7 +4,6 @@ use crate::expression::{
 };
 use crate::parseresult::PResult;
 use crate::spacelike::{comment_tail, spacelike};
-use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::bytes::complete::tag;
@@ -14,7 +13,7 @@ use nom::error::context;
 use nom::multi::{many0, many_till, separated_list0};
 use nom::sequence::{delimited, pair, preceded, terminated};
 use nom::Parser as _;
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Write};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateExpression {
@@ -58,11 +57,13 @@ impl Display for TemplateArgument {
             TemplateArgument::Body(ref v) if v.is_empty() => {
                 out.write_str("|_| Ok(())")
             }
-            TemplateArgument::Body(ref v) => writeln!(
-                out,
-                "#[allow(clippy::used_underscore_binding)] |mut _ructe_out_| {{\n{}\nOk(())\n}}",
-                v.iter().map(|b| b.code()).format(""),
-            ),
+            TemplateArgument::Body(ref v) => {
+                out.write_str("#[allow(clippy::used_underscore_binding)] |mut _ructe_out_| {\n")?;
+                for b in v {
+                    b.write_code(out)?;
+                }
+                out.write_str("Ok(())\n}\n")
+            }
         }
     }
 }
@@ -73,61 +74,71 @@ impl TemplateExpression {
             text: text.to_string(),
         }
     }
-    pub fn code(&self) -> String {
+    pub fn write_code(&self, out: &mut impl Write) -> fmt::Result {
         match *self {
-            TemplateExpression::Comment => String::new(),
+            TemplateExpression::Comment => Ok(()),
             TemplateExpression::Text { ref text } if text.is_ascii() => {
-                format!("_ructe_out_.write_all(b{text:?})?;\n")
+                writeln!(out, "_ructe_out_.write_all(b{text:?})?;")
             }
             TemplateExpression::Text { ref text } => {
-                format!("_ructe_out_.write_all({text:?}.as_bytes())?;\n")
+                writeln!(out, "_ructe_out_.write_all({text:?}.as_bytes())?;")
             }
             TemplateExpression::Expression { ref expr } => {
-                format!("{expr}.to_html(_ructe_out_.by_ref())?;\n")
+                writeln!(out, "{expr}.to_html(_ructe_out_.by_ref())?;")
             }
             TemplateExpression::ForLoop {
                 ref name,
                 ref expr,
                 ref body,
-            } => format!(
-                "for {name} in {expr} {{\n{}}}\n",
-                body.iter().map(|b| b.code()).format(""),
-            ),
+            } => {
+                writeln!(out, "for {name} in {expr} {{")?;
+                for b in body {
+                    b.write_code(out)?;
+                }
+                out.write_str("}\n")
+            }
             TemplateExpression::IfBlock {
                 ref expr,
                 ref body,
                 ref else_body,
-            } => format!(
-                "if {expr} {{\n{}}}{}\n",
-                body.iter().map(|b| b.code()).format(""),
-                match else_body.as_deref() {
-                    Some([e @ TemplateExpression::IfBlock { .. }]) =>
-                        format!(" else {}", e.code()),
-
-                    Some(body) => format!(
-                        " else {{\n{}}}",
-                        body.iter().map(|b| b.code()).format(""),
-                    ),
-                    None => String::new(),
+            } => {
+                writeln!(out, "if {expr} {{")?;
+                for b in body {
+                    b.write_code(out)?;
                 }
-            ),
-            TemplateExpression::MatchBlock { ref expr, ref arms } => format!(
-                "match {expr} {{{}}}\n",
-                arms.iter().format_with("", |(expr, body), f| {
-                    f(&format_args!(
-                        "\n  {} => {{\n{}}}",
-                        expr,
-                        body.iter().map(|b| b.code()).format(""),
-                    ))
-                })
-            ),
+                out.write_str("}")?;
+                match else_body.as_deref() {
+                    Some([e @ TemplateExpression::IfBlock { .. }]) => {
+                        out.write_str(" else ")?;
+                        e.write_code(out)
+                    }
+                    Some(body) => {
+                        out.write_str(" else {\n")?;
+                        for b in body {
+                            b.write_code(out)?;
+                        }
+                        out.write_str("}\n")
+                    }
+                    None => out.write_char('\n'),
+                }
+            }
+            TemplateExpression::MatchBlock { ref expr, ref arms } => {
+                write!(out, "match {expr} {{")?;
+                for (expr, body) in arms {
+                    write!(out, "\n  {expr} => {{")?;
+                    for b in body {
+                        b.write_code(out)?;
+                    }
+                    write!(out, "}}")?;
+                }
+                writeln!(out, "\n}}")
+            }
             TemplateExpression::CallTemplate { ref name, ref args } => {
-                format!(
-                    "{name}(_ructe_out_.by_ref(){})?;\n",
-                    args.iter().format_with("", |arg, f| f(&format_args!(
-                        ", {arg}"
-                    ))),
-                )
+                write!(out, "{name}(_ructe_out_.by_ref()",)?;
+                for arg in args {
+                    write!(out, ", {arg}")?;
+                }
+                writeln!(out, ")?;")
             }
         }
     }

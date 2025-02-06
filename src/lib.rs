@@ -154,9 +154,9 @@ mod templateexpression;
 use parseresult::show_errors;
 use std::env;
 use std::error::Error;
-use std::fmt::{self, Debug, Display};
+use std::fmt::{self, Debug, Display, Write as _};
 use std::fs::{create_dir_all, read_dir, File};
-use std::io::{self, Read, Write};
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use template::template;
 
@@ -211,7 +211,7 @@ pub use staticfiles::StaticFiles;
 ///
 /// [cargo]: https://doc.rust-lang.org/cargo/
 pub struct Ructe {
-    f: Vec<u8>,
+    f: String,
     outdir: PathBuf,
 }
 
@@ -241,32 +241,32 @@ impl Ructe {
     ///
     /// [cargo]: https://doc.rust-lang.org/cargo/
     pub fn new(outdir: PathBuf) -> Result<Ructe> {
-        let mut f = Vec::with_capacity(512);
+        let mut f = String::with_capacity(512);
         let outdir = outdir.join("templates");
         create_dir_all(&outdir)?;
-        f.write_all(b"pub mod templates {\n")?;
+        f.write_str("pub mod templates {\n")?;
         write_if_changed(
             &outdir.join("_utils.rs"),
-            include_bytes!(concat!(
+            include_str!(concat!(
                 env!("CARGO_MANIFEST_DIR"),
                 "/src/templates/utils.rs"
             )),
         )?;
-        f.write_all(
-            b"#[doc(hidden)]\nmod _utils;\n\
-              #[doc(inline)]\npub use self::_utils::*;\n\n",
+        f.write_str(
+            "#[doc(hidden)]\nmod _utils;\n\
+             #[doc(inline)]\npub use self::_utils::*;\n\n",
         )?;
         if cfg!(feature = "warp03") {
             write_if_changed(
                 &outdir.join("_utils_warp03.rs"),
-                include_bytes!(concat!(
+                include_str!(concat!(
                     env!("CARGO_MANIFEST_DIR"),
                     "/src/templates/utils_warp03.rs"
                 )),
             )?;
-            f.write_all(
-                b"#[doc(hidden)]\nmod _utils_warp03;\n\
-                  #[doc(inline)]\npub use self::_utils_warp03::*;\n\n",
+            f.write_str(
+                "#[doc(hidden)]\nmod _utils_warp03;\n\
+                 #[doc(inline)]\npub use self::_utils_warp03::*;\n\n",
             )?;
         }
         Ok(Ructe { f, outdir })
@@ -320,7 +320,7 @@ impl Ructe {
     ///
     /// [`StaticFile`]: templates::StaticFile
     pub fn statics(&mut self) -> Result<StaticFiles> {
-        self.f.write_all(b"pub mod statics;")?;
+        self.f.write_str("pub mod statics;")?;
         StaticFiles::for_template_dir(
             &self.outdir,
             &PathBuf::from(get_env("CARGO_MANIFEST_DIR")?),
@@ -330,27 +330,24 @@ impl Ructe {
 
 impl Drop for Ructe {
     fn drop(&mut self) {
-        let _ = self.f.write_all(b"}\n");
+        let _ = self.f.write_str("}\n");
         let _ =
             write_if_changed(&self.outdir.join("../templates.rs"), &self.f);
     }
 }
 
-fn write_if_changed(path: &Path, content: &[u8]) -> io::Result<()> {
-    use std::fs::{read, write};
-    if let Ok(old) = read(path) {
+fn write_if_changed(path: &Path, content: &str) -> Result<()> {
+    use std::fs::{read_to_string, write};
+    if let Ok(old) = read_to_string(path) {
         if old == content {
             return Ok(());
         }
     }
-    write(path, content)
+    write(path, content.as_bytes())?;
+    Ok(())
 }
 
-fn handle_entries(
-    f: &mut impl Write,
-    indir: &Path,
-    outdir: &Path,
-) -> Result<()> {
+fn handle_entries(f: &mut String, indir: &Path, outdir: &Path) -> Result<()> {
     println!("cargo:rerun-if-changed={}", indir.display());
     for entry in read_dir(indir)? {
         let entry = entry?;
@@ -359,11 +356,11 @@ fn handle_entries(
             if let Some(filename) = entry.file_name().to_str() {
                 let outdir = outdir.join(filename);
                 create_dir_all(&outdir)?;
-                let mut modrs = Vec::with_capacity(512);
-                modrs.write_all(
-                    b"#[allow(clippy::useless_attribute, unused)]\n\
-                      use super::{Html,ToHtml};\n",
-                )?;
+                let mut modrs = String::with_capacity(512);
+                modrs.push_str(
+                    "#[allow(clippy::useless_attribute, unused)]\n\
+                     use super::{Html,ToHtml};\n",
+                );
                 handle_entries(&mut modrs, &path, &outdir)?;
                 write_if_changed(&outdir.join("mod.rs"), &modrs)?;
                 writeln!(f, "pub mod {filename};\n")?;
@@ -391,17 +388,13 @@ fn handle_entries(
     Ok(())
 }
 
-fn handle_template(
-    name: &str,
-    path: &Path,
-    outdir: &Path,
-) -> io::Result<bool> {
+fn handle_template(name: &str, path: &Path, outdir: &Path) -> Result<bool> {
     let mut input = File::open(path)?;
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
     match template(&buf) {
         Ok((_, t)) => {
-            let mut data = Vec::new();
+            let mut data = String::new();
             t.write_rust(&mut data, name)?;
             write_if_changed(
                 &outdir.join(format!("template_{name}.rs")),
@@ -429,16 +422,19 @@ pub enum RucteError {
     Io(io::Error),
     /// Error resolving a given environment variable.
     Env(String, env::VarError),
-    /// Error bundling a sass stylesheet as css.
+    /// A build-time formatting error in Ructe
+    Fmt(fmt::Error),
     #[cfg(feature = "sass")]
+    /// Error bundling a sass stylesheet as css.
     Sass(rsass::Error),
 }
 
 impl Error for RucteError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match &self {
-            RucteError::Io(e) => Some(e),
-            RucteError::Env(_, e) => Some(e),
+            Self::Io(e) => Some(e),
+            Self::Env(_, e) => Some(e),
+            Self::Fmt(e) => Some(e),
             #[cfg(feature = "sass")]
             RucteError::Sass(e) => Some(e),
         }
@@ -455,6 +451,7 @@ impl Debug for RucteError {
         match self {
             RucteError::Io(err) => Display::fmt(err, out),
             RucteError::Env(var, err) => write!(out, "{var:?}: {err}"),
+            Self::Fmt(err) => Display::fmt(err, out),
             #[cfg(feature = "sass")]
             RucteError::Sass(err) => Debug::fmt(err, out),
         }
@@ -466,6 +463,11 @@ impl From<io::Error> for RucteError {
         RucteError::Io(e)
     }
 }
+impl From<fmt::Error> for RucteError {
+    fn from(value: fmt::Error) -> Self {
+        Self::Fmt(value)
+    }
+}
 
 #[cfg(feature = "sass")]
 impl From<rsass::Error> for RucteError {
@@ -475,4 +477,4 @@ impl From<rsass::Error> for RucteError {
 }
 
 /// A result where the error type is a [`RucteError`].
-pub type Result<T> = std::result::Result<T, RucteError>;
+pub type Result<T, E = RucteError> = std::result::Result<T, E>;
