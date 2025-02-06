@@ -12,6 +12,7 @@ project adheres to
 
 * Updated `nom` to 8.0.0, and added `nom-language`.
 * Removed `itertools` depenendency (PR #147).
+* Updated my email address in author field.
 * MSRV is now 1.65.0, as required by `nom` 8.0.
 
 

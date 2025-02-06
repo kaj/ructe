@@ -1,7 +1,7 @@
 [package]
 name = "gotham-ructe"
 version = "0.12.0"
-authors = ["Rasmus Kaj <kaj@kth.se>"]
+authors = ["Rasmus Kaj <rasmus@krats.se>"]
 edition = "2018"
 
 build = "src/build.rs"
