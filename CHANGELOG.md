@@ -8,7 +8,7 @@ project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## Release 0.18.2 -- 2025-02-07
 
 * Updated `nom` to 8.0.0, and added `nom-language`.
 * Removed `itertools` depenendency (PR #147).
