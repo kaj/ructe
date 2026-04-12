@@ -9,7 +9,7 @@ use nom::sequence::{delimited, pair, preceded, terminated};
 use nom::Parser as _;
 use std::str::{from_utf8, Utf8Error};
 
-pub fn expression(input: &[u8]) -> PResult<&str> {
+pub fn expression(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(context(
             "Expected rust expression",
@@ -46,7 +46,7 @@ pub fn input_to_str(s: &[u8]) -> Result<&str, Utf8Error> {
     from_utf8(s)
 }
 
-pub fn comma_expressions(input: &[u8]) -> PResult<String> {
+pub fn comma_expressions(input: &[u8]) -> PResult<'_, String> {
     map(
         separated_list0(preceded(tag(","), many0(tag(" "))), expression),
         |list: Vec<_>| list.join(", "),
@@ -54,7 +54,7 @@ pub fn comma_expressions(input: &[u8]) -> PResult<String> {
     .parse(input)
 }
 
-pub fn rust_name(input: &[u8]) -> PResult<&str> {
+pub fn rust_name(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(pair(
             alt((tag("_"), alpha1)),
@@ -64,7 +64,7 @@ pub fn rust_name(input: &[u8]) -> PResult<&str> {
     ).parse(input)
 }
 
-fn expr_in_parens(input: &[u8]) -> PResult<&str> {
+fn expr_in_parens(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(delimited(tag("("), expr_inside_parens, tag(")"))),
         input_to_str,
@@ -72,7 +72,7 @@ fn expr_in_parens(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-fn expr_in_brackets(input: &[u8]) -> PResult<&str> {
+fn expr_in_brackets(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(delimited(
             tag("["),
@@ -92,7 +92,7 @@ fn expr_in_brackets(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
+pub fn expr_in_braces(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(delimited(
             tag("{"),
@@ -112,7 +112,7 @@ pub fn expr_in_braces(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-pub fn expr_inside_parens(input: &[u8]) -> PResult<&str> {
+pub fn expr_inside_parens(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(many0(alt((
             value((), is_not("{}[]()\"/")),
@@ -128,7 +128,7 @@ pub fn expr_inside_parens(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-pub fn quoted_string(input: &[u8]) -> PResult<&str> {
+pub fn quoted_string(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize(delimited(
             char('"'),
@@ -140,7 +140,7 @@ pub fn quoted_string(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-pub fn rust_comment(input: &[u8]) -> PResult<&[u8]> {
+pub fn rust_comment(input: &[u8]) -> PResult<'_, &[u8]> {
     delimited(
         tag("/*"),
         recognize(many0(alt((

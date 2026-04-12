@@ -7,15 +7,15 @@ use nom::multi::many0;
 use nom::sequence::preceded;
 use nom::Parser as _;
 
-pub fn spacelike(input: &[u8]) -> PResult<()> {
+pub fn spacelike(input: &[u8]) -> PResult<'_, ()> {
     value((), many0(alt((comment, value((), multispace1))))).parse(input)
 }
 
-pub fn comment(input: &[u8]) -> PResult<()> {
+pub fn comment(input: &[u8]) -> PResult<'_, ()> {
     preceded(tag("@*"), comment_tail).parse(input)
 }
 
-pub fn comment_tail(input: &[u8]) -> PResult<()> {
+pub fn comment_tail(input: &[u8]) -> PResult<'_, ()> {
     preceded(
         many0(alt((
             value((), is_not("*")),

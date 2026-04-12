@@ -144,7 +144,7 @@ impl TemplateExpression {
     }
 }
 
-pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
+pub fn template_expression(input: &[u8]) -> PResult<'_, TemplateExpression> {
     match opt(preceded(
         char('@'),
         alt((
@@ -265,7 +265,7 @@ pub fn template_expression(input: &[u8]) -> PResult<TemplateExpression> {
     }
 }
 
-fn if2(input: &[u8]) -> PResult<TemplateExpression> {
+fn if2(input: &[u8]) -> PResult<'_, TemplateExpression> {
     context(
         "Error in conditional expression:",
         map(
@@ -290,7 +290,7 @@ fn if2(input: &[u8]) -> PResult<TemplateExpression> {
     .parse(input)
 }
 
-fn for_variable(input: &[u8]) -> PResult<String> {
+fn for_variable(input: &[u8]) -> PResult<'_, String> {
     delimited(
         spacelike,
         context(
@@ -319,7 +319,7 @@ fn for_variable(input: &[u8]) -> PResult<String> {
     .parse(input)
 }
 
-fn template_block(input: &[u8]) -> PResult<Vec<TemplateExpression>> {
+fn template_block(input: &[u8]) -> PResult<'_, Vec<TemplateExpression>> {
     preceded(
         char('{'),
         map(
@@ -336,7 +336,7 @@ fn template_block(input: &[u8]) -> PResult<Vec<TemplateExpression>> {
     .parse(input)
 }
 
-fn template_argument(input: &[u8]) -> PResult<TemplateArgument> {
+fn template_argument(input: &[u8]) -> PResult<'_, TemplateArgument> {
     alt((
         map(
             delimited(
@@ -351,7 +351,7 @@ fn template_argument(input: &[u8]) -> PResult<TemplateArgument> {
     .parse(input)
 }
 
-fn cond_expression(input: &[u8]) -> PResult<String> {
+fn cond_expression(input: &[u8]) -> PResult<'_, String> {
     match opt(tag("let")).parse(input)? {
         (i, Some(b"let")) => map(
             pair(
@@ -382,7 +382,7 @@ fn cond_expression(input: &[u8]) -> PResult<String> {
     }
 }
 
-fn loop_expression(input: &[u8]) -> PResult<String> {
+fn loop_expression(input: &[u8]) -> PResult<'_, String> {
     map(
         map_res(
             recognize(terminated(
@@ -399,7 +399,7 @@ fn loop_expression(input: &[u8]) -> PResult<String> {
     .parse(input)
 }
 
-fn logic_expression(input: &[u8]) -> PResult<&str> {
+fn logic_expression(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize((
             opt(terminated(char('!'), spacelike)),
@@ -414,7 +414,7 @@ fn logic_expression(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-fn rel_operator(input: &[u8]) -> PResult<&str> {
+fn rel_operator(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         delimited(
             spacelike,

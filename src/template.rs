@@ -68,7 +68,7 @@ impl Template {
     }
 }
 
-pub fn template(input: &[u8]) -> PResult<Template> {
+pub fn template(input: &[u8]) -> PResult<'_, Template> {
     map(
         (
             spacelike,
@@ -133,7 +133,7 @@ pub fn template(input: &[u8]) -> PResult<Template> {
     .parse(input)
 }
 
-fn end_of_file(input: &[u8]) -> PResult<()> {
+fn end_of_file(input: &[u8]) -> PResult<'_, ()> {
     if input.is_empty() {
         Ok((input, ()))
     } else {
@@ -144,7 +144,7 @@ fn end_of_file(input: &[u8]) -> PResult<()> {
     }
 }
 
-fn formal_argument(input: &[u8]) -> PResult<&str> {
+fn formal_argument(input: &[u8]) -> PResult<'_, &str> {
     map_res(
         recognize((
             rust_name,
@@ -158,7 +158,7 @@ fn formal_argument(input: &[u8]) -> PResult<&str> {
     .parse(input)
 }
 
-fn type_expression(input: &[u8]) -> PResult<()> {
+fn type_expression(input: &[u8]) -> PResult<'_, ()> {
     value(
         (),
         (
@@ -187,7 +187,7 @@ fn type_expression(input: &[u8]) -> PResult<()> {
     .parse(input)
 }
 
-pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
+pub fn comma_type_expressions(input: &[u8]) -> PResult<'_, ()> {
     value(
         (),
         terminated(
@@ -201,7 +201,7 @@ pub fn comma_type_expressions(input: &[u8]) -> PResult<()> {
     .parse(input)
 }
 
-fn lifetime(input: &[u8]) -> PResult<()> {
+fn lifetime(input: &[u8]) -> PResult<'_, ()> {
     delimited(spacelike, value((), tag("'")), rust_name).parse(input)
 }
 
