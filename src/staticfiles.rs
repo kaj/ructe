@@ -330,15 +330,17 @@ impl StaticFile {
     /// With the folloing code in `build.rs`:
     /// ````
     /// # use ructe::{Result, Ructe, StaticFiles};
-    /// # use std::fs::create_dir_all;
+    /// # use std::fs::{create_dir_all, remove_dir_all};
     /// # use std::path::PathBuf;
     /// # use std::vec::Vec;
+    /// # use std::env::temp_dir;
     /// # fn main() -> Result<()> {
-    /// # let p = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target").join("test-tmp").join("add-file");
+    /// # let p = PathBuf::from(temp_dir()).join("test-tmp").join("add-file");
     /// # create_dir_all(&p);
-    /// # let mut ructe = Ructe::new(p)?;
+    /// # let mut ructe = Ructe::new(p.clone())?;
     /// let mut statics = ructe.statics()?;
     /// statics.add_file_data("black.css", b"body{color:black}\n");
+    /// # remove_dir_all(p);
     /// # Ok(())
     /// # }
     /// ````
