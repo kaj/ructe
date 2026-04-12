@@ -1,5 +1,6 @@
-use gotham::hyper::http::header::CONTENT_TYPE;
-use gotham::hyper::{Body, Response, StatusCode};
+use gotham::helpers::http::Body;
+use gotham::helpers::http::response::create_response;
+use gotham::http::{Response, StatusCode};
 use gotham::state::State;
 use mime::TEXT_HTML_UTF_8;
 use std::io;
@@ -17,17 +18,17 @@ impl RucteResponse for State {
     {
         let mut buf = Vec::new();
         let res = match do_render(&mut buf) {
-            Ok(()) => Response::builder()
-                .header(CONTENT_TYPE, TEXT_HTML_UTF_8.as_ref())
-                .body(buf.into())
-                .unwrap(),
+            Ok(()) => {
+                create_response(&self, StatusCode::OK, TEXT_HTML_UTF_8, buf)
+            }
             Err(e) => {
                 println!("Rendering failed: {}", e);
-                Response::builder()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .header(CONTENT_TYPE, TEXT_HTML_UTF_8.as_ref())
-                    .body(buf.into())
-                    .unwrap()
+                create_response(
+                    &self,
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    TEXT_HTML_UTF_8,
+                    buf,
+                )
             }
         };
         (self, res)

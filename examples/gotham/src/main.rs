@@ -1,19 +1,21 @@
 //! An example web service using ructe with the gotham framework.
 mod ructe_response;
 
-use gotham::hyper::http::header::{CACHE_CONTROL, CONTENT_TYPE};
-use gotham::hyper::{Body, Response, StatusCode};
+use crate::ructe_response::RucteResponse;
+use crate::templates::*;
+use gotham::StartError;
+use gotham::helpers::http::Body;
+use gotham::helpers::http::response::create_response;
+use gotham::http::header::CACHE_CONTROL;
+use gotham::http::{Response, StatusCode};
 use gotham::router::builder::{
-    build_simple_router, DefineSingleRoute, DrawRoutes,
+    DefineSingleRoute, DrawRoutes, build_simple_router,
 };
 use gotham::state::{FromState, State};
-use gotham::StartError;
 use gotham_derive::{StateData, StaticResponseExtender};
 use mime::TEXT_HTML;
-use ructe_response::RucteResponse;
 use serde::Deserialize;
 use std::io::{self, Write};
-use templates::*;
 
 /// The main routine starts a gotham server with a simple router
 /// calling different handlers for some urls.
@@ -64,21 +66,27 @@ pub struct FilePath {
 /// expires header (or a 404 if the file does not exist).
 fn static_file(state: State) -> (State, Response<Body>) {
     let res = {
-        let FilePath { ref name } = FilePath::borrow_from(&state);
+        let FilePath { name } = FilePath::borrow_from(&state);
         if let Some(data) = statics::StaticFile::get(name) {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(CONTENT_TYPE, data.mime.as_ref())
-                .header(CACHE_CONTROL, "max-age: 31536000") // 1 year as seconds
-                .body(data.content.into())
-                .unwrap()
+            let mut response = create_response(
+                &state,
+                StatusCode::OK,
+                data.mime.clone(),
+                data.content,
+            );
+            response.headers_mut().append(
+                CACHE_CONTROL,
+                "max-age: 31536000".try_into().unwrap(),
+            ); // 1 year as seconds
+            response
         } else {
-            println!("Static file {} not found", name);
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .header(CONTENT_TYPE, TEXT_HTML.as_ref())
-                .body("not found".into())
-                .unwrap()
+            println!("Static file {name} not found");
+            create_response(
+                &state,
+                StatusCode::NOT_FOUND,
+                TEXT_HTML,
+                "not found".as_bytes(),
+            )
         }
     };
     (state, res)
