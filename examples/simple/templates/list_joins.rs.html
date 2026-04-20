@@ -1,0 +1,6 @@
+@use super::{number_item_html, JoinHtml, JoinToHtml};
+
+@(items: &[u8])
+
+<p>Items: @items.iter().join_to_html(", ").</p>
+<p>Items: @items.iter().cloned().join_html(number_item_html, ", ").</p>
