@@ -2,7 +2,7 @@ use std::io;
 use std::str::from_utf8;
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
-use crate::templates::*;
+use crate::templates::{page_html, statics};
 
 fn main() {
     println!("### Page:");

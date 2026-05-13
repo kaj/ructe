@@ -8,3 +8,9 @@ build = "src/build.rs"
 
 [build-dependencies]
 ructe = { path = "../..", features = ["sass"] }
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }

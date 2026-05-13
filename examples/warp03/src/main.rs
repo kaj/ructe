@@ -99,7 +99,7 @@ async fn static_file(name: String) -> Result<impl Reply> {
 }
 
 /// A duration to add to current time for a far expires header.
-static FAR: Duration = Duration::from_secs(180 * 24 * 60 * 60);
+static FAR: Duration = Duration::from_hours(180 * 24);
 
 /// Convert some rejections to `MyError`
 ///

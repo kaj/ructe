@@ -1,11 +1,11 @@
 @(items: &[&str])
 
-@if !items.is_empty() {
+@if items.is_empty() {
+<p>No items</p>
+} else {
 <ul>
   @for item in items {
     <li>@item</li>
   }
 </ul>
-} else {
-<p>No items</p>
 }

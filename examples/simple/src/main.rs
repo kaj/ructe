@@ -3,7 +3,7 @@
 use std::io;
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
-use crate::templates::*;
+use crate::templates::page;
 
 fn main() {
     page::page_html(&mut io::stdout(), "sample page").unwrap();

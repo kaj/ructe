@@ -8,3 +8,14 @@ build = "src/build.rs"
 
 [build-dependencies]
 ructe = { path = "../.." }
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# This example contains some unusual stuff for testing:
+needless_lifetimes = "allow"
+needless_pass_by_value = "allow"
+unnecessary_literal_unwrap = "allow"
+useless_vec = "allow"
