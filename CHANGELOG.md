@@ -10,7 +10,10 @@ project adheres to
 
 ## Unreleased
 
-* 
+* Updated gotham example to use gotham 0.8.0.
+* Enabled pedantic lints in some examples.
+* Some internal cleanup.
+
 
 ## Release 0.18.2 -- 2025-02-07
 
