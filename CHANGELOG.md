@@ -10,6 +10,9 @@ project adheres to
 
 ## Unreleased
 
+* Allow `clippy::too_many_lines` for template functions (as templates may be
+  rather large and each line of an actual template can result in several
+  lines of generated code).
 * Updated gotham example to use gotham 0.8.0.
 * Enabled pedantic lints in some examples.
 * Some internal cleanup.
