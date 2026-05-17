@@ -470,7 +470,7 @@ impl StaticFile {
         }
         writeln!(
             self.src,
-            "\n/// From {path:?}\
+            "\n/// From `{path:?}`\
              \n#[allow(non_upper_case_globals)]\
              \npub static {rust_name}: StaticFile = StaticFile {{\
              \n  content: {content},\
