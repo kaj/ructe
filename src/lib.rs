@@ -366,9 +366,8 @@ fn handle_entries(f: &mut String, indir: &Path, outdir: &Path) -> Result<()> {
             }
         } else if let Some(filename) = entry.file_name().to_str() {
             for suffix in &[".rs.html", ".rs.svg", ".rs.xml"] {
-                if filename.ends_with(suffix) {
+                if let Some(prename) = filename.strip_suffix(suffix) {
                     println!("cargo:rerun-if-changed={}", path.display());
-                    let prename = &filename[..filename.len() - suffix.len()];
                     let name =
                         format!("{prename}_{}", &suffix[".rs.".len()..]);
                     if handle_template(&name, &path, outdir)? {
