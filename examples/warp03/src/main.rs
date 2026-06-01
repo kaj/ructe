@@ -162,7 +162,7 @@ impl std::fmt::Display for MyError {
 
 impl From<templates::RenderError> for MyError {
     fn from(err: templates::RenderError) -> MyError {
-        log::error!("Failed to render: {:?}", err);
+        log::error!("Failed to render: {err:?}");
         MyError::InternalError
     }
 }
