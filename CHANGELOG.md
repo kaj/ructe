@@ -15,6 +15,7 @@ project adheres to
   lines of generated code).
 * Put filenames in doc for static file structs in backticks (conforming to
   `clippy::doc_markdown`).
+* Updated `md5` to 0.8.0.
 * Updated gotham example to use gotham 0.8.0.
 * Enabled pedantic lints in ructe itself and some examples.
 * Some internal cleanup.
