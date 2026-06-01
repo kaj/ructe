@@ -9,10 +9,16 @@ use std::io::{self, Write};
 /// formats the value using Display and then html-encodes the result.
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
+    ///
+    /// # Errors
+    ///
+    /// This method returns an error if writing to `out` fails.
+    /// Implementors should not return an error for any other reason.
     fn to_html(&self, out: &mut dyn Write) -> io::Result<()>;
 
     /// Write the HTML represention of this value to a buffer.
     ///
+    /// The HTML representation is decieded by the [`Self::to_html`] method.
     /// This can be used for testing, and for short-cutting situations
     /// with complex ownership, since the resulting buffer gets owned
     /// by the caller.
@@ -27,6 +33,9 @@ pub trait ToHtml {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Errors
+    ///
+    /// This method returns an error if `to_html` return an error.
     fn to_buffer(&self) -> io::Result<HtmlBuffer> {
         let mut buf = Vec::new();
         self.to_html(&mut buf)?;

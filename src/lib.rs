@@ -14,7 +14,7 @@
 //!
 //! The template syntax, which is inspired by [Twirl], the Scala-based
 //! template engine in [Play framework], is documented in
-//! the [Template_syntax] module.
+//! the [`Template_syntax`] module.
 //! A sample template may look like this:
 //!
 //! ```html
@@ -223,6 +223,11 @@ impl Ructe {
     /// variable.
     ///
     /// [cargo]: https://doc.rust-lang.org/cargo/
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `OUT_DIR` can't be read or if generated code
+    /// can't be created in that directory.
     pub fn from_env() -> Result<Ructe> {
         Ructe::new(PathBuf::from(get_env("OUT_DIR")?))
     }
@@ -239,6 +244,11 @@ impl Ructe {
     /// you should probably use [`Ructe::from_env`] instead.
     ///
     /// [cargo]: https://doc.rust-lang.org/cargo/
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if generated code can't be created in `outdir`.
+    #[expect(clippy::needless_pass_by_value, reason = "API compat")]
     pub fn new(outdir: PathBuf) -> Result<Ructe> {
         let mut f = String::with_capacity(512);
         let outdir = outdir.join("templates");
@@ -286,6 +296,15 @@ impl Ructe {
     /// The `template_html` function will get a `template` alias for
     /// backwards compatibility, but that will be removed in a future
     /// release.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if in input dir can't be read, if the output can't
+    /// be written, or if there is a template that can't be converted to
+    /// rust code.
+    /// Note that while some errors in template code will result in an error
+    /// from this method, other errors will return ok here but generate code
+    /// that results in a compilation error.
     pub fn compile_templates<P>(&mut self, indir: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -318,6 +337,11 @@ impl Ructe {
     /// project.
     ///
     /// [`StaticFile`]: templates::StaticFile
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the output can't be written, or if the
+    /// `CARGO_MANIFEST_DIR` environment variable is not set.
     pub fn statics(&mut self) -> Result<StaticFiles> {
         self.f.write_str("pub mod statics;")?;
         StaticFiles::for_template_dir(

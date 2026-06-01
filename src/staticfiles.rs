@@ -151,9 +151,9 @@ pub struct StaticFiles {
     src_path: PathBuf,
     /// Base path for finding static files with relative paths
     base_path: PathBuf,
-    /// Maps rust names to public names (foo_jpg -> foo-abc123.jpg)
+    /// Maps rust names to public names (`foo_jpg` -> `foo-abc123.jpg`)
     names: BTreeMap<String, String>,
-    /// Maps public names to rust names (foo-abc123.jpg -> foo_jpg)
+    /// Maps public names to rust names (`foo-abc123.jpg` -> `foo_jpg`)
     names_r: BTreeMap<String, String>,
 }
 
@@ -223,6 +223,11 @@ impl StaticFile {
     }
 
     /// Add all files from a specific directory, `indir`, as static files.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `indir` is not a directory, if it or any file
+    /// in it can't be read, or if the generated code can't be written.
     pub fn add_files(
         &mut self,
         indir: impl AsRef<Path>,
@@ -255,6 +260,11 @@ impl StaticFile {
     ///
     /// The `to` parameter may be an empty string.
     /// In that case, no extra slash is added.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `indir` is not a directory, if it or any file
+    /// in it can't be read, or if the generated code can't be written.
     pub fn add_files_as(
         &mut self,
         indir: impl AsRef<Path>,
@@ -283,6 +293,10 @@ impl StaticFile {
     /// name and ext are the name and extension from `path` and has is
     /// a few url-friendly bytes from a hash of the file content.
     ///
+    /// # Errors
+    ///
+    /// Returns an error if `path` can't be read, or if the generated code
+    /// can't be written.
     pub fn add_file(&mut self, path: impl AsRef<Path>) -> Result<&mut Self> {
         let path = self.path_for(path);
         if let Some((name, ext)) = name_and_ext(&path) {
@@ -306,6 +320,11 @@ impl StaticFile {
     /// Add one specific file as a static file.
     ///
     /// Use `url_name` in the url without adding any hash characters.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `path` can't be read, or if the generated code
+    /// can't be written.
     pub fn add_file_as(
         &mut self,
         path: impl AsRef<Path>,
@@ -360,6 +379,10 @@ impl StaticFile {
     /// # }
     /// assert_eq!(statics::black_css.name, "black-r3rltVhW.css");
     /// ````
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the generated code can't be written.
     pub fn add_file_data<P>(
         &mut self,
         path: P,
@@ -400,6 +423,11 @@ impl StaticFile {
     ///
     /// This method is only available when ructe is built with the
     /// "sass" feature.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `src` can't be read, if there is a sass error
+    /// handling it, or if the generated code can't be written.
     #[cfg(feature = "sass")]
     pub fn add_sass_file<P>(&mut self, src: P) -> Result<&mut Self>
     where
@@ -463,8 +491,7 @@ impl StaticFile {
         if rust_name
             .as_bytes()
             .first()
-            .map(|c| c.is_ascii_digit())
-            .unwrap_or(true)
+            .map_or(true, u8::is_ascii_digit)
         {
             rust_name.insert(0, 'n');
         }
@@ -512,6 +539,7 @@ impl StaticFile {
     /// # Ok(())
     /// # }
     /// ````
+    #[must_use]
     pub fn get_names(&self) -> &BTreeMap<String, String> {
         &self.names
     }

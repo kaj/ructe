@@ -134,7 +134,7 @@ impl TemplateExpression {
                 writeln!(out, "\n}}")
             }
             TemplateExpression::CallTemplate { ref name, ref args } => {
-                write!(out, "{name}(_ructe_out_.by_ref()",)?;
+                write!(out, "{name}(_ructe_out_.by_ref()")?;
                 for arg in args {
                     write!(out, ", {arg}")?;
                 }
@@ -185,62 +185,8 @@ pub fn template_expression(input: &[u8]) -> PResult<'_, TemplateExpression> {
             map(comment_tail, |()| TemplateExpression::Comment).parse(i)
         }
         (i, Some(b"if")) => if2(i),
-        (i, Some(b"for")) => map(
-            (
-                for_variable,
-                delimited(
-                    terminated(
-                        context("Expected \"in\"", tag("in")),
-                        spacelike,
-                    ),
-                    context("Expected iterable expression", loop_expression),
-                    spacelike,
-                ),
-                context("Error in loop block:", template_block),
-            ),
-            |(name, expr, body)| TemplateExpression::ForLoop {
-                name,
-                expr,
-                body,
-            },
-        )
-        .parse(i),
-        (i, Some(b"match")) => context(
-            "Error in match expression:",
-            map(
-                (
-                    delimited(spacelike, expression, spacelike),
-                    preceded(
-                        char('{'),
-                        map(
-                            many_till(
-                                context(
-                                    "Error in match arm starting here:",
-                                    pair(
-                                        delimited(
-                                            spacelike,
-                                            map(expression, String::from),
-                                            spacelike,
-                                        ),
-                                        preceded(
-                                            terminated(tag("=>"), spacelike),
-                                            template_block,
-                                        ),
-                                    ),
-                                ),
-                                preceded(spacelike, char('}')),
-                            ),
-                            |(arms, _end)| arms,
-                        ),
-                    ),
-                ),
-                |(expr, arms)| TemplateExpression::MatchBlock {
-                    expr: expr.to_string(),
-                    arms,
-                },
-            ),
-        )
-        .parse(i),
+        (i, Some(b"for")) => for2(i),
+        (i, Some(b"match")) => match2(i),
         (i, Some(b"(")) => {
             map(terminated(expr_inside_parens, tag(")")), |expr| {
                 TemplateExpression::Expression {
@@ -290,6 +236,22 @@ fn if2(input: &[u8]) -> PResult<'_, TemplateExpression> {
     .parse(input)
 }
 
+fn for2(input: &[u8]) -> PResult<'_, TemplateExpression> {
+    map(
+        (
+            for_variable,
+            delimited(
+                terminated(context("Expected \"in\"", tag("in")), spacelike),
+                context("Expected iterable expression", loop_expression),
+                spacelike,
+            ),
+            context("Error in loop block:", template_block),
+        ),
+        |(name, expr, body)| TemplateExpression::ForLoop { name, expr, body },
+    )
+    .parse(input)
+}
+
 fn for_variable(input: &[u8]) -> PResult<'_, String> {
     delimited(
         spacelike,
@@ -315,6 +277,45 @@ fn for_variable(input: &[u8]) -> PResult<'_, String> {
             )),
         ),
         spacelike,
+    )
+    .parse(input)
+}
+
+fn match2(input: &[u8]) -> PResult<'_, TemplateExpression> {
+    context(
+        "Error in match expression:",
+        map(
+            (
+                delimited(spacelike, expression, spacelike),
+                preceded(
+                    char('{'),
+                    map(
+                        many_till(
+                            context(
+                                "Error in match arm starting here:",
+                                pair(
+                                    delimited(
+                                        spacelike,
+                                        map(expression, String::from),
+                                        spacelike,
+                                    ),
+                                    preceded(
+                                        terminated(tag("=>"), spacelike),
+                                        template_block,
+                                    ),
+                                ),
+                            ),
+                            preceded(spacelike, char('}')),
+                        ),
+                        |(arms, _end)| arms,
+                    ),
+                ),
+            ),
+            |(expr, arms)| TemplateExpression::MatchBlock {
+                expr: expr.to_string(),
+                arms,
+            },
+        ),
     )
     .parse(input)
 }

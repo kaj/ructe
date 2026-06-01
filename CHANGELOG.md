@@ -16,7 +16,7 @@ project adheres to
 * Put filenames in doc for static file structs in backticks (conforming to
   `clippy::doc_markdown`).
 * Updated gotham example to use gotham 0.8.0.
-* Enabled pedantic lints in some examples.
+* Enabled pedantic lints in ructe itself and some examples.
 * Some internal cleanup.
 
 

@@ -35,3 +35,7 @@ mime = { version = "0.3", optional = true }
 [badges]
 travis-ci = { repository = "kaj/ructe" }
 maintenance = { status = "actively-developed" }
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unnecessary_debug_formatting = "allow"
